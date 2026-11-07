@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mac 管家</title>
+<script>if (/[?&]embed=1/.test(location.search)) { document.documentElement.className += " embed";
+  try { if ((JSON.parse(localStorage.getItem("mbdash.layout") || "{}")).skin !== "glass") document.documentElement.classList.add("skin-soft"); } catch (e) { document.documentElement.classList.add("skin-soft"); } }</script>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1d2330;--mute:#6b7280;--line:#e5e7eb;--ok:#15803d;--warn:#b45309;--err:#b91c1c;--accent:#4f46e5;--chip:#eef2ff}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1115;--card:#181b22;--ink:#e6e8ee;--mute:#9aa3b2;--line:#2a2f3a;--ok:#4ade80;--warn:#fbbf24;--err:#f87171;--accent:#818cf8;--chip:#23263a}}
+*{box-sizing:border-box}
+body{margin:0;text-wrap:pretty;background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif}
+main{max-width:1100px;margin:0 auto;padding:24px 16px 60px}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:16px}
+h1{font-size:22px;margin:0}
+h2{font-size:15px;margin:28px 0 10px;color:var(--mute);font-weight:600}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 12px;border-radius:8px;cursor:pointer}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button:disabled{opacity:.5;cursor:wait}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px}
+.stat b{display:block;font-size:20px}
+.stat span{color:var(--mute);font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+.app{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;border-left:4px solid var(--line)}
+.app.ok{border-left-color:var(--ok)}.app.warn{border-left-color:var(--warn)}.app.error{border-left-color:var(--err)}
+.app h3{margin:0 0 4px;font-size:15px;display:flex;justify-content:space-between;gap:8px}
+.dot{font-size:12px;font-weight:500;white-space:nowrap}
+.meta,ul.issues,.ai,.stat span{word-break:keep-all;overflow-wrap:anywhere}
+.app h3 .dot::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:currentColor;margin-right:6px;vertical-align:1px}
+.ok .dot{color:var(--ok)}.warn .dot{color:var(--warn)}.error .dot{color:var(--err)}
+.meta{color:var(--mute);font-size:12px}
+.nums{display:flex;gap:14px;margin:8px 0;font-variant-numeric:tabular-nums}
+.nums div{font-size:12px;color:var(--mute)}.nums b{display:block;color:var(--ink);font-size:15px}
+ul.issues{margin:6px 0;padding-left:18px;font-size:13px}
+.ai{margin-top:8px;padding:8px 10px;border-radius:8px;background:var(--chip);font-size:13px}
+.ai .fix{color:var(--mute);margin-top:2px}
+.row-actions{display:flex;gap:6px;margin-top:8px}
+.row-actions button{padding:4px 9px;font-size:12px}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:13px}
+th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;word-break:break-all}
+th{color:var(--mute);font-weight:500}
+.bad{color:var(--err)}
+#summary{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;display:none}
+#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;display:none}
+label.auto{color:var(--mute);font-size:12px;display:flex;align-items:center;gap:4px}
+
+/* ===== 嵌在 Deck 里（?embed=1）时：跟监控台同一套玻璃风格 ===== */
+html.embed{--g:rgba(24,28,40,.5);--gh:rgba(255,255,255,.06);--edge:rgba(255,255,255,.10);--edge-hi:rgba(255,255,255,.22);--ink:#eef0f5;--mute:#a3a9b7;--line:rgba(255,255,255,.08);--ok:#4fd39a;--warn:#f5b546;--err:#ff6b6b;--accent:#7aa7ff;--chip:rgba(122,167,255,.12);--track:rgba(255,255,255,.1);color-scheme:dark}
+html.embed[data-theme="light"] button.primary{background:var(--accent)}
+html.embed[data-theme="light"]{--g:rgba(255,255,255,.52);--gh:rgba(255,255,255,.6);--edge:rgba(255,255,255,.75);--edge-hi:rgba(255,255,255,.95);--ink:#121621;--mute:#4b5363;--line:rgba(15,23,42,.08);--ok:#138a5b;--warn:#b26b00;--err:#d23c3c;--accent:#2f6fe0;--chip:rgba(47,111,224,.08);--track:rgba(15,23,42,.1);color-scheme:light}
+html.embed body{background:transparent;-webkit-user-select:none;user-select:none}
+html.embed main{max-width:none;padding:18px 18px 40px}
+html.embed .stat,html.embed .app,html.embed #summary,html.embed table{background:var(--g);border:0;-webkit-backdrop-filter:blur(20px) saturate(1.6);backdrop-filter:blur(20px) saturate(1.6);box-shadow:inset 0 1px 0 var(--edge-hi),inset 0 0 0 1px var(--edge);border-radius:16px}
+html.embed .app{padding:14px 16px;border-left:0}
+html.embed th,html.embed td{border-color:var(--line)}
+html.embed button{min-height:36px;padding:0 14px;border-radius:11px;border:0;background:var(--gh);color:var(--ink);font-weight:600;box-shadow:inset 0 0 0 1px var(--edge);transition:transform .45s cubic-bezier(.34,1.56,.64,1),opacity .45s}
+html.embed button.primary{background:#3d68d8;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 6px 16px -6px var(--accent)}
+html.embed button.pressed{transform:scale(.97);transition:transform .12s cubic-bezier(.2,.8,.2,1),opacity .12s}
+html.embed button.pressed.touch{opacity:.8}
+html.embed .row-actions button{min-height:32px;padding:0 10px}
+html.embed .ai{background:var(--chip);border-radius:10px}
+html.embed label.auto{gap:8px;font-size:13px;cursor:pointer;min-height:36px}
+html.embed label.auto input{-webkit-appearance:none;appearance:none;width:38px;height:23px;border-radius:12px;background:var(--track);position:relative;margin:0;cursor:pointer;transition:background .2s}
+html.embed label.auto input::after{content:"";position:absolute;left:2px;top:2px;width:19px;height:19px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .35s cubic-bezier(.34,1.56,.64,1)}
+html.embed label.auto input:checked{background:var(--ok)}
+html.embed label.auto input:checked::after{transform:translateX(15px)}
+html.embed #toast{background:var(--g);color:var(--ink);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);box-shadow:inset 0 0 0 1px var(--edge),0 10px 30px rgba(0,0,0,.3);border-radius:12px}
+html.embed .grid > *,html.embed .stats > *{animation:glassIn .6s cubic-bezier(.2,.8,.2,1) both}
+@keyframes glassIn{from{opacity:0;filter:blur(8px)}}
+html.embed.reduce *{animation:none!important;transition-property:opacity!important}
+@media (prefers-reduced-motion:reduce){html.embed *{animation:none!important;transition-property:opacity!important}}
+
+/* ===== 新拟态皮肤（Deck 设置里选「新拟态」时，监控台给这里加 .skin-soft）===== */
+html.embed.skin-soft{--nm-knob:linear-gradient(145deg,#c3c9d4,#a3abb9);--nm-bg:#252a33;--nm-hi:rgba(56,63,77,.9);--nm-lo:rgba(10,12,16,.75);--nm-face:linear-gradient(145deg,#2a2f39,#21252d);--nm-rim:inset 1px 1px 0 rgba(255,255,255,.045);
+  --ink:#eceff5;--mute:#a9b0bf;--line:rgba(255,255,255,.07);--chip:rgba(122,167,255,.10);--track:#252a33}
+html.embed.skin-soft[data-theme="light"]{--nm-knob:linear-gradient(145deg,#ffffff,#e4e9f0);--nm-bg:#e3e8ef;--nm-hi:rgba(255,255,255,.95);--nm-lo:rgba(146,160,186,.58);--nm-face:linear-gradient(145deg,#e9edf3,#dbe1e9);--nm-rim:inset 1px 1px 0 rgba(255,255,255,.7);
+  --ink:#141925;--mute:#465062;--line:rgba(120,135,160,.16);--chip:rgba(47,111,224,.07);--track:#e3e8ef}
+html.embed.skin-soft{--nm-up:7px 7px 16px var(--nm-lo),-7px -7px 16px var(--nm-hi);--nm-up-xs:2px 2px 5px var(--nm-lo),-2px -2px 5px var(--nm-hi);
+  --nm-in:inset 4px 4px 9px var(--nm-lo),inset -4px -4px 9px var(--nm-hi);--nm-in-s:inset 2px 2px 5px var(--nm-lo),inset -2px -2px 5px var(--nm-hi)}
+/* 底色要明确写：iframe 和外层深浅色不一致时，浏览器会给 iframe 画一层不透明的默认底（夜里会比外面深一块） */
+html.embed.skin-soft,html.embed.skin-soft body{background:var(--nm-bg)}
+html.embed.skin-soft main{padding:20px 20px 44px}
+html.embed.skin-soft .grid,html.embed.skin-soft .stats{gap:16px}
+html.embed.skin-soft .stat,html.embed.skin-soft .app,html.embed.skin-soft #summary,html.embed.skin-soft table{background:var(--nm-bg);-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:var(--nm-up),var(--nm-rim);border-radius:20px}
+html.embed.skin-soft table{border-radius:16px}
+html.embed.skin-soft button:not(.primary){background:var(--nm-face);box-shadow:var(--nm-up-xs),var(--nm-rim);transition:transform .45s cubic-bezier(.34,1.56,.64,1),box-shadow .22s,color .2s}
+html.embed.skin-soft button.pressed:not(.primary){box-shadow:var(--nm-in-s);color:var(--accent)}
+html.embed.skin-soft button.primary{box-shadow:3px 3px 8px var(--nm-lo),-3px -3px 8px var(--nm-hi),inset 0 1px 0 rgba(255,255,255,.28)}
+html.embed.skin-soft button:not(.primary):disabled{box-shadow:var(--nm-in-s)}
+html.embed.skin-soft button:focus-visible{outline:none;box-shadow:var(--nm-up-xs),0 0 0 3px var(--accent)}
+html.embed.skin-soft .ai{background:var(--nm-bg);box-shadow:var(--nm-in-s);border-radius:12px}
+html.embed.skin-soft label.auto input{background:var(--nm-bg);box-shadow:var(--nm-in-s),0 0 0 1px rgba(255,255,255,.16)}
+html.embed.skin-soft[data-theme="light"] label.auto input{box-shadow:var(--nm-in-s)}
+html.embed.skin-soft label.auto input::after{background:var(--nm-knob,var(--nm-face));box-shadow:var(--nm-up-xs)}
+html.embed.skin-soft label.auto input:checked{background:var(--ok);box-shadow:inset 2px 2px 5px rgba(0,0,0,.22)}
+html.embed.skin-soft label.auto input:checked::after{background:#fff}
+html.embed.skin-soft #toast{background:var(--nm-bg);-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 18px 40px -14px var(--nm-lo),var(--nm-up-xs),var(--nm-rim)}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div>
+    <h1>Mac 管家</h1>
+    <div class="meta" id="when">读取中…</div>
+  </div>
+  <div class="btns">
+    <label class="auto"><input type="checkbox" id="auto"> 每 30 秒刷新本地状态</label>
+    <a href="/dash" id="dashLink" style="text-decoration:none"><button type="button">监控台</button></a>
+    <button id="btnRefresh">刷新状态</button>
+    <button id="btnDeep" title="用 footprint 测每个应用的真实内存与显存（IOSurface + IOAccelerator），约多花几秒">测显存</button>
+    <button id="btnAI" class="primary" title="把当前快照发给 DeepSeek 逐个排查，会消耗 API 额度">DeepSeek 排查</button>
+  </div>
+</header>
+
+<section class="stats" id="stats"></section>
+<div id="summary" style="margin-top:12px"></div>
+
+<h2>我的应用</h2>
+<section class="grid" id="apps"></section>
+
+<h2>Dock 失效图标</h2>
+<div id="dock"></div>
+
+<h2>其他自建后台服务（LaunchAgent）</h2>
+<div id="agents"></div>
+
+<h2>历次 DeepSeek 排查</h2>
+<div id="history"></div>
+</main>
+<div id="toast"></div>
+<script>
+const TOKEN = "__TOKEN__";
+let last = null, ai = {};
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const levelText = {ok:"正常", warn:"注意", error:"有问题"};  // 圆点由 CSS 画（.dot::before），这里不再写「●」，否则嵌在 Deck 里会出现两个点
+function toast(t){const el=$("#toast");el.textContent=t;el.style.display="block";clearTimeout(el._t);el._t=setTimeout(()=>el.style.display="none",3500)}
+async function post(url, body){const r=await fetch(url,{method:"POST",headers:{"X-Token":TOKEN,"Content-Type":"application/json"},body:JSON.stringify(body||{})});return r.json()}
+
+function render(d){
+  last = d;
+  $("#when").textContent = "本地状态更新于 " + d.time;
+  const m = d.memory||{}, g = d.gpu||{};
+  const running = d.apps.filter(a=>a.running).length, bad = d.apps.filter(a=>a.level!=="ok").length;
+  $("#stats").innerHTML = [
+    ["内存", (m.used_gb??"?")+" / "+(m.total_gb??"?")+" GB", m.free_pct!=null?"空闲 "+m.free_pct+"%":""],
+    ["GPU", g.utilization_pct!=null?g.utilization_pct+"%":"读不到", g.in_use_mb!=null?"显存在用 "+g.in_use_mb+" MB":""],
+    ["应用", running+" / "+d.apps.length+" 在运行", bad?bad+" 个需要留意":"全部正常"],
+    ["Dock", d.dock_broken.length?d.dock_broken.length+" 个失效":"没有失效图标", d.dock.length+" 个图标"],
+  ].map(([k,v,s])=>`<div class="stat"><span>${k}</span><b>${esc(v)}</b><span>${esc(s)}</span></div>`).join("");
+  $("#apps").innerHTML = d.apps.map(a=>{
+    const r = ai[a.id];
+    const lvl = r ? r.level : a.level;
+    const mem = a.footprint_mb!=null ? a.footprint_mb+" MB" : (a.running? a.rss_mb+" MB":"—");
+    const actions = a.kind==="agent"
+      ? `<button data-act="restart" data-id="${a.id}">重启服务</button>`
+      : `<button data-act="open" data-id="${a.id}">打开</button>${a.running?`<button data-act="quit" data-id="${a.id}">退出</button>`:""}<button data-act="reveal" data-id="${a.id}">在访达中显示</button>`;
+    return `<div class="app ${lvl}">
+      <h3><span>${esc(a.name)}</span><span class="dot">${levelText[lvl]||""}</span></h3>
+      <div class="meta">${esc(a.version?"v"+a.version+" · ":"")}${a.running?"运行中 "+esc(a.uptime||""):"未运行"}${a.in_dock?" · 在 Dock":""}${a.url_status?" · 服务 "+a.url_status:""}</div>
+      <div class="nums"><div><b>${a.running?a.cpu+"%":"—"}</b>CPU</div><div><b>${esc(mem)}</b>${a.footprint_mb!=null?"内存+显存":"内存"}</div>${a.gpu_mb!=null?`<div><b>${a.gpu_mb} MB</b>显存</div>`:""}<div><b>${a.pids.length||"—"}</b>进程</div>${a.log_mb!=null?`<div><b>${a.log_mb} MB</b>日志</div>`:""}</div>
+      ${a.issues.length?`<ul class="issues">${a.issues.map(i=>`<li>${esc(i)}</li>`).join("")}</ul>`:""}
+      ${r?`<div class="ai"><div>DeepSeek：${esc(r.finding)}</div><div class="fix">${esc(r.fix)}</div></div>`:""}
+      <div class="meta">${esc(a.note||"")}</div>
+      <div class="row-actions">${actions}</div>
+    </div>`}).join("");
+  $("#dock").innerHTML = d.dock_broken.length
+    ? `<table><tr><th>图标</th><th>指向（已不存在）</th></tr>${d.dock_broken.map(x=>`<tr><td>${esc(x.label)}</td><td class="bad">${esc(x.path)}</td></tr>`).join("")}</table>`
+    : `<div class="meta">没有失效图标。</div>`;
+  $("#agents").innerHTML = d.other_agents.length
+    ? `<table><tr><th>标签</th><th>状态</th><th>上次退出码</th><th>程序</th></tr>${d.other_agents.map(x=>`<tr><td>${esc(x.label)}</td><td>${x.loaded?(x.pid?"运行中 pid "+x.pid:"已加载"):'<span class="bad">未加载</span>'}</td><td>${esc(x.last_exit??"—")}</td><td class="${x.program_exists?"":"bad"}">${esc(x.program)}</td></tr>`).join("")}</table>`
+    : `<div class="meta">无。</div>`;
+}
+
+async function refresh(deep){
+  const btn = deep?$("#btnDeep"):$("#btnRefresh"); btn.disabled=true;
+  try{ render(deep? await post("/api/deep") : await (await fetch("/api/status")).json()); }
+  catch(e){ toast("刷新失败："+e) } finally{ btn.disabled=false }
+}
+
+async function runAI(){
+  if(!confirm("把当前快照发给 DeepSeek 排查一次？\n会消耗少量 API 额度（通常几千 token）。")) return;
+  const b=$("#btnAI"); b.disabled=true; b.textContent="DeepSeek 排查中…";
+  // 在 Deck 里：整块屏边缘亮起 AI 思考光效
+  let glow=null; try{ glow = window.parent!==window && window.parent.DeckGlow } catch(e){}
+  if(glow) glow.show({thinking:true});
+  try{
+    const r = await post("/api/deepseek");
+    if(r.error){ toast(r.error); return }
+    ai = {}; (r.apps||[]).forEach(x=>ai[x.id]=x);
+    const u = r.usage||{};
+    $("#summary").style.display="block";
+    $("#summary").innerHTML = `<b>DeepSeek 总评：</b>${esc(r.summary)}<div class="meta">Dock：${esc(r.dock||"—")}</div><div class="meta">${esc(r.time)} · 用时 ${r.seconds}s · tokens ${u.total_tokens??"?"}（输入 ${u.prompt_tokens??"?"} / 输出 ${u.completion_tokens??"?"}）</div>`;
+    render(r.snapshot); loadHistory();
+  }catch(e){ toast("排查失败："+e) } finally{ b.disabled=false; b.textContent="DeepSeek 排查"; if(glow) glow.hide() }
+}
+
+async function loadHistory(){
+  const h = await (await fetch("/api/history")).json();
+  $("#history").innerHTML = h.length ? `<table><tr><th>时间</th><th>总评</th><th>tokens</th></tr>${h.slice().reverse().slice(0,10).map(x=>`<tr><td>${esc(x.time)}</td><td>${esc(x.summary)}</td><td>${esc((x.usage||{}).total_tokens??"")}</td></tr>`).join("")}</table>` : `<div class="meta">还没跑过。</div>`;
+}
+
+document.addEventListener("click", async e=>{
+  const b = e.target.closest("button[data-act]"); if(!b) return;
+  b.disabled = true;
+  const r = await post("/api/action",{id:b.dataset.id,action:b.dataset.act});
+  toast(r.error || (r.ok?"已执行":"失败："+(r.msg||"")));
+  setTimeout(()=>refresh(false), 2500);
+});
+$("#btnRefresh").onclick=()=>refresh(false);
+$("#btnDeep").onclick=()=>refresh(true);
+$("#btnAI").onclick=runAI;
+let timer=null;
+$("#auto").onchange=e=>{ clearInterval(timer); if(e.target.checked) timer=setInterval(()=>refresh(false),30000) };
+refresh(false); loadHistory();
+</script>
+<script>
+if (/[?&]embed=1/.test(location.search)) {
+  var l = document.getElementById("dashLink"); if (l) l.style.display = "none";
+  // 不用系统自带的悬停小字：说明挪到按钮旁的提示条
+  Array.prototype.forEach.call(document.querySelectorAll("[title]"), function (el) { el.setAttribute("aria-description", el.title); el.removeAttribute("title"); });
+  // 按压反馈：鼠标立刻按下；触摸 0.1 秒后才下沉
+  var pt = null, pe = null;
+  document.addEventListener("pointerdown", function (e) {
+    var b = e.target.closest && e.target.closest("button"); if (!b) return; pe = b;
+    if (e.pointerType === "mouse") b.classList.add("pressed"); else pt = setTimeout(function () { b.classList.add("pressed", "touch"); }, 100);
+  });
+  var up = function () { clearTimeout(pt); if (pe) pe.classList.remove("pressed", "touch"); pe = null; };
+  document.addEventListener("pointerup", up); document.addEventListener("pointercancel", up);
+}
+</script>
+</body>
+</html>

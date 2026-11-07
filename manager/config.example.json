@@ -1,0 +1,70 @@
+{
+  "port": 8777,
+  "deepseek": {
+    "model": "deepseek-chat",
+    "base_url": "https://api.deepseek.com",
+    "key_source": [
+      {
+        "type": "env",
+        "name": "DEEPSEEK_API_KEY"
+      },
+      {
+        "type": "keychain",
+        "service": "deepseek-api"
+      },
+      {
+        "type": "file",
+        "path": "~/.dsh/.credentials.yaml",
+        "pattern": "DEEPSEEK_API_KEY\\s*:\\s*[\"']?([^\"'\\s#]+)"
+      },
+      {
+        "type": "file",
+        "path": "~/.config/mac-manager/deepseek.key"
+      }
+    ]
+  },
+  "dashboard": {
+    "_说明": "监控台（/dash）。lan=true 时同一 Wi-Fi 的 iPad 可凭配对链接只读访问；也可在监控台设置里一键开关。各数据源可设 enabled / interval（秒）。",
+    "lan": false,
+    "order": [
+      "system",
+      "claude",
+      "codex",
+      "github",
+      "deepseek",
+      "butler",
+      "makerworld"
+    ],
+    "sources": {
+      "claude": {
+        "usage_limits": false
+      },
+      "codex": {
+        "path": ""
+      },
+      "github": {
+        "gh_path": ""
+      },
+      "deepseek": {
+        "balance_interval_min": 5,
+        "low_balance": 10
+      },
+      "makerworld": {
+        "user_id": ""
+      }
+    }
+  },
+  "news": {
+    "title": "Vesper 日报",
+    "_说明": "资讯页（Deck 第三个页签）。每天按 slots 在 DeepSeek 非高峰（半价）时段编一期，每天花费到 daily_budget_cny 就停。interests 可改成你关心的方向；feeds / searches 可整组替换来源。",
+    "enabled": true,
+    "model": "deepseek-flash",
+    "fallback_model": "deepseek-chat",
+    "slots": [
+      "06:30",
+      "12:30",
+      "20:00"
+    ],
+    "daily_budget_cny": 1.0
+  }
+}

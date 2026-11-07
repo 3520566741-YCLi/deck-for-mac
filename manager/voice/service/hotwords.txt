@@ -1,0 +1,11 @@
+# 热词：一行一个。用于 Apple 实时字幕（contextualStrings）、Qwen3-ASR 热词，
+# 以及英文词的大小写/空格纠正（例如 "deep seek" → DeepSeek）。
+# 只放容易听错的专有名词：Qwen3-ASR 的热词太多、太常见（比如单独的 Mac）反而会把别的字带偏。
+# 个人补充写在 ~/Library/Application Support/Deck/voice/hotwords.txt；manager/apps.json 里的应用名会自动加入。
+Codex
+Claude
+Claude Code
+Deck
+DeepSeek
+GitHub
+Notion

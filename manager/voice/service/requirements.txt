@@ -1,0 +1,5 @@
+# Deck 语音服务（Python 3.11）。固定版本，各线程共用。
+sherpa-onnx==2.0.1
+numpy>=1.26,<3
+pypinyin>=0.51   # sherpa_onnx.text2token 生成中文关键词要用
+opencc-python-reimplemented==0.1.7   # 繁体 → 简体（Apache-2.0）

@@ -1,0 +1,4 @@
+# Vesper TTS（tts.py）。和识别线程共用 venv：~/Library/Application Support/Deck/voice/venv
+numpy>=1.26
+mlx-audio==0.6.4          # Qwen3-TTS 0.6B Base 克隆（Apple GPU，流式）；模型 mlx-community/Qwen3-TTS-12Hz-0.6B-Base-8bit
+# 可选的备用引擎 Kokoro 用识别线程已装的 sherpa-onnx==2.0.1

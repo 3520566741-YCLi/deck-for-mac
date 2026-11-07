@@ -1,64 +1,99 @@
 <div align="center">
 
+<img src="docs/images/icon.png" width="96" alt="Deck 图标">
+
 # Deck
 
-**一块常亮的 Mac 控制台 + 一个本地优先的语音助手。把这个仓库丢给你的 AI，让它帮你在自己的 Mac 上搭出来。**
+**免费开源的 MacBook 电脑管家：一块常亮的控制台 + 一个本地优先的语音助手。**
 
-**An always-on Mac dashboard + a local-first voice assistant. Hand this repo to your AI and let it build one for your Mac.**
+**中文** · [English](README.en.md)
 
-![macOS](https://img.shields.io/badge/macOS-Apple%20Silicon-black?logo=apple)
-![Local first](https://img.shields.io/badge/local--first-only%20the%20LLM%20is%20cloud-2e8b57)
-![AI setup](https://img.shields.io/badge/setup-by%20your%20AI-8a2be2)
-![Status](https://img.shields.io/badge/status-early-orange)
+![macOS](https://img.shields.io/badge/macOS-Apple%20芯片-black?logo=apple)
+![License](https://img.shields.io/badge/license-MIT-blue)
+![Local first](https://img.shields.io/badge/除了大模型-全在本机-2e8b57)
+![Setup](https://img.shields.io/badge/安装-交给你的%20AI-8a2be2)
+![Version](https://img.shields.io/badge/version-0.1.0-orange)
+
+<img src="docs/images/home-day.png" width="860" alt="Deck 控制台主页（白天）">
 
 </div>
 
----
+## 它能做什么
 
-## 这是什么 / What it is
+| | 功能 | 一句话 |
+|---|---|---|
+| 🖥️ | **控制台** | 本地网页，铺在外接屏、旧 iPad 上，或从 MacBook 刘海弹出（⌥空格）。新拟态皮肤，白天 / 夜里自动切换，卡片可拖、可改大小。 |
+| 📊 | **实时状态** | CPU、内存、GPU、磁盘、网速、最占资源的进程；Claude Code / Codex 还剩多少额度；DeepSeek 余额；GitHub 仓库。一张卡只回答一个问题。 |
+| 💽 | **磁盘管家** | 点磁盘圆环：谁在变大、最近新增了什么、谁在狂写硬盘。 |
+| 🎙️ | **语音助手** | 喊名字唤醒，本机识别、本机合成，只有「大脑」用云端大模型。声纹确认是你才听、才能打断。能读卡片数据、打开卡片、联网搜、帮你点屏幕。 |
+| 🗞️ | **资讯页** | 每天三期个人科技日报：前沿科技、开源热榜、AI 巨头动态、艺术 × 代码、自选股资讯（以长桥证券为例）。每天花费封顶 1 元。 |
+| 🧹 | **工具箱 + 每日清理** | 卸载连残留、清缓存、找大文件和重复文件、应用更新。**只移到废纸篓，从不直接删除**，可一键放回。 |
 
-Deck 是我给自己 Mac 做的小管家，现在把做法整理出来分享给朋友：
+<table>
+<tr>
+<td><img src="docs/images/home-night.png" alt="夜里的主页"></td>
+<td><img src="docs/images/notch.png" alt="从刘海弹出"></td>
+</tr>
+<tr>
+<td><img src="docs/images/disk.png" alt="磁盘面板"></td>
+<td><img src="docs/images/news.png" alt="资讯页"></td>
+</tr>
+<tr>
+<td><img src="docs/images/assistant.png" alt="和 Vesper 对话"></td>
+<td><img src="docs/images/butler.png" alt="管家页"></td>
+</tr>
+</table>
 
-- 🖥️ **控制台**：一个本地网页，铺在扩展屏（比如旧 iPad）上，或者从刘海弹出。一张卡片只回答一个问题：Mac 现在忙不忙、Claude Code / Codex 还剩多少额度、DeepSeek 余额、GitHub 仓库、磁盘清理……
-- 🎙️ **语音助手**：喊名字唤醒，本机识别、本机合成语音，只有「大脑」用云端大模型。能回答卡片上的数据、帮你开卡片、搜网页；改电脑的事一定先问你。
-- 🧹 **工具箱**：卸载应用连残留、清缓存、找大文件，**只移到废纸篓，从不直接删除**。
+## 怎么装：交给你的 AI
 
-Deck is the little butler I built for my own Mac, written up so friends can build theirs:
+Deck 由好几块组成（Python 服务、网页、Swift 小应用、本地语音模型），每台 Mac 情况不一样，所以我们不做一键安装包，而是写了一份**给 AI 看的手把手说明**，让你自己的 AI 编程助手照着装。
 
-- 🖥️ **Dashboard**: a local web page shown on an extra screen (an old iPad works) or dropped down from the notch. Each card answers one question: is the Mac busy, how much Claude Code / Codex quota is left, DeepSeek balance, GitHub repos, disk cleanup…
-- 🎙️ **Voice assistant**: wake it by name. Speech recognition and speech synthesis run on the Mac; only the "brain" is a cloud LLM. It reads card data, opens cards, searches the web, and always asks before changing anything on your Mac.
-- 🧹 **Toolbox**: uninstall apps with their leftovers, clear caches, find large files. **Everything goes to the Trash, nothing is deleted outright.**
-
-## 怎么用 / How to use it
-
-这个仓库**不是**一个装完就能用的安装包，而是一份写给 AI 看的「施工说明」。
-
-1. 打开你的 AI 编程助手（Claude Code、Codex、Cursor……），让它在你的 Mac 上工作。
+1. 打开你的 AI 编程助手（Claude Code、Codex、Cursor……），让它能在你的 Mac 上干活。
 2. 把这句话发给它：
 
-   > 请读 https://github.com/3520566741-YCLi/deck-for-mac 里的 `AI_SETUP.zh-CN.md`，按里面的步骤在我的 Mac 上搭一个 Deck。先问我想要哪些功能、用哪家语音和大模型，再动手。
+   > 请读 https://github.com/3520566741-YCLi/deck-for-mac 的 `AI_SETUP.md`，按里面的步骤在我的 Mac 上装好 Deck。先检查我的电脑、问我想要哪些功能，再一步一步来。
 
-3. 回答它的问题（要哪些卡片、用哪家大模型、要不要语音、助手叫什么名字），剩下的交给它。
+3. 回答它的问题（要哪些卡片、用哪个大模型、要不要语音、助手叫什么）。**API key 不要发给它**，它会给你一行命令，你自己在终端里把 key 存进钥匙串。
 
-This repo is **not** a ready-made installer. It is a build guide written for AI coding assistants. Tell yours: *"Read `AI_SETUP.md` in https://github.com/3520566741-YCLi/deck-for-mac and build me a Deck. Ask me what I want first."* Then answer its questions.
+想自己装也可以，[AI_SETUP.md](AI_SETUP.md) 每一步都有命令。
 
-## 里面有什么 / What's inside
+## 需要什么
 
-| 文件 / File | 内容 / What |
-|---|---|
-| [AI_SETUP.zh-CN.md](AI_SETUP.zh-CN.md) · [AI_SETUP.md](AI_SETUP.md) | 给 AI 的完整施工说明：先问什么、架构、每张卡的数据从哪来、语音用哪些开源组件、安全规矩、验收清单 / The full build guide for your AI |
-| [docs/voice-latency.zh-CN.md](docs/voice-latency.zh-CN.md) · [docs/voice-latency.md](docs/voice-latency.md) | 语音助手提速：从说完到出声 2–3 秒是怎么做到的 / How the voice loop gets to 2–3 s |
+- Apple 芯片的 Mac（M1 及以后）。语音要 macOS 14+；助手面板的系统液态玻璃要 macOS 26+（更早的系统自动换成网页面板）。
+- 用助手要一个大模型 API key，默认 [DeepSeek](https://platform.deepseek.com/)（任何兼容 OpenAI、支持流式和工具调用的接口都行）。
+- 语音要约 3 GB 磁盘放本地模型。
+- 每个外部服务都列在 [docs/services.md](docs/services.md)，附 2026-11-07 的核查结果和核查方法。
 
-更多素材（参考代码、界面）会慢慢补上。More reference code and UI will be added over time.
+## 原则
 
-## 原则 / Principles
+- **本地优先**：除了大模型，识别、合成、唤醒、声纹、数据采集都在你的 Mac 上。录音和声纹不上传。
+- **只听 127.0.0.1**：所有服务只在本机；写操作要随机令牌 + 同源检查；挡 DNS 重绑定。
+- **不花冤枉钱**：大模型只在你开口、点按钮、或你设好的时间调用。
+- **改电脑先问你**：清理、结束进程、点按钮都先出确认卡。
+- **只进废纸篓**：任何「删除」都只是移到废纸篓，可以放回。
 
-- **本地优先 / Local first**：除了大模型，识别、合成、唤醒、数据采集都在你自己的 Mac 上。Everything except the LLM runs on your Mac.
-- **只听 127.0.0.1 / Localhost only**：所有服务只在本机，不开公网端口。No service is exposed to the network.
-- **不花冤枉钱 / No idle spending**：大模型只在你开口或点按钮时调用，从不 24 小时跑。The LLM is only called when you talk or click.
-- **改电脑先问你 / Ask before acting**：清理、结束进程、点按钮这类操作都先出确认。Anything that changes your Mac asks first.
-- **只进废纸篓 / Trash, never delete**：任何「删除」都只是移到废纸篓，可以放回。Every removal can be undone.
+## 目录
 
-## 许可 / License
+```
+manager/            管家服务（Python 标准库，:8777）+ 控制台网页
+  monitor/          各卡片的数据采集
+  assistant.py      助手：对话、工具、长期记忆
+  newsroom/         资讯页（免费来源 → DeepSeek 一次编辑）
+  voice/            语音：DeckVoice.app（Swift）+ 语音服务（Python, sherpa-onnx）
+  hands/            DeckHands.app：辅助功能 API 点按
+app/                Deck.app 原生壳（SwiftPM）：扩展屏铺满 / 刘海弹出
+scripts/            Claude 状态栏桥接、界面自查脚本
+docs/               服务清单、语音提速笔记、截图
+```
 
-[MIT](LICENSE)。引用到的第三方开源项目各有各的许可，`AI_SETUP` 里都标了。Third-party projects keep their own licenses, listed in `AI_SETUP`.
+## 文档
+
+- [AI_SETUP.md](AI_SETUP.md)：给 AI 的安装和配置说明
+- [docs/services.md](docs/services.md)：外部服务清单、核查方法、长桥证券案例
+- [docs/voice-latency.md](docs/voice-latency.md)：语音助手怎么做到说完 2–3 秒出声
+- [SECURITY.md](SECURITY.md)：安全设计和怎么报告漏洞
+- [CHANGELOG.md](CHANGELOG.md)：更新记录
+
+## 许可
+
+[MIT](LICENSE)。第三方组件（GridStack、React Bits、按键音效、语音模型）各有许可，见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
