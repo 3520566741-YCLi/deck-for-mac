@@ -1,22 +1,28 @@
 <div align="center">
 
-<img src="docs/images/icon.png" width="96" alt="Deck 图标">
+<img src="docs/images/icon.png" width="128" alt="Deck 图标">
 
-# Deck
+<h1>Deck</h1>
 
-**免费开源的 MacBook 电脑管家：一块常亮的控制台 + 一个本地优先的语音助手。**
+<p><b>免费开源的 MacBook 电脑管家</b><br>一块常亮的控制台 + 一个本地优先的语音助手。铺在外接屏、旧 iPad 上，或者从刘海里流下来。</p>
 
-**中文** · [English](README.en.md)
+<p><b>中文</b> · <a href="README.en.md">English</a></p>
 
-![macOS](https://img.shields.io/badge/macOS-Apple%20芯片-black?logo=apple)
-![License](https://img.shields.io/badge/license-MIT-blue)
-![Local first](https://img.shields.io/badge/除了大模型-全在本机-2e8b57)
-![Setup](https://img.shields.io/badge/安装-交给你的%20AI-8a2be2)
-![Version](https://img.shields.io/badge/version-0.1.0-orange)
+[![Release](https://img.shields.io/github/v/release/3520566741-YCLi/deck-for-mac?style=flat-square&label=%E7%89%88%E6%9C%AC&color=2f6fe0)](https://github.com/3520566741-YCLi/deck-for-mac/releases/latest)
+[![License](https://img.shields.io/github/license/3520566741-YCLi/deck-for-mac?style=flat-square&label=%E8%AE%B8%E5%8F%AF)](LICENSE)
+![Platform](https://img.shields.io/badge/macOS-14%2B%20%C2%B7%20Apple%20%E8%8A%AF%E7%89%87-111?style=flat-square&logo=apple)
+![Local first](https://img.shields.io/badge/%E9%99%A4%E4%BA%86%E5%A4%A7%E6%A8%A1%E5%9E%8B-%E5%85%A8%E5%9C%A8%E6%9C%AC%E6%9C%BA-139a63?style=flat-square)
+[![Setup](https://img.shields.io/badge/%E5%AE%89%E8%A3%85-%E4%BA%A4%E7%BB%99%E4%BD%A0%E7%9A%84%20AI-7259e0?style=flat-square)](AI_SETUP.md)
+[![Stars](https://img.shields.io/github/stars/3520566741-YCLi/deck-for-mac?style=flat-square&label=Star&color=c27a0c)](https://github.com/3520566741-YCLi/deck-for-mac/stargazers)
 
-<img src="docs/images/home-day.png" width="860" alt="Deck 控制台主页（白天）">
+<a href="#画廊"><img src="docs/images/banner.jpg" width="900" alt="Deck：控制台主页和刘海模式"></a>
+
+<p><a href="#它能做什么">功能</a> · <a href="#三种放法">三种放法</a> · <a href="#画廊">画廊</a> · <a href="#怎么装交给你的-ai">安装</a> · <a href="#常见问题">常见问题</a> · <a href="#参与贡献">参与贡献</a></p>
 
 </div>
+
+> [!NOTE]
+> Deck 不是一键安装包。它由 Python 服务、网页、Swift 小应用和本地语音模型组成，**推荐把仓库交给你自己的 AI 编程助手，照着 [AI_SETUP.md](AI_SETUP.md) 装**，它会先问你要哪些功能。
 
 ## 它能做什么
 
@@ -29,20 +35,56 @@
 | 🗞️ | **资讯页** | 每天三期个人科技日报：前沿科技、开源热榜、AI 巨头动态、艺术 × 代码、自选股资讯（以长桥证券为例）。每天花费封顶 1 元。 |
 | 🧹 | **工具箱 + 每日清理** | 卸载连残留、清缓存、找大文件和重复文件、应用更新。**只移到废纸篓，从不直接删除**，可一键放回。 |
 
-<table>
-<tr>
-<td><img src="docs/images/home-night.png" alt="夜里的主页"></td>
-<td><img src="docs/images/notch.png" alt="从刘海弹出"></td>
-</tr>
-<tr>
-<td><img src="docs/images/disk.png" alt="磁盘面板"></td>
-<td><img src="docs/images/news.png" alt="资讯页"></td>
-</tr>
-<tr>
-<td><img src="docs/images/assistant.png" alt="和 Vesper 对话"></td>
-<td><img src="docs/images/butler.png" alt="管家页"></td>
-</tr>
-</table>
+## 三种放法
+
+同一个网页、同一套功能，放哪儿由你：菜单栏 Deck 图标 → **显示方式：自动 / 扩展屏 / 刘海**，⌥空格随时呼出。
+
+| 外接屏 / 旧 iPad 铺满 | 从 MacBook 刘海弹出 |
+|:---:|:---:|
+| <img src="docs/images/home-day.png" alt="扩展屏铺满"> | <img src="docs/images/notch-l.png" alt="刘海模式"> |
+| 插上副屏自动铺上去 | 碰一下刘海展开，移开自动收起 |
+
+**刘海模式**有大、中、小三种尺寸，横排（左右翻页）和竖排（上下滑）两种排法，在刘海里也能直接和助手对话。
+
+| 中号 | 小号 |
+|:---:|:---:|
+| <img src="docs/images/notch-m.png" alt="刘海模式中号"> | <img src="docs/images/notch-s.png" alt="刘海模式小号"> |
+
+## 画廊
+
+#### 夜里自动换深色
+<img src="docs/images/home-night.png" width="860" alt="夜里的主页">
+
+#### 刘海里翻页、滑动、对话
+| 横排 · 左右翻页 | 竖排 · 上下滑动 |
+|:---:|:---:|
+| <img src="docs/images/notch-row.png" alt="横排"> | <img src="docs/images/notch-col.png" alt="竖排"> |
+
+<img src="docs/images/notch-vesper.png" width="860" alt="在刘海里和助手对话">
+
+#### 语音助手：喊名字就来
+<img src="docs/images/assistant.png" width="860" alt="和助手对话">
+
+#### 磁盘：谁在变大、最近新增、谁在写硬盘
+<img src="docs/images/disk.png" width="860" alt="磁盘面板">
+
+#### 工具箱和每日清理：只进废纸篓，一键放回
+| 工具箱 | 每日清理 |
+|:---:|:---:|
+| <img src="docs/images/toolbox.png" alt="工具箱"> | <img src="docs/images/cleanup.png" alt="每日清理"> |
+
+#### 管家和 GitHub：哪个软件崩了、哪个仓库红了
+| 管家 | GitHub |
+|:---:|:---:|
+| <img src="docs/images/butler.png" alt="管家页"> | <img src="docs/images/github.png" alt="GitHub 管家"> |
+
+#### 资讯：每天三期个人科技日报
+<img src="docs/images/news.png" width="860" alt="资讯页">
+
+#### 设置：卡片想开就开，皮肤随时换
+<img src="docs/images/settings.png" width="860" alt="设置">
+
+> 截图里的应用名、仓库名和对话是示范内容，数字是真实运行时的数据。
 
 ## 怎么装：交给你的 AI
 
@@ -72,6 +114,53 @@ Deck 由好几块组成（Python 服务、网页、Swift 小应用、本地语�
 - **改电脑先问你**：清理、结束进程、点按钮都先出确认卡。
 - **只进废纸篓**：任何「删除」都只是移到废纸篓，可以放回。
 
+## 路线图
+
+- [x] 控制台：实时状态、AI 额度、DeepSeek 余额、GitHub、我的应用、工具箱、每日清理
+- [x] 三种放法：扩展屏、刘海（大中小、横排竖排）、自动切换
+- [x] 磁盘面板、资讯页、长桥自选股资讯
+- [x] 语音助手：本机唤醒、声纹、识别、合成，可打断
+- [x] DeckHands：用辅助功能 API 帮你点屏幕，风险操作先确认
+- [ ] 更多大模型预设（欢迎 PR）
+- [ ] 英文界面（欢迎 PR）
+
+## 常见问题
+
+<details><summary><b>要花钱吗？</b></summary>
+
+Deck 本身免费。只有助手的「大脑」调用云端大模型会花钱（默认 DeepSeek，用你自己的 key）；资讯页每天封顶 1 元，可调。不开助手和资讯页就完全不花钱。
+</details>
+
+<details><summary><b>我的数据会上传吗？</b></summary>
+
+录音、声纹、文件内容、截图都不上传。发给大模型的只有你说的话、卡片摘要、记忆和新闻标题。详见 <a href="docs/services.md#隐私">docs/services.md</a>。
+</details>
+
+<details><summary><b>没有刘海 / 没有 iPad 能用吗？</b></summary>
+
+能。没有刘海就用扩展屏模式铺在任何副屏上，或者直接在浏览器里打开 <code>http://127.0.0.1:8777</code>。
+</details>
+
+<details><summary><b>Intel Mac 能用吗？</b></summary>
+
+目前只支持 Apple 芯片（M1 及以后）：原生壳按 arm64 编译，本地语音模型也要用 Apple GPU。
+</details>
+
+<details><summary><b>助手能改名字吗？</b></summary>
+
+能，改 <code>wake_name.txt</code> 后重新录一次声纹即可，见 <a href="AI_SETUP.md">AI_SETUP.md</a>。
+</details>
+
+<details><summary><b>股票只能用长桥吗？</b></summary>
+
+代码以长桥证券为例（只要「自选」只读权限）。其他券商不一定提供面向个人的行情接口，接之前先按 <a href="docs/services.md">docs/services.md</a> 的三条核查。
+</details>
+
+<details><summary><b>会不会误删我的文件？</b></summary>
+
+不会。所有「删除」都只是移到废纸篓，Deck 从不清空废纸篓，每日清理也能一键放回。
+</details>
+
 ## 目录
 
 ```
@@ -86,14 +175,23 @@ scripts/            Claude 状态栏桥接、界面自查脚本
 docs/               服务清单、语音提速笔记、截图
 ```
 
+## 参与贡献
+
+欢迎 issue 和 PR！先看 [CONTRIBUTING.md](CONTRIBUTING.md) 和 [行为准则](CODE_OF_CONDUCT.md)。安全问题请按 [SECURITY.md](SECURITY.md) 私下报告。
+
 ## 文档
 
 - [AI_SETUP.md](AI_SETUP.md)：给 AI 的安装和配置说明
 - [docs/services.md](docs/services.md)：外部服务清单、核查方法、长桥证券案例
 - [docs/voice-latency.md](docs/voice-latency.md)：语音助手怎么做到说完 2–3 秒出声
-- [SECURITY.md](SECURITY.md)：安全设计和怎么报告漏洞
 - [CHANGELOG.md](CHANGELOG.md)：更新记录
+
+## 致谢
+
+站在这些开源项目的肩膀上：[sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx)、[Qwen3-ASR / Qwen3-TTS](https://huggingface.co/Qwen)、[mlx-audio](https://github.com/Blaizzy/mlx-audio)、[3D-Speaker](https://github.com/modelscope/3D-Speaker)、[Silero VAD](https://github.com/snakers4/silero-vad)、[GridStack.js](https://github.com/gridstack/gridstack.js)、[React Bits](https://github.com/DavidHDev/react-bits)、[snd-lib](https://github.com/snd-lib/snd-lib)、[Kenney](https://kenney.nl/)。完整清单见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
 
 ## 许可
 
-[MIT](LICENSE)。第三方组件（GridStack、React Bits、按键音效、语音模型）各有许可，见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+[MIT](LICENSE) © Deck for Mac contributors。第三方组件各有许可，见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+
+<div align="center"><sub>觉得有用就点个 ⭐，让更多人看到。</sub></div>

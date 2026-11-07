@@ -1,0 +1,43 @@
+name: 🐞 Bug 报告 / Bug report
+description: 有东西坏了 / Something is broken
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        谢谢反馈！**请不要贴 API key、个人路径或聊天记录。** 安全问题请走 [私下报告](../../security/advisories/new)。
+        Thanks! **Don't paste API keys, personal paths or chat history.** Security issues go through [private reporting](../../security/advisories/new).
+  - type: dropdown
+    id: area
+    attributes:
+      label: 哪一块 / Area
+      options: [控制台 Dashboard, 刘海模式 Notch mode, 扩展屏 External screen, 磁盘 Disk, 工具箱与清理 Toolbox & cleanup, 语音助手 Voice assistant, 资讯页 News, DeckHands, 安装 Setup, 其他 Other]
+    validations: {required: true}
+  - type: textarea
+    id: what
+    attributes:
+      label: 发生了什么 / What happened
+      description: 你期望的和实际的 / Expected vs. actual
+    validations: {required: true}
+  - type: textarea
+    id: steps
+    attributes:
+      label: 怎么复现 / Steps to reproduce
+      placeholder: "1. …\n2. …"
+  - type: input
+    id: macos
+    attributes:
+      label: macOS 版本和芯片 / macOS version and chip
+      placeholder: macOS 26.1 · M3
+    validations: {required: true}
+  - type: input
+    id: version
+    attributes:
+      label: Deck 版本 / Deck version
+      placeholder: v0.1.0 或 commit
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志或截图 / Logs or screenshots
+      description: "`logs/` 里的相关几行即可，先删掉个人信息 / A few relevant lines from `logs/`, with personal data removed"
+      render: text
