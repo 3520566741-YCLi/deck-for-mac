@@ -21,7 +21,7 @@ DEFAULTS = {
     "listen_timeout_s": 6,      # 唤醒后多久没开口就回到待机
     "followup_s": 60,           # 助手说完后不用再喊唤醒词、直接接着说的窗口；0 关闭（选 1 分钟）
     "followup_voice_gate": True,  # 窗口里每句都核对声纹，不是他就忽略、窗口不关
-    "followup_voice_floor": 0.45,
+    "followup_voice_floor": 0.35,  # 11-08：他接话「那你查呗」只有 0.43 被扔掉；她自己的声音 ≤0.16、合成冒充 ≤0.12
     "preroll_s": 0.4,           # 进入 listening 前多带的音频，防止吃掉第一个字
     "wake_preroll_s": 0.15,     # 唤醒词之后开始听：只多带一点
     "echo_tail_s": 0.7,         # 没回声消除：助手说完等多久再开追问窗口

@@ -106,9 +106,23 @@ def set_state(s):
     emit({"type": "state", "state": s, "prev": prev})
 
 
+_status_hooks = []
+
+
+def add_status(fn):
+    """别的模块往 /status（和 SSE 一连上就发的 status 事件）里加字段，例如唤醒自检结果。"""
+    _status_hooks.append(fn)
+
+
 def status():
-    return {"state": _state, "mic": _mic_on, "mic_reason": _mic_reason, "helper": _helper_connected,
-            "audio": audio_stats(), "helper_relaunches_1h": len(_hl["tries"]), "helper_quit": _hl["quit"]}
+    st = {"state": _state, "mic": _mic_on, "mic_reason": _mic_reason, "helper": _helper_connected,
+          "audio": audio_stats(), "helper_relaunches_1h": len(_hl["tries"]), "helper_quit": _hl["quit"]}
+    for fn in list(_status_hooks):
+        try:
+            st.update(fn() or {})
+        except Exception:  # noqa: BLE001
+            pass
+    return st
 
 
 # ---------- 麦克风有没有真的在送声音（11-06：换设备后 helper 显示 mic=true，其实一帧都没送过来，唤醒全哑） ----------

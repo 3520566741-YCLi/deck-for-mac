@@ -37,9 +37,9 @@ DEFAULTS = {
     # 新档案（v2）也留一点余量（11-07）：门槛被下限夹到 0.55，可他自己 8 遍录音留一法就有 0.50 / 0.54 两遍过不了，
     # 隔一点距离、换个音量更常落在 0.45–0.55，结果是「叫了它一下又自己取消」。放到 门槛 − 0.10，但不低于下面的线；
     # 冒充者：11-07 用 32 种 macOS 合成声音中英文各说一遍，最高 0.356（Daniel，男声），余量约 0.09
-    "near_margin": 0.10,
-    "near_floor": 0.45,
-    "near_floor_en": 0.44,
+    "near_margin": 0.13,
+    "near_floor": 0.42,     # 11-08：他真人实测 0.42–0.68（03:07 那次 0.456 差点被拒），冒充最高 0.356
+    "near_floor_en": 0.42,
     "max_seg_s": 1.8,          # 声纹只看检测点前最后 1.8 秒（唤醒词本身约 1–1.7 秒）
     "allow_unenrolled": True,  # 还没录声纹时也能唤醒（事件里 enrolled=false，Deck 可以提示去录入）
     "log_scores": True,        # 只记分数，不存音频
@@ -262,8 +262,13 @@ class WakeEngine:
         self.last = None                    # 最近一次唤醒/拒绝（给录入页「让朋友试试」显示）
         # 收音体检（11-06：设备切换后 DeckVoice 没送音频，状态全是正常的，只读查不出来）
         self.audio = {"frames": 0, "last_t": 0.0, "rms": 0.0, "peak_5s": 0.0, "_win": []}
+        self.last_processed = 0.0           # 唤醒线程最近一次处理完音频的时间（自检看它有没有卡住）
+        self.last_kws_total = -10 ** 12     # 最近一次 KWS 命中时 ring.total（第二条路据此避免重复）
+        self.asr_path = AsrWake(self) if self.cfg.get("asr_wake", True) else None
+        self.health = {"ok": True, "problems": [], "t": None}
         self._t = threading.Thread(target=self._run, name="friday-wake", daemon=True)
         self._t.start()
+        threading.Thread(target=self._health_loop, name="wake-health", daemon=True).start()
 
     # hub.subscribe_audio 的回调：只入队，绝不阻塞 hub
     def feed(self, samples):
@@ -322,11 +327,21 @@ class WakeEngine:
                 if kw:
                     ts = list(self.kws.timestamps(self.stream))
                     self.kws.reset_stream(self.stream)
+                    self.last_kws_total = self.ring.total
                     self._on_keyword(kw, ts)
                     self._since_reset = 0
         if self.pending and self.ring.total >= self.pending["until"]:
             p, self.pending = self.pending, None
             self._judge(p)
+        if self.asr_path is not None:
+            self.asr_path.feed(x)
+        self.last_processed = time.time()
+
+    def _gate_ok(self):
+        """现在能不能唤醒（两条路共用）：录入页暂停、她在说话、冷却中都不行。"""
+        if self.paused_by or self.get_state() == "speaking" or time.time() < self.cool_until:
+            return False
+        return True
 
     def _segment_start(self, ts):
         """唤醒词开始于第几个采样。sherpa-onnx 2.0.1 的 KWS 实测不给时间戳（列表为空），这时取检测点前
@@ -375,7 +390,7 @@ class WakeEngine:
         return round(max(thr - self.cfg["near_margin"], floor), 3)
 
     def _judge(self, p):
-        seg = trim_speech(self.ring.slice(p["start"], p["until"]))
+        seg = p["seg"] if "seg" in p else trim_speech(self.ring.slice(p["start"], p["until"]))
         # 唤醒词就在检测点前面（录入时只有 1.0–1.7 秒）。有环境声时能量去静音会留下 2 秒多，混进去的噪声
         # 和前面的话会把声纹分拉低（11-06：≤1 秒的片段 0.55–0.64，2.3–2.55 秒的只有 0.27–0.40），所以只留最后 MAX_SEG_S
         cap = int(self.cfg.get("max_seg_s", 1.8) * SR)
@@ -392,23 +407,81 @@ class WakeEngine:
             info.update(score=0.0, reason="too_short", enrolled=True)
         else:
             e = speaker.embed(seg)
-            lang = speaker.lang_of(p["kw"])
-            r = speaker.check(e, lang)
-            soft = self._soft_gate(prof, lang)
-            ok = r["ok"] or (soft is not None and r["score"] >= soft)
+            best = None
+            # 第二条路只说了名字（没「你好 / Hey」）时中英文两组都比，取更像的那组
+            for lang in p.get("langs") or [speaker.lang_of(p["kw"])]:
+                r = speaker.check(e, lang)
+                soft = self._soft_gate(prof, lang)
+                ok = r["ok"] or (soft is not None and r["score"] >= soft)
+                if best is None or (ok, r["score"]) > (best[0], best[1]["score"]):
+                    best = (ok, r, soft, lang)
+            ok, r, soft, lang = best
             info.update(score=r["score"], td=r["td"], ti=r["ti"], threshold=r["threshold"], enrolled=True,
                         strict_ok=r["ok"], lang=lang, pool=r.get("pool"), soft=soft)
             if r["ok"] and prof.maybe_adapt(e, r["score"], lang):
                 info["adapted"] = True
+        info.update(p.get("extra") or {})
         info["latency_ms"] = int((time.time() - p["t"]) * 1000)
         self.cool_until = time.time() + (self.cfg["cooldown_s"] if ok else self.cfg["reject_cooldown_s"])
         ev = {"type": "wake", "speaker_ok": ok, "score": info.get("score"), "enrolled": info["enrolled"],
               "kws": (p["kw"] or P.WAKE_WORD).replace("_", " ")}
         if not ok and "reason" in info:
             ev["reason"] = info["reason"]
+        if ok and p.get("preroll_s"):
+            ev["preroll_s"] = p["preroll_s"]   # 第二条路：名字后面已经说了的话，让识别从这里接着认
+        if p.get("path"):
+            ev["path"] = p["path"]
         self.last = dict(info, ok=ok, t=time.strftime("%H:%M:%S"))
         self._log(dict(info, event="wake" if ok else "reject"))
         self.emit(ev)
+
+    # ---------- 自检（11-08：叫了四次都没反应，链路哪一段坏了要能自己发现，并在 Deck 上提醒） ----------
+    def self_test(self):
+        """拿用户自己录的唤醒词跑一遍两条识别路，再看音频和唤醒线程是不是活着。返回 health。"""
+        return self._publish(self._check())
+
+    def _check(self):
+        problems = []
+        a = self.audio_info()
+        hub_mod = _hub_mod()
+        mic_on = bool(getattr(hub_mod, "_mic_on", True)) if hub_mod else True
+        helper = bool(getattr(hub_mod, "_helper_connected", True)) if hub_mod else True
+        if not helper:
+            problems.append("DeckVoice 没连上语音服务")
+        elif mic_on and not a["ok"]:
+            problems.append("麦克风开着但没有声音进来")
+        if a["ok"] and self.last_processed and time.time() - self.last_processed > 5:
+            problems.append("唤醒检测卡住了（声音在进来，但没在处理）")
+        clip = _selftest_clip()
+        if clip is not None:
+            kw, _ = spot_offline(clip)
+            asr_hit = self.asr_path.match_clip(clip) if self.asr_path is not None else None
+            if not kw and not asr_hit:
+                problems.append("拿你的录音自测，两条唤醒路都没认出「Vesper」")
+        health = {"ok": not problems, "problems": problems, "t": time.strftime("%H:%M:%S"),
+                  "asr_path": self.asr_path is not None and self.asr_path.ready}
+        return health
+
+    def _publish(self, health):
+        changed = health["ok"] != self.health.get("ok")
+        self.health = health
+        if changed or not health["ok"]:     # 坏着的时候每次都发：后打开的 Deck 也能看到
+            self.emit({"type": "voice.health", **health})
+            self._log({"event": "health", **health})
+        return health
+
+    def _health_loop(self):
+        time.sleep(self.cfg.get("health_first_s", 60))
+        while True:
+            try:
+                h = self._check()
+                if not h["ok"]:
+                    time.sleep(15)          # 换设备、重开麦克风这类几秒钟的事不算，15 秒后再确认一次
+                    h = self._check()
+                self._publish(h)
+            except Exception as e:  # noqa: BLE001
+                self._log({"event": "error", "where": "health", "err": repr(e)})
+            time.sleep(self.cfg.get("health_every_s", 600))
 
     def _log(self, d):
         if not self.cfg.get("log_scores", True):
@@ -423,6 +496,178 @@ class WakeEngine:
                 self.log_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
         except Exception:
             pass
+
+
+# ---------- 第二条唤醒路：短句转文字，找「Vesper」（11-08） ----------
+# 为什么要：KWS 模型只有 3M 参数，合成声音测命中率才 55–58%；用户 真人说时常常压根没认出来——
+# 认不出就连一行日志都没有，表现就是「叫了好多遍一点反应都没有」。SenseVoice（226 MB，int8）把他 13 遍
+# 录音全认出来了（WSPER / WESPER / VISSPER / 威PER…），一句 2 秒的话 40–60 ms。
+# 所以：VAD 切出待机时的短句 → SenseVoice 转文字 → 名字在句子开头（前面最多是「你好 / Hey / 早上好」）
+# → 声纹核对（和 KWS 那条路同一个门槛）。说「我刚跟 Vesper 聊天」这种名字在中间的不算。
+
+# 英文写法：V/W/B/F 开头、PER 结尾、中间最多 3 个字母（VESPER、WSPER、VISSPER、WEPER、VPER）
+# 11-08 又见到「WER」「WBER」：P 被吞掉的，只认 V/W 开头的这几种短写法（WATER、BETTER 这类常用词不会对上）
+_NAME_EN = re.compile(r"(?<![A-Z])([VWBF][A-Z]{0,3}PER|[VW]E?S?B?ER)(?![A-Z])")
+# 这些也长那样，但都是常用词，不算
+_NAME_EN_NOT = {"WHISPER", "WHIMPER", "WRAPPER", "WIPER", "VIPER", "WHOPPER", "WHIPPER", "WEEPER", "BUMPER",
+                "BEEPER", "FLIPPER", "FLOPPER", "BOPPER", "BIPPER", "WAPPER", "FLAPPER", "BOOPER", "VAPER",
+                "WEBPER", "BAPER"}
+# 中文写法：维斯帕、威斯帕、薇丝珀、威PER…
+_NAME_ZH = re.compile(r"[维威薇韦唯微魏伟][斯丝思司]?(?:帕|珀|柏|泊|PER|BER|ER)")
+_CJK = re.compile(r"[一-鿿]")
+_GREET = re.compile(r"(你好|您好|嘿|嗨|哈喽|喂|早上好|晚上好|在吗|HEY|HI\b|HELLO|OK\b|OKAY|GOOD)")
+
+
+def match_name(text):
+    """SenseVoice 的结果里有没有在叫她。返回 (名字结束在第几个字符, 名字前面的话, 后面的话) 或 None。"""
+    t = (text or "").upper()
+    t = re.sub(r"[，。！？、,.!?;；:：\"'“”‘’]", " ", t)
+    for m in list(_NAME_ZH.finditer(t)) + [m for m in _NAME_EN.finditer(t) if m.group(1) not in _NAME_EN_NOT]:
+        before, after = t[:m.start()].strip(), t[m.end():].strip()
+        words = [w for w in re.split(r"\s+", re.sub(r"[一-鿿]", " ", before)) if w]
+        cjk = len(_CJK.findall(before))
+        # 名字前面只能是很短的招呼：最多 4 个汉字、最多 2 个英文词（你好 / 早上好 / Hey / Good morning / 嘿EY）
+        if cjk <= 4 and len(words) <= 2 and cjk + len(words) <= 4:
+            return m.end(), before, after
+    return None
+
+
+class AsrWake:
+    """在唤醒线程里跑：喂音频 → VAD 断句 → 待机时的短句交给 SenseVoice。模型缺了就安静地不启用。"""
+
+    def __init__(self, eng):
+        self.eng = eng
+        self.ready = False
+        self.rec = None
+        self.vad = None
+        self.base = 0                 # VAD 创建时 ring.total（VAD 段的 start 是从这里数的采样）
+        self.lock = threading.Lock()  # 自检线程也会用识别器
+        try:
+            self._load()
+            self.ready = True
+        except Exception as e:  # noqa: BLE001
+            print(f"[wake] 第二条唤醒路没启用：{e!r}", flush=True)
+
+    def _load(self):
+        import glob
+        import sherpa_onnx
+        d = sorted(glob.glob(str(P.MODELS / "sherpa-onnx-sense-voice*")))
+        if not d or not P.SILERO_VAD.exists():
+            raise FileNotFoundError("没有 SenseVoice 或 Silero VAD 模型")
+        d = d[-1]
+        self.rec = sherpa_onnx.OfflineRecognizer.from_sense_voice(
+            model=d + "/model.int8.onnx", tokens=d + "/tokens.txt", num_threads=1, language="auto", use_itn=True)
+        c = sherpa_onnx.VadModelConfig()
+        c.silero_vad.model = str(P.SILERO_VAD)
+        c.silero_vad.threshold = 0.5
+        c.silero_vad.min_silence_duration = 0.3   # 说完停 0.3 秒就断句，唤醒要快
+        c.silero_vad.min_speech_duration = 0.25
+        c.silero_vad.max_speech_duration = 8
+        c.silero_vad.window_size = 512
+        c.sample_rate = SR
+        c.num_threads = 1
+        self.vad = sherpa_onnx.VoiceActivityDetector(c, buffer_size_in_seconds=20)
+        self.base = self.eng.ring.total
+
+    def transcribe(self, x):
+        with self.lock:
+            st = self.rec.create_stream()
+            st.accept_waveform(SR, np.asarray(x, np.float32))
+            self.rec.decode_stream(st)
+            r = st.result
+            return r.text, list(r.tokens), list(r.timestamps)
+
+    def match_clip(self, x):
+        return match_name(self.transcribe(x)[0]) is not None
+
+    def feed(self, x):
+        if not self.ready:
+            return
+        self.vad.accept_waveform(x)
+        while not self.vad.empty():
+            seg = self.vad.front
+            samples, start = np.array(seg.samples, dtype=np.float32), int(seg.start)
+            self.vad.pop()
+            try:
+                self._segment(samples, self.base + start)
+            except Exception as e:  # noqa: BLE001
+                self.eng._log({"event": "error", "where": "asr_wake", "err": repr(e)})
+
+    def _segment(self, seg, start_abs):
+        eng = self.eng
+        dur = len(seg) / SR
+        if not (0.4 <= dur <= 6.0) or eng.get_state() != "idle" or not eng._gate_ok():
+            return
+        if eng.last_kws_total >= start_abs - int(0.3 * SR):
+            return  # 这句 KWS 已经认出来了，那条路在管
+        t0 = time.time()
+        # 长句（「你好 Vesper，帮我把磁盘清一下」）整句转文字时名字常被吞掉（11-08 实测只剩「你好把磁盘…」），
+        # 只转开头 2.4 秒就认得出来
+        head = seg if dur <= 3.0 else seg[: int(2.4 * SR)]
+        text, toks, ts = self.transcribe(head)
+        hit = match_name(text)
+        if not hit and _GREET.match((text or "").upper().strip()) and len(head) > int(1.4 * SR):
+            # 「你好…」开头却没名字：名字常被后面的话盖掉（11-08「你好现在几点了」），只听开头 1.7 秒再认一次
+            head = seg[: int(1.7 * SR)]
+            t2, k2, s2 = self.transcribe(head)
+            if match_name(t2):
+                text, toks, ts = t2, k2, s2
+                hit = match_name(t2)
+        if not hit:
+            # 以招呼开头的短句却没认出名字：多半是他在叫、但名字被认成了别的。只记文字（不存音频），下次好对症调
+            if dur <= 3.0 and _GREET.match((text or "").upper().strip()):
+                eng._log({"event": "heard", "path": "asr", "text": text[:30], "seg_s": round(dur, 2)})
+            return
+        _, before, after = hit
+        name_end = _name_end_s(toks, ts, len(head) / SR)
+        vseg = trim_speech(seg[: int(min(dur, name_end + 0.2) * SR)])
+        cap = int(eng.cfg.get("max_seg_s", 1.8) * SR)
+        if len(vseg) > cap:
+            vseg = vseg[-cap:]
+        zh = bool(_CJK.search(before))
+        langs = ["zh"] if zh else (["en"] if before else ["zh", "en"])
+        rest = re.sub(r"[\s，。！？、,.!?]", "", after)
+        pre = None
+        if len(rest) >= 2 or dur - name_end >= 0.8:  # 「你好 Vesper，现在几点」：名字后面已经说了的话交给识别，不用再说一遍
+            pre = round((eng.ring.total - (start_abs + int(name_end * SR))) / SR + 0.05, 2)
+            pre = pre if 0 < pre <= 9 else None
+        kw = ("你好" + P.NAME) if zh else "hey_" + P.NAME.lower()
+        eng._judge({"kw": kw, "seg": vseg, "how": "asr", "t": t0, "langs": langs, "path": "asr",
+                    "preroll_s": pre, "extra": {"text": text[:40], "seg_full_s": round(dur, 2), "path": "asr"}})
+
+
+def _name_end_s(toks, ts, dur):
+    """名字（…PER / …帕）最后一个 token 结束在第几秒；对不上就用整句长度。"""
+    joined, owner = "", []
+    for i, t in enumerate(toks):
+        joined += t
+        owner += [i] * len(t)
+    hit = match_name(joined)
+    if not hit or not ts or len(ts) != len(toks):
+        return dur
+    # match_name 去标点前后长度不变（标点换成空格），位置可以直接对回 token
+    i = owner[min(hit[0], len(owner)) - 1]
+    return ts[i + 1] if i + 1 < len(ts) else min(dur, ts[i] + 0.3)
+
+
+def _selftest_clip():
+    """自检用的录音：声纹录入时他自己说的「你好 Vesper」（w1…w5 里第一个存在的）。"""
+    for k in ("w1", "w2", "w5", "w4", "w3"):
+        f = Path(P.VOICEPRINT) / "enroll" / f"{k}.wav"
+        if f.exists():
+            try:
+                return speaker.load_wav(f)
+            except Exception:  # noqa: BLE001
+                continue
+    return None
+
+
+def _hub_mod():
+    try:
+        from . import hub as h
+        return h
+    except Exception:  # noqa: BLE001
+        return None
 
 
 engine = None
@@ -441,5 +686,28 @@ def start(hub):
         hub.subscribe_audio(engine.feed, name="wake")
     except TypeError:
         hub.subscribe_audio(engine.feed)
-    print(f"[wake] 「{P.WAKE_WORD}」等 {len(P.WAKE_WORDS)} 种叫法唤醒已开启；声纹", "已录入" if speaker.profile().enrolled else "未录入")
+    try:
+        hub.route("GET", "/wake/health", _http_health)
+        if hasattr(hub, "add_status"):
+            hub.add_status(lambda: {"wake_health": engine.health})
+    except Exception as e:  # noqa: BLE001
+        print(f"[wake] 自检接口没挂上：{e!r}", flush=True)
+    print(f"[wake] 「{P.WAKE_WORD}」等 {len(P.WAKE_WORDS)} 种叫法唤醒已开启；声纹", "已录入" if speaker.profile().enrolled else "未录入",
+          "；第二条路（SenseVoice 认名字）", "开" if engine.asr_path is not None and engine.asr_path.ready else "关", flush=True)
     return engine
+
+
+_last_run = -1e9
+
+
+def _http_health(method, path, query, body):
+    """GET /wake/health：马上自检一次（?run=1）或返回最近一次结果。
+    自检要跑两遍识别，别的网页也能发 GET 过来，所以 20 秒内最多真跑一次，其余返回上次结果。"""
+    global _last_run
+    now = time.monotonic()
+    if query.get("run") and now - _last_run >= 20:
+        _last_run = now
+        h = engine.self_test()
+    else:
+        h = engine.health
+    return 200, json.dumps(h, ensure_ascii=False).encode(), "application/json; charset=utf-8"

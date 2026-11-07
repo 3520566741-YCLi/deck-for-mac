@@ -36,3 +36,12 @@
 ## 2026-11-06 中英文分开录
 - 录入加了 3 遍「Hey Friday」（可跳过）。中文、英文唤醒词各有一组录音、各自用留一法定门槛（中文下限 0.55，英文 0.50），英文唤醒只和英文那组比，自动补录也分开。
 - 放宽线（soft_min_score 0.35 / soft_min_score_en 0.22）只给旧档案兜底：11-05 那份是内置麦克风直录、没经过 DeckVoice，而且没有英文。经 DeckVoice 重新录过（profile v2，chain=deckvoice）后，录过的语言不再放宽。
+
+## 2026-11-08 第二条唤醒路 + 自检
+- 问题：KWS（3M 参数）对用户真人说的「你好 Vesper」常常压根不触发，没触发就连日志都没有，表现就是「叫了好多遍一点反应都没有」。
+- 第二条路：Silero VAD 切出待机时的短句 → SenseVoice（226 MB int8，一句 40–60 ms）转文字 → 名字在句子开头（前面最多是「你好 / Hey / 早上好」这类短招呼）→ 声纹核对，和 KWS 同一个门槛。长句只认开头 2.4 秒；「你好…」开头没认出名字时再只认开头 1.7 秒。名字后面已经说的话（「你好 Vesper 现在几点」）用 preroll 交给识别，不用再说一遍。
+- 名字的写法见 `wake.match_name`：WSPER / WESPER / VISSPER / WEPER / WPER / WER / 威PER / 维斯帕…；PAPER、SUPER、HELPER、WHISPER、JASPER、「我刚跟 Vesper 聊天」都不算。
+- 声纹放宽线：门槛 − 0.13，不低于 0.42（他真人实测 0.42–0.68；32 种合成声音冒充最高 0.357）。
+- 离线测：他 13 遍录音 × 2 种音量 26/26 叫醒；他的 3 句普通话、16 句含 paper/super/whisper/hello 的合成句子 0 次误唤醒；冒充 0 次通过。
+- 日志新增：`path: "asr"`（第二条路唤醒）、`event: "heard"`（以招呼开头却没认出名字，只记文字）、`event: "health"`。
+- 自检：每 10 分钟拿 enroll/w1.wav 跑两条路 + 看音频有没有进来、唤醒线程有没有卡住、DeckVoice 连没连上；坏了发 `voice.health` 事件，Deck 弹提醒（同一问题 30 分钟一次），语音服务连不上 1 分钟也提醒。`GET /wake/health?run=1` 马上测一次，`/status` 里有 `wake_health`。

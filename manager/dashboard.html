@@ -3773,6 +3773,26 @@ window.DeckHost = { post: post, esc: esc, icon: icon, toast: toast, openSheet: o
     V.on("wake", function (ev) { if (ev.speaker_ok === false) return; setChat(true); if (window.DeckGlow) DeckGlow.show({ thinking: false }); });
     // 说「退下吧 Vesper」「再见 Vesper」：关掉对话窗口和光效
     V.on("dismiss", function () { setChat(false); if (window.DeckGlow && DeckGlow.on) DeckGlow.hide(); });
+    // 语音唤醒自检（11-08）：语音服务每 10 分钟拿他自己的录音测一遍「你好 Vesper」，坏了就在这里提醒，
+    // 不要等他叫了好几遍才发现。同一个问题 30 分钟内只提醒一次；语音服务连不上超过 1 分钟也提醒
+    var wakeWarn = { text: "", at: 0 }, wasBad = false;
+    function wakeHealth(h) {
+      if (!h) return;
+      if (h.ok) { if (wasBad) toast("语音唤醒恢复正常了"); wasBad = false; return; }
+      wasBad = true;
+      var t = "语音唤醒出问题了：" + (h.problems || []).join("；");
+      if (t === wakeWarn.text && Date.now() - wakeWarn.at < 30 * 60000) return;
+      wakeWarn = { text: t, at: Date.now() }; toast(t);
+    }
+    V.on("voice.health", wakeHealth);
+    V.on("status", function (ev) { if (ev.wake_health && ev.wake_health.t) wakeHealth(ev.wake_health); });
+    var offTimer = null;
+    V.on("connection", function (ev) {
+      clearTimeout(offTimer);
+      if (!ev.connected) offTimer = setTimeout(function () { if (!V.connected) wakeHealth({ ok: false, problems: ["语音服务没在运行（DeckVoice 会自动重开，几分钟后还这样就告诉 Claude）"] }); }, 60000);
+      else if (wasBad) wakeHealth({ ok: true });
+    });
+    offTimer = setTimeout(function () { if (!V.connected) wakeHealth({ ok: false, problems: ["语音服务没在运行（DeckVoice 会自动重开，几分钟后还这样就告诉 Claude）"] }); }, 60000);
     // 外接键盘 ← / ⌥⌘J 直接说：一开始听就把面板打开（不用先点「Vesper」）
     V.on("listen", function (ev) { if (!ev.on || ev.source === "followup" || ev.source === "empty-retry") return; setChat(true); if (window.DeckGlow) DeckGlow.show({ thinking: false }); });
     V.on("state", function (ev) { $("micBtn").setAttribute("aria-pressed", String(ev.state === "listening"));
