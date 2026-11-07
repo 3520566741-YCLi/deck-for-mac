@@ -1,0 +1,19 @@
+name: ✨ 功能建议 / Feature request
+description: 想让 Deck 多会一件事 / Something Deck should do
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 你想解决什么问题 / What problem does it solve
+    validations: {required: true}
+  - type: textarea
+    id: idea
+    attributes:
+      label: 你设想的样子 / What you have in mind
+      description: 哪张卡片、哪个模式、语音怎么说 / Which card, which mode, what you'd say to the assistant
+  - type: textarea
+    id: service
+    attributes:
+      label: 要接外部服务吗 / Does it need an outside service
+      description: 如果要，写上服务名和你查到的可用性、费用、授权范围 / If so, name it and what you found about availability, cost and scopes
