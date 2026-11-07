@@ -1,0 +1,11 @@
+# local config and secrets
+config.json
+*.key
+.env*
+# runtime data
+logs/
+*.log
+*.db
+voiceprint/
+__pycache__/
+.DS_Store
