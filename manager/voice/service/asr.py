@@ -525,12 +525,13 @@ def _barge():
 
 
 def _followup_voice_ok(vres):
-    """接话窗口的声纹：短句、远场分数偏低，门槛放宽到 max(0.45, 档案门槛 − 0.15)；不到 0.8 秒的短句（「好」「对」）算通过。"""
+    """接话窗口的声纹：短句、远场分数偏低，门槛放宽到 max(0.35, 档案门槛 − 0.30)；不到 0.8 秒的短句（「好」「对」）算通过。
+    11-08：他真人接话 0.43–0.50（门槛原来 0.50，「那你查呗」被当成别人扔掉）；她自己的声音 ≤0.16，冒充 ≤0.12。"""
     if not vres or vres.get("reason") == "not_enrolled":
         return True, "no-profile"
     if vres.get("reason") == "too_short":
         return True, "short"
-    thr = max(CFG.get("followup_voice_floor", 0.45), float(vres.get("threshold") or 0.65) - 0.15)
+    thr = max(CFG.get("followup_voice_floor", 0.45), float(vres.get("threshold") or 0.65) - 0.30)
     return float(vres.get("score") or 0) >= thr, "score"
 
 
@@ -598,7 +599,12 @@ def _on_wake(ev):
         return
     # 还在「想」的时候又叫它，说明想问新问题了（页面收到新的 wake 会放弃上一个回答）
     if hub.state() in ("idle", "listening", "thinking"):
-        start_listening("wake")
+        # 第二条唤醒路（转文字认名字）是在他说完一句后才认出来的：「你好 Vesper，现在几点」里名字后面那段
+        # 已经在录音缓冲里了，preroll_s 让识别从名字后面接着认，他不用再说一遍
+        if ev.get("preroll_s") and not L.active:
+            start_listening("wake", preroll_s=float(ev["preroll_s"]))
+        else:
+            start_listening("wake")
 
 
 def _on_partial(ev):

@@ -20,6 +20,10 @@ import files
 
 VOICE_URL = "http://127.0.0.1:8778"  # 语音服务（manager/voice/service），见 voice/INTERFACE.md
 MAX_ROUNDS = 6          # 一次提问里最多连着调用几轮工具
+# 「我查一下再告诉你」这类承诺（她没法过一会儿主动开口，说了就得当场查）
+PROMISE = re.compile(r"(查|搜|看看|核实|确认)[^。！？\n]{0,8}(再|之后|以后|完)[^。！？\n]{0,4}(告诉|回复|跟你说|说给你|答复|回你)"
+                     r"|(稍后|回头|晚点|等会儿?)[^。！？\n]{0,4}(告诉|回复|跟你说|答复|回你)"
+                     r"|(I'?ll|let me) (check|look (it|that|this)? ?up|search)[^.]{0,40}(get back|let you know)", re.I)
 HISTORY_TURNS = 24      # 发给模型的最近几条对话
 MEMORY_IN_PROMPT = 120  # 系统提示里最多放几条记忆
 KEEP_MESSAGES = 3000    # 聊天记录最多留多少条，旧的自动丢掉
@@ -32,7 +36,7 @@ PERSONA = """你是 Vesper，用户的 Mac 控制台 Deck 里内置的助手，�
 - 长期记忆：他告诉你的稳定信息（偏好、习惯、决定、身边的人、在做的项目、对你的要求）用 memory_save 记下来，一条只记一件事，用第三人称写（如「用户喜欢……」）；和已有记忆重复或冲突时用 memory_update 改那一条；他说忘掉、或信息过时了用 memory_delete。临时的、一次性的事不要记。记了就在回答里顺口提一句。
 - 想不起以前聊过什么时，用 recall 搜聊天记录。
 - 找文件：他提到某个文件或文件夹（在哪、打开、看看），第一步就调用 find_files 按名字找，不要先问他放在哪（不用他说全名，名字一部分也行；语音识别可能把名字拆开或拼错，照原样传就行），找到后用 open_path 打开（文件夹在访达里打开，文稿用默认应用打开；reveal=true 是在访达里选中）。他说「桌面上有什么」用 list_folder。桌面上被桌面整理工具收起的东西带隐藏标志，桌面上看不到图标，但文件还在，照样能找到和打开，回答时顺口说一句它被 桌面整理工具收起来了。没查过就绝不说「没有」；找不到时说你找了哪些地方，问他换个名字或在哪个文件夹。这几个工具只读，不会改动或删除文件。
-- 联网：他问的是常识以外、可能变化或你不确定的事（新闻、天气、价格、版本、产品、人物、某件事怎么做、某个说法对不对），先用 web_search 搜一下再答，别凭印象编；搜到的摘要不够就用 read_page 读一两篇原文。回答说结论和关键数字，不要念网址；来源会自动显示在屏幕上。可以用 site:、lang:zh,en、after:2026-10-01 这类写法缩小范围。纯常识或闲聊不用搜。
+- 联网：他问的是常识以外、可能变化或你不确定的事（新闻、天气、价格、版本、产品、人物、某件事怎么做、某个说法对不对），先用 web_search 搜一下再答，别凭印象编；搜到的摘要不够就用 read_page 读一两篇原文。回答说结论和关键数字，不要念网址；来源会自动显示在屏幕上。可以用 site:、lang:zh,en、after:2026-10-01 这类写法缩小范围。纯常识或闲聊不用搜。你没办法过一会儿主动开口，所以绝对不要说「我查一下再告诉你」「稍后回复你」：要查就在这一轮直接调用 web_search，查完再回答。
 - 问你自己用了多少、花了多少、余额还剩多少，用 my_usage（这是你自己这把 key 的用量）。注意：监控台上的 DeepSeek 卡片是 DeepSeek Harness 的用量和余额，不是你的，两者别混。
 - 他说「换成男声 / 换回女声 / 说慢一点」之类，用 set_voice 换你说话的声音和语速（只改 Deck 自己的设置，直接做）。
 - 清理：Claude、DeepSeek（Harness）、Codex 工作区里没用的东西（旧测试残留、日志、缓存、临时目录）。先调用 cleanup_scan，屏幕上会出一张确认卡；你用一两句话说清能腾出多少、主要是什么，然后问他要不要移到废纸篓。只有他明确同意（点卡片上的按钮，或者说「好 / 可以 / 清吧」）才调用 cleanup_confirm。东西只会进废纸篓，可以撤销，绝不直接删除。他没同意或者犹豫，就不要清。另外每晚 23:30 会自动做一次每日清理：清单先交给 DeepSeek 逐项核对，只把确认是 AI 生成的测试文件、临时文件、缓存、旧安装包移进废纸篓，拿不准的留着；他问起就照实说，结果在「每日清理」卡片上，能一键放回。
@@ -768,8 +772,9 @@ class Friday:
             emit(ev)
 
         stopped = failed = False
+        searched = nudged = False
         try:
-            for _ in range(MAX_ROUNDS):
+            for rnd in range(MAX_ROUNDS):
                 content, calls, finish = "", {}, None
                 for chunk in self._stream(key, messages, alive):
                     if chunk.get("usage"):
@@ -794,7 +799,20 @@ class Friday:
                     break
                 answer += content
                 if not calls:
+                    # 11-08：她说「我查一下再告诉你」，却没调用搜索就结束了——她没法过一会儿主动开口，这句承诺永远不会兑现。
+                    # 说了要查又没查，就让她这一轮接着真的去查，查完把结果说出来
+                    if not nudged and not searched and PROMISE.search(content or "") and rnd < MAX_ROUNDS - 1 and alive():
+                        nudged = True
+                        messages.append({"role": "assistant", "content": content})
+                        messages.append({"role": "system", "content": "你刚才说要去查，但没有查。现在就调用 web_search 查，"
+                                         "查完直接把结果告诉他。你没办法过一会儿再主动说话，不要再说「稍后告诉你」。"})
+                        if answer and not answer.endswith("\n"):
+                            answer += "\n"
+                            emit({"t": "delta", "text": "\n"})
+                        emit({"t": "thinking"})
+                        continue
                     break
+                searched = searched or any(c["name"] in ("web_search", "read_page") for c in calls.values())
                 emit({"t": "thinking"})
                 messages.append({"role": "assistant", "content": content or None, "tool_calls": [
                     {"id": c["id"], "type": "function", "function": {"name": c["name"], "arguments": c["args"] or "{}"}}

@@ -1,5 +1,30 @@
 # 更新记录 / Changelog
 
+版本号规则：小修小补升第三位（0.1.0 → 0.1.1），加新功能升第二位（0.1.x → 0.2.0）。旧版本一直保留在 [Releases](../../releases)。
+Versioning: fixes bump the patch number (0.1.0 → 0.1.1), new features bump the minor number (0.1.x → 0.2.0). Every old version stays on the [Releases](../../releases) page.
+
+## v0.1.1 · 2026-11-08
+
+修语音助手叫不醒、说了「我查一下」却不查。
+Fixes the assistant not waking up, and saying "let me check" without actually checking.
+
+**修复 / Fixes**
+
+- 唤醒多一条路：唤醒词模型没反应时，把待机时的短句转成文字，句首是助手名字（前面可以有「你好 / Hey」）再核对声纹，也能叫醒。实测真人录音 26/26 叫醒，含相似发音的句子 0 次误唤醒。
+  A second wake path: when the keyword model misses, short phrases heard while idle are transcribed; if the assistant's name starts the phrase (optionally after "hi / hey"), the voiceprint is checked and it wakes. In tests, 26/26 real recordings woke it and similar-sounding sentences caused 0 false wakes.
+- 「你好 Vesper，现在几点」一口气说完能直接回答，不用再说一遍。 / "Hey Vesper, what time is it" in one breath now gets answered directly.
+- 唤醒自检：每 10 分钟用你录入声纹时的录音测一遍，坏了在 Deck 上提醒；语音服务断开超过 1 分钟也提醒。 / Wake self-test every 10 minutes using your enrollment recording; Deck warns you if it fails or if the voice service is gone for over a minute.
+- 助手不再说「我查一下再告诉你」然后没下文：要查就当场联网查完再答。 / The assistant no longer promises to "check and get back to you": it searches the web in the same turn.
+- 接话时你的声音不会再被误当成别人。 / Your follow-up replies are no longer mistaken for someone else's voice.
+
+**新增 / Added**
+
+- DeckVoice 看门狗（可选）：登录时和每 5 分钟检查，语音小助手没在运行就后台打开，见 `manager/voice/helper/keepalive/`。 / Optional DeckVoice watchdog: at login and every 5 minutes it reopens the voice helper if it isn't running. See `manager/voice/helper/keepalive/`.
+
+**安全 / Security**
+
+- 唤醒自检接口 20 秒内最多真跑一次，防止别的网页反复触发占用 CPU。 / The wake self-test endpoint runs at most once per 20 seconds, so other web pages can't hammer the CPU.
+
 ## v0.1.0 · 2026-11-07
 
 第一版公开发布：放出完整代码，不再只是施工说明。
