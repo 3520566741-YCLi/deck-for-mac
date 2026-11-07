@@ -1,0 +1,25 @@
+{
+ "_说明": "「我的应用」卡片要盯的应用。复制成 apps.json 再改。kind: app=普通 .app；agent=LaunchAgent 服务。match 是进程可执行文件路径里要包含的片段。",
+ "apps": [
+  {
+   "id": "deckvoice",
+   "name": "DeckVoice",
+   "kind": "app",
+   "path": "~/Applications/DeckVoice.app",
+   "match": "/DeckVoice.app/",
+   "proc": "DeckVoice",
+   "want_running": true,
+   "note": "Deck 的麦克风和扬声器小助手（只有开了语音才需要）"
+  },
+  {
+   "id": "safari",
+   "name": "Safari",
+   "kind": "app",
+   "path": "/Applications/Safari.app",
+   "match": "/Safari.app/",
+   "proc": "Safari",
+   "want_running": false,
+   "note": "示例：换成你自己关心的应用"
+  }
+ ]
+}

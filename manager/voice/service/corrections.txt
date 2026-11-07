@@ -1,0 +1,14 @@
+# 识别后纠正：一行一条「听错的写法 => 正确写法」，按顺序替换。英文不分大小写。
+# 个人补充写在 ~/Library/Application Support/Deck/voice/corrections.txt
+克劳德 => Claude
+克劳德code => Claude Code
+迪普西克 => DeepSeek
+深度 seek => DeepSeek
+deep sick => DeepSeek
+deepsick => DeepSeek
+扣德克斯 => Codex
+code x => Codex
+codecs => Codex
+get hub => GitHub
+git hub => GitHub
+戴克 => Deck

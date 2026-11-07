@@ -9,3 +9,16 @@ logs/
 voiceprint/
 __pycache__/
 .DS_Store
+
+# Deck
+manager/config.json
+manager/apps.json
+manager/server.log
+manager/check-history.json
+manager/pair.key
+manager/config.json.tmp
+manager/hands/build/
+manager/voice/helper/build/
+app/.build/
+app/dist/
+logs/
