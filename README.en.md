@@ -17,7 +17,11 @@
 
 <a href="#gallery"><img src="docs/images/banner.jpg" width="900" alt="Deck: dashboard and notch mode"></a>
 
-<p><a href="#what-it-does">Features</a> · <a href="#three-ways-to-show-it">Display modes</a> · <a href="#gallery">Gallery</a> · <a href="#how-to-install-hand-it-to-your-ai">Install</a> · <a href="#faq">FAQ</a> · <a href="#contributing">Contributing</a></p>
+<a href="https://github.com/3520566741-YCLi/deck-for-mac/releases/latest"><img src="https://img.shields.io/github/v/release/3520566741-YCLi/deck-for-mac?style=for-the-badge&label=Download&logo=apple&logoColor=white&color=2f6fe0" alt="Download the latest release" height="40"></a>
+&nbsp;
+<a href="CHANGELOG.md"><img src="https://img.shields.io/github/release-date/3520566741-YCLi/deck-for-mac?style=for-the-badge&label=Updated&color=7259e0" alt="Last updated" height="40"></a>
+
+<p><a href="#what-it-does">Features</a> · <a href="#three-ways-to-show-it">Display modes</a> · <a href="#gallery">Gallery</a> · <a href="#download-and-install">Download &amp; install</a> · <a href="#whats-new">What's new</a> · <a href="#faq">FAQ</a> · <a href="#contributing">Contributing</a></p>
 
 </div>
 
@@ -88,18 +92,35 @@ One web page, one set of features, wherever you like: menu bar Deck icon → **D
 
 > App names, repo names and conversations in the screenshots are demo content; the numbers come from a real running Mac.
 
-## How to install: hand it to your AI
+## Download and install
 
-Deck has several parts (a Python service, a web page, small Swift apps, local voice models) and every Mac is different, so there is no one-click installer. Instead there is a **step-by-step guide written for AI coding assistants**.
+**1. Download:** open the [latest release](https://github.com/3520566741-YCLi/deck-for-mac/releases/latest), click **Source code (zip)** under **Assets** at the bottom, unzip it, rename the folder to `deck-for-mac` and put it in your home folder (`~/deck-for-mac`). With git, updating later is easier:
 
-1. Open your AI coding assistant (Claude Code, Codex, Cursor…) and let it work on your Mac.
-2. Send it this:
+```bash
+git clone https://github.com/3520566741-YCLi/deck-for-mac.git ~/deck-for-mac
+```
 
-   > Read `AI_SETUP.en.md` in https://github.com/3520566741-YCLi/deck-for-mac and install Deck on my Mac step by step. Check my machine and ask me what I want first.
+> Deck is a Python service, a web page, small Swift apps and local voice models, and every Mac needs a different subset, so there is no `.dmg`: the download is the full source.
 
-3. Answer its questions (which cards, which LLM, voice or not, the assistant's name). **Never paste an API key into the chat**; it will give you one command to store the key in the macOS Keychain yourself.
+**2. Hand it to your AI:** open your AI coding assistant (Claude Code, Codex, Cursor…), let it work on your Mac, and send it:
+
+> Read ~/deck-for-mac/AI_SETUP.en.md (or `AI_SETUP.en.md` in https://github.com/3520566741-YCLi/deck-for-mac) and install Deck on my Mac step by step. Check my machine and ask me what I want first.
+
+**3. Answer its questions** (which cards, which LLM, voice or not, the assistant's name). **Never paste an API key into the chat**; it will give you one command to store the key in the macOS Keychain yourself.
 
 You can also follow [AI_SETUP.en.md](AI_SETUP.en.md) by hand; every step has its commands.
+
+### Updating
+
+Click **Watch → Custom → Releases** at the top right of the repo to get notified of new versions. To update, tell your AI:
+
+> Update Deck to the latest version following section 10 of ~/deck-for-mac/AI_SETUP.en.md.
+
+Your settings (`config.json`, `apps.json`), chat history, memories and voiceprint are never overwritten.
+
+## What's new
+
+**v0.1.1** (2026-11-08): the voice assistant wakes up more reliably (a second, name-based wake path and a self-test every 10 minutes); "let me check" now means it searches the web right away; optional DeckVoice watchdog. Every version is in [CHANGELOG.md](CHANGELOG.md) and on [Releases](https://github.com/3520566741-YCLi/deck-for-mac/releases); old versions are kept.
 
 ## Requirements
 
