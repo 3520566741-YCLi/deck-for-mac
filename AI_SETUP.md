@@ -99,12 +99,12 @@ curl -s https://api.deepseek.com/models -H "Authorization: Bearer $(security fin
 
 ### 3.3 助手的名字
 
-默认叫 **Vesper**（用合成声音测过：唤醒率约 72%、零误唤醒）。他想改名：
+默认叫 **Vesper**（用合成声音测过：唤醒率约 72%、零误唤醒）。v0.3.0 起改名不用动代码，让他在 **Deck 设置 →「助手」** 里自己改：
 
-1. 名字选**少见、两三个音节**的英文名；`manager/voice/service/wake_cli.py` 里有一套用系统合成声音测命中率和误唤醒的工具，定之前测一下。
-2. 写进 `~/Library/Application Support/Deck/voice/wake_name.txt`（一行），重启语音服务。
-3. 页面和提示词里的显示名：在仓库里搜 `Vesper` 一起换（`manager/dashboard.html`、`manager/assistant.py`、`manager/news.html`、`config.json` 的 `news.title`）。
-4. 到 <http://127.0.0.1:8778/enroll> 按新名字重录声纹。
+1. 「名字」页签：填英文 3–12 个字母或 2–4 个汉字，可选填读法（中文谐音或英文单词，帮唤醒模型念准）。先点「体检这个名字」：用 macOS 合成声音把各种叫法说一遍，看两条唤醒路能认出几成、会不会被普通聊天误叫醒。满意再点「用这个名字」，唤醒当场换，不用重启。
+2. 「声纹」页签：按新名字重录（约 4 分钟）。
+3. 「测试」页签：自己叫 10 遍看唤醒率和声纹通过率；请别人叫 10 遍看会不会被冒充；安静听几分钟看会不会误醒。
+4. 页面上的名字、大模型人设会自动跟着变。改名其实就是写 `~/Library/Application Support/Deck/voice/wake_name.txt`（第一行名字，第二行读法），接口见 `manager/voice/service/assist.py`。资讯页标题另在 `config.json` 的 `news.title` 改。
 
 ## 4. 语音（可选，最大的一块）
 
@@ -120,7 +120,7 @@ open ~/Applications/DeckVoice.app         # 第一次会问麦克风、语音识
 
 - DeckVoice 会自己拉起语音服务（`service/run.sh`，第一次会在 `~/Library/Application Support/Deck/voice/venv` 建虚拟环境、装 `requirements.txt`）。
 - **语音合成**：默认千问自带音色（Qwen3-TTS 0.6B，跑在 Apple GPU 上，约 1.9 GB）。装：先让 DeckVoice 跑一次建好虚拟环境，再 `"$HOME/Library/Application Support/Deck/voice/venv/bin/pip" install -r service/requirements-tts.txt && service/tools/fetch_tts_models.sh`。不想占空间可以用 CPU 后备 Kokoro：从 [sherpa-onnx 的 tts-models 发布页](https://github.com/k2-fsa/sherpa-onnx/releases/tag/tts-models) 下载 `kokoro-multi-lang-v1_1` 解压到 `~/Library/Application Support/Deck/voice/models/`，再在同目录上一级的 `tts.json` 写 `{"voice": "kokoro:zf_001"}`。
-- **录声纹**：打开 <http://127.0.0.1:8778/enroll>，按页面念 16 句（约 4 分钟）。录好后只有他的声音能唤醒和打断。
+- **录声纹**：Deck 设置 →「助手」→「声纹」，按提示念 16 句（约 4 分钟；中文名字 11 句）。旧的录入页 <http://127.0.0.1:8778/enroll> 也还能用。录好后只有他的声音能唤醒和打断。
 - 快捷键：⌥⌘J 直接说、⌥⌘. 停、⌥⌘M 开关麦克风。
 
 **签名很重要：** 三个小应用（Deck、DeckVoice、DeckHands）用他自己的 **Apple Development 证书**签名（Xcode → 设置 → 账户，用免费 Apple ID 就能生成）。没有证书会退回临时签名，**每次重新编译都要重新给麦克风 / 辅助功能权限**。

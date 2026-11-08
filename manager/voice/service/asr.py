@@ -124,7 +124,12 @@ def is_dismiss_phrase(text):
     if len(n) <= 9 and any(k in n for k in _DISMISS_KEYS):
         return True
     core = n
-    for name in _NAMES:
+    try:
+        from . import voicepaths as _P
+        cur = (normalize_for_match(_P.NAME),)   # Deck 设置里改过名字：新名字也要去掉
+    except Exception:  # noqa: BLE001
+        cur = ()
+    for name in cur + _NAMES:
         core = core.replace(name, "")
     core = _EN_FILLER_TAIL.sub("", _EN_FILLER_HEAD.sub("", core))
     return core in _DISMISS_EN

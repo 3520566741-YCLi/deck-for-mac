@@ -28,6 +28,7 @@ STATIC_FILES = {"/static/gridstack-all.js": "application/javascript; charset=utf
                 "/static/gridstack.min.css": "text/css; charset=utf-8",
                 "/static/deck-voice.js": "application/javascript; charset=utf-8",
                 "/static/deck-tools.js": "application/javascript; charset=utf-8",
+                "/static/deck-assist.js": "application/javascript; charset=utf-8",
                 # Vesper 光球的两个动画层，来自 React Bits（MIT + Commons Clause，见 static/reactbits-LICENSE.md）
                 "/static/reactbits-orb.js": "application/javascript; charset=utf-8",
                 "/static/reactbits-strands.js": "application/javascript; charset=utf-8",
@@ -533,7 +534,7 @@ from monitor import Hub  # noqa: E402
 HUB = Hub(DASH_CFG, butler_collect=collect, deepseek_key=deepseek_key)
 
 # ---------- Vesper（Deck 内置 DeepSeek 助手） ----------
-from assistant import Friday  # noqa: E402
+from assistant import Friday, assistant_name as _assistant_name  # noqa: E402
 from cleaner import public as cleaner_public  # noqa: E402
 import daily_clean  # noqa: E402
 import apptools  # noqa: E402
@@ -692,7 +693,8 @@ class Handler(BaseHTTPRequestHandler):
                 html = f.read()
             boot = {"local": local, "token": TOKEN if local else "", "lan": LAN,
                     "pair_urls": lan_urls() if local and LAN else [],
-                    "voice": os.path.exists(os.path.join(HERE, "static", "deck-voice.js"))}
+                    "voice": os.path.exists(os.path.join(HERE, "static", "deck-voice.js")),
+                    "aname": _assistant_name()}
             html = html.replace("/*__BOOT__*/{}", json.dumps(boot))
             return self._send(200, html.encode(), "text/html; charset=utf-8", cookie=not local)
         if path == "/api/dash":

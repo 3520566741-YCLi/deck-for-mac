@@ -101,12 +101,12 @@ Another provider: any API compatible with OpenAI Chat Completions that supports 
 
 ### 3.3 The assistant's name
 
-The default is **Vesper** (tested with synthetic voices: about 72% wake rate, zero false wakes). To rename:
+The default is **Vesper** (tested with synthetic voices: about 72% wake rate, zero false wakes). From v0.3.0 renaming needs no code changes; the user does it in **Deck Settings → Assistant**:
 
-1. Pick an **uncommon two- or three-syllable** English name. `manager/voice/service/wake_cli.py` has tools to measure hit rate and false wakes with the system's synthetic voices; test before deciding.
-2. Write it to `~/Library/Application Support/Deck/voice/wake_name.txt` (one line) and restart the voice service.
-3. Display name: search the repo for `Vesper` and replace it (`manager/dashboard.html`, `manager/assistant.py`, `manager/news.html`, `news.title` in `config.json`).
-4. Re-record the voiceprint with the new name at <http://127.0.0.1:8778/enroll>.
+1. **Name** tab: 3–12 English letters or 2–4 Chinese characters, plus an optional pronunciation hint (Chinese characters that sound alike, or English words). Tap "Check this name" first: macOS synthetic voices say every wake phrase so you can see how often each wake path catches it and whether ordinary chat triggers it. Then "Use this name"; wake switches immediately, no restart.
+2. **Voiceprint** tab: re-record with the new name (about 4 minutes).
+3. **Test** tab: say it 10 times for wake rate and voiceprint pass rate; have someone else say it 10 times to check impersonation; listen quietly for a few minutes to count false wakes.
+4. The name shown on the page and the LLM persona follow automatically. Under the hood it writes `~/Library/Application Support/Deck/voice/wake_name.txt` (line 1 name, line 2 hint); the API is in `manager/voice/service/assist.py`. The news page title is `news.title` in `config.json`.
 
 ## 4. Voice (optional, the biggest part)
 
@@ -122,7 +122,7 @@ open ~/Applications/DeckVoice.app         # asks for microphone and speech recog
 
 - DeckVoice starts the voice service itself (`service/run.sh` creates a venv at `~/Library/Application Support/Deck/voice/venv` and installs `requirements.txt` the first time).
 - **Speech synthesis**: the default is Qwen's built-in voice (Qwen3-TTS 0.6B on the Apple GPU, about 1.9 GB). Install after DeckVoice has run once: `"$HOME/Library/Application Support/Deck/voice/venv/bin/pip" install -r service/requirements-tts.txt && service/tools/fetch_tts_models.sh`. For a smaller CPU fallback, download `kokoro-multi-lang-v1_1` from [sherpa-onnx's tts-models release](https://github.com/k2-fsa/sherpa-onnx/releases/tag/tts-models) into `~/Library/Application Support/Deck/voice/models/` and write `{"voice": "kokoro:zf_001"}` to `~/Library/Application Support/Deck/voice/tts.json`.
-- **Voiceprint**: open <http://127.0.0.1:8778/enroll> and read 16 prompts (about 4 minutes). After that only their voice can wake or interrupt it.
+- **Voiceprint**: Deck Settings → Assistant → Voiceprint, read 16 prompts (about 4 minutes; 11 for a Chinese name). The old page <http://127.0.0.1:8778/enroll> still works. After that only their voice can wake or interrupt it.
 - Shortcuts: ⌥⌘J talk, ⌥⌘. stop, ⌥⌘M microphone on/off.
 
 **Signing matters:** sign the three small apps (Deck, DeckVoice, DeckHands) with **their own Apple Development certificate** (Xcode → Settings → Accounts; a free Apple ID is enough). Without it the build falls back to ad-hoc signing and **microphone / Accessibility permissions must be granted again after every rebuild**.

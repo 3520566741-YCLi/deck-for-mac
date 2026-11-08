@@ -8,6 +8,7 @@
 录入期间暂停唤醒，免得自己把自己叫醒。
 """
 import json
+import re
 import threading
 import time
 from pathlib import Path
@@ -24,25 +25,35 @@ except ImportError:  # wake_cli.py 直接运行
 SR = 16000
 HERE = Path(__file__).resolve().parent
 
-N = P.NAME
-STEPS = [
-    {"id": "w1", "kind": "wake", "title": "正常说", "hint": "像平时叫人一样，自然地说"},
-    {"id": "w2", "kind": "wake", "title": "再来一遍", "hint": "还是正常音量，语速可以随意一点"},
-    {"id": "w3", "kind": "wake", "title": "站远一点", "hint": "离电脑两三米，或者转过身去说"},
-    {"id": "w4", "kind": "wake", "title": "小声说", "hint": "像旁边有人在睡觉那样，轻声说"},
-    {"id": "w5", "kind": "wake", "title": "戴耳机说", "hint": "戴上 AirPods 等耳机麦克风说；没有耳机可以跳过", "optional": True},
-    {"id": "v1", "kind": "wake", "title": "换个叫法 · 嘿", "say": "嘿" + N, "hint": "平时随口叫的语气"},
-    {"id": "v2", "kind": "wake", "title": "换个叫法 · 喂", "say": "喂" + N, "hint": "像找人那样叫一声"},
-    {"id": "v3", "kind": "wake", "title": "换个叫法 · 早上好", "say": "早上好" + N, "hint": "也可以说晚上好" + N},
-    {"id": "e1", "kind": "wake_en", "title": "英文 · 正常说", "say": "Hey " + N, "hint": "用平时叫它的英文说法", "optional": True},
-    {"id": "e2", "kind": "wake_en", "title": "英文 · 再来一遍", "say": "Hey " + N, "hint": "语速随意，可以说 Hi " + N, "optional": True},
-    {"id": "e3", "kind": "wake_en", "title": "英文 · 远一点或小声", "say": "Hey " + N, "hint": "离电脑远一点，或者轻声说", "optional": True},
-    {"id": "f1", "kind": "wake_en", "title": "英文 · OK " + N, "say": "OK " + N, "hint": "随口叫一声", "optional": True},
-    {"id": "f2", "kind": "wake_en", "title": "英文 · Good morning", "say": "Good morning " + N, "hint": "也可以说 Good evening " + N, "optional": True},
-    {"id": "s1", "kind": "sent", "title": "第 1 句", "text": "今天天气不错，帮我看看下午有没有安排，再把桌面上的截图整理一下。"},
-    {"id": "s2", "kind": "sent", "title": "第 2 句", "text": "周末晚上想听点轻松的音乐，顺便提醒我明天早上八点起床。"},
-    {"id": "s3", "kind": "sent", "title": "第 3 句", "text": "把磁盘里没用的缓存清理掉，然后告诉我还剩多少空间。"},
-]
+def steps():
+    """录入步骤跟着当前名字走（Deck 里可以随时改名）。中文名字没有英文那几步。"""
+    N = P.NAME
+    out = [
+        {"id": "w1", "kind": "wake", "title": "正常说", "hint": "像平时叫人一样，自然地说"},
+        {"id": "w2", "kind": "wake", "title": "再来一遍", "hint": "还是正常音量，语速可以随意一点"},
+        {"id": "w3", "kind": "wake", "title": "站远一点", "hint": "离电脑两三米，或者转过身去说"},
+        {"id": "w4", "kind": "wake", "title": "小声说", "hint": "像旁边有人在睡觉那样，轻声说"},
+        {"id": "w5", "kind": "wake", "title": "戴耳机说", "hint": "戴上 AirPods 等耳机麦克风说；没有耳机可以跳过", "optional": True},
+        {"id": "v1", "kind": "wake", "title": "换个叫法 · 嘿", "say": "嘿" + N, "hint": "平时随口叫的语气"},
+        {"id": "v2", "kind": "wake", "title": "换个叫法 · 喂", "say": "喂" + N, "hint": "像找人那样叫一声"},
+        {"id": "v3", "kind": "wake", "title": "换个叫法 · 早上好", "say": "早上好" + N, "hint": "也可以说晚上好" + N},
+        {"id": "e1", "kind": "wake_en", "title": "英文 · 正常说", "say": "Hey " + N, "hint": "用平时叫它的英文说法", "optional": True},
+        {"id": "e2", "kind": "wake_en", "title": "英文 · 再来一遍", "say": "Hey " + N, "hint": "语速随意，可以说 Hi " + N, "optional": True},
+        {"id": "e3", "kind": "wake_en", "title": "英文 · 远一点或小声", "say": "Hey " + N, "hint": "离电脑远一点，或者轻声说", "optional": True},
+        {"id": "f1", "kind": "wake_en", "title": "英文 · OK " + N, "say": "OK " + N, "hint": "随口叫一声", "optional": True},
+        {"id": "f2", "kind": "wake_en", "title": "英文 · Good morning", "say": "Good morning " + N, "hint": "也可以说 Good evening " + N, "optional": True},
+        {"id": "s1", "kind": "sent", "title": "第 1 句", "text": "今天天气不错，帮我看看下午有没有安排，再把桌面上的截图整理一下。"},
+        {"id": "s2", "kind": "sent", "title": "第 2 句", "text": "周末晚上想听点轻松的音乐，顺便提醒我明天早上八点起床。"},
+        {"id": "s3", "kind": "sent", "title": "第 3 句", "text": "把磁盘里没用的缓存清理掉，然后告诉我还剩多少空间。"},
+    ]
+    if any("\u4e00" <= c <= "\u9fff" for c in N):
+        out = [s for s in out if s["kind"] != "wake_en"]
+    return out
+
+
+STEPS = steps()  # 旧代码/工具还在读；正式流程一律用 steps()
+
+
 LIMITS = {"wake": {"max": 5.0, "end_sil": 0.6, "min": 0.6},
           "wake_en": {"max": 5.0, "end_sil": 0.6, "min": 0.5},
           "sent": {"max": 16.0, "end_sil": 1.1, "min": 2.5}}
@@ -147,6 +158,7 @@ class Session:
         self.msg = None
         self.result = None
         self.started = time.time()
+        self.touched = time.time()   # 最近一次有人操作；录入页关掉没退出时，靠它自动收尾
 
 
 rec = Recorder()
@@ -197,7 +209,7 @@ def _analyse(step, audio, err):
             return
         e = speaker.embed(seg)
         # 和前面录过的唤醒词比一比，防止中途换了人或者噪音太大
-        kind_of = {s["id"]: s["kind"] for s in STEPS}
+        kind_of = {s["id"]: s["kind"] for s in steps()}
         prev = [t["emb"] for k, t in sess.takes.items() if kind_of.get(k) == kind and k != step["id"]]
         if kind in ("wake", "wake_en") and len(prev) >= 2:
             c = float(speaker._unit(np.mean(prev, axis=0)) @ e)
@@ -217,9 +229,9 @@ def _analyse(step, audio, err):
 
 
 def _finish():
-    wake_ids = [s["id"] for s in STEPS if s["kind"] == "wake" and s["id"] in sess.takes]
-    en_ids = [s["id"] for s in STEPS if s["kind"] == "wake_en" and s["id"] in sess.takes]
-    sent_ids = [s["id"] for s in STEPS if s["kind"] == "sent" and s["id"] in sess.takes]
+    wake_ids = [s["id"] for s in steps() if s["kind"] == "wake" and s["id"] in sess.takes]
+    en_ids = [s["id"] for s in steps() if s["kind"] == "wake_en" and s["id"] in sess.takes]
+    sent_ids = [s["id"] for s in steps() if s["kind"] == "sent" and s["id"] in sess.takes]
     if len(wake_ids) < 4 or len(sent_ids) < 3 or len(en_ids) == 1:
         return 400, {"error": f"还差几步没录完（「{P.WAKE_WORD}」至少 4 遍、句子 3 句；英文要么跳过，要么至少 2 遍）"}
     # 旧档案整个移到废纸篓，再写新的
@@ -238,6 +250,7 @@ def _finish():
     cal["weak_takes"] = [wake_ids[i] for i in cal["weak_takes"]]
     if cal.get("en"):
         cal["weak_takes"] += [en_ids[i] for i in cal["en"]["weak"]]
+    cal["heard_as"] = _learn_aliases(wake_ids + en_ids)
     sess.result = cal
     eng = _wake_engine()
     if eng:
@@ -245,13 +258,48 @@ def _finish():
     return 200, {"ok": True, **cal}
 
 
+def _learn_aliases(ids):
+    """把这次录的唤醒词交给第二条唤醒路的识别器（SenseVoice）听一遍，记下它把名字写成了什么
+    （「你好凯亚」「HEY KAYA」），以后在识别结果里看到这些写法就知道是在叫她。不存音频，只存几个字。"""
+    eng = _wake_engine()
+    asr = getattr(eng, "asr_path", None) if eng else None
+    if not asr or not getattr(asr, "ready", False):
+        return []
+    try:
+        from . import names
+    except ImportError:
+        import names
+    pre = sorted([p.upper() for p in P.ZH_PREFIXES + P.EN_PREFIXES], key=len, reverse=True)
+    lex = names.lexicon()
+    got = []
+    for k in ids:
+        try:
+            text = asr.transcribe(sess.takes[k]["audio"])[0]
+        except Exception:  # noqa: BLE001
+            continue
+        sess.takes[k]["info"]["heard"] = (text or "")[:30]
+        t = re.sub(r"[，。！？、,.!?;；:：\"'“”‘’\s]", "", (text or "").upper())
+        for p in pre:
+            p = p.replace(" ", "")
+            if t.startswith(p):
+                t = t[len(p):]
+                break
+        # 只收短的、不是常用英文词的（HEY WATER 这种认错了的不能当名字）
+        if 1 <= len(t) <= 8 and not (t.isascii() and t in lex and t != P.NAME.upper()):
+            got.append(t)
+    if got:
+        names.save_aliases(P.NAME, got)
+        wake._reset_matcher()
+    return sorted(set(got))
+
+
 def state():
     eng = _wake_engine()
     prof = speaker.profile()
-    steps = []
-    for s in STEPS:
+    rows = []
+    for s in steps():
         t = sess.takes.get(s["id"]) if sess else None
-        steps.append(dict(s, done=bool(t), info=t["info"] if t else None))
+        rows.append(dict(s, done=bool(t), info=t["info"] if t else None))
     return {
         "enrolled": prof.enrolled, "threshold": prof.threshold, "threshold_en": prof.thresholds.get("en"),
         "has_en": prof.has("en") if prof.enrolled else False, "version": prof.version if prof.enrolled else 0,
@@ -260,7 +308,7 @@ def state():
         # 改名后：按旧名字录的声纹提示重录
         "wake_word": P.WAKE_WORD, "name": P.NAME,
         "wake_word_changed": bool(prof.enrolled and prof.meta.get("wake_word", P.WAKE_WORD) != P.WAKE_WORD),
-        "session": bool(sess), "steps": steps,
+        "session": bool(sess), "steps": rows,
         "rec": {"phase": rec.phase, "level": round(rec.level, 3), "step": rec.step["id"] if rec.step else None},
         "msg": sess.msg if sess else None, "result": sess.result if sess else None,
         "wake_on": bool(eng), "wake_paused": bool(eng and eng.paused_by),
@@ -282,6 +330,8 @@ def handle(method, path, query, body):
     if not path.startswith("/enroll/api/"):
         return _json(404, {"error": "not found"})
     act = path[len("/enroll/api/"):]
+    if sess is not None and act != "state":
+        sess.touched = time.time()
     try:
         data = json.loads(body or b"{}") if method == "POST" else {}
     except Exception:
@@ -304,6 +354,13 @@ def handle(method, path, query, body):
         return _json(405, {"error": "method"})
     eng = _wake_engine()
     if act == "start":
+        try:   # 正在跑唤醒测试就先停掉（测试和录入都要独占麦克风那一路）
+            from . import assist as _assist
+        except ImportError:
+            _assist = None
+        t = getattr(_assist, "_test", None) if _assist else None
+        if t is not None and t.running:
+            t.stop()
         sess = Session()
         if eng:
             eng.pause("enroll")
@@ -311,7 +368,7 @@ def handle(method, path, query, body):
     if act == "record":
         if not sess:
             return _json(400, {"error": "先开始录入"})
-        step = next((s for s in STEPS if s["id"] == data.get("step")), None)
+        step = next((s for s in steps() if s["id"] == data.get("step")), None)
         if not step:
             return _json(400, {"error": "没有这一步"})
         sess.msg = None
@@ -332,9 +389,32 @@ def handle(method, path, query, body):
     return _json(404, {"error": "未知操作"})
 
 
+STALE_S = 15 * 60
+
+
+def _stale_loop():
+    """录入期间唤醒是暂停的。网页关掉（Deck 退出、刷新）没点退出时，15 分钟没人操作就自动退出这次录入，
+    唤醒恢复，旧声纹不受影响。"""
+    global sess
+    while True:
+        time.sleep(30)
+        try:
+            s = sess
+            if s is not None and rec.phase == "idle" and time.time() - s.touched > STALE_S:
+                rec.cancel()
+                sess = None
+                eng = _wake_engine()
+                if eng:
+                    eng.resume("enroll")
+                print("[enroll] 15 分钟没人操作，自动退出录入，唤醒已恢复", flush=True)
+        except Exception:  # noqa: BLE001
+            pass
+
+
 def register(hub):
     global _hub
     _hub = hub
+    threading.Thread(target=_stale_loop, name="enroll-stale", daemon=True).start()
     try:
         hub.subscribe_audio(rec.feed, name="enroll")
     except TypeError:

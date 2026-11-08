@@ -19,6 +19,14 @@ import time
 
 from . import hub
 
+
+def _name():
+    try:
+        from . import voicepaths as P
+        return P.NAME
+    except Exception:  # noqa: BLE001
+        return "Vesper"
+
 FILLERS = {"嗯", "啊", "呃", "哦", "噢", "额", "唔", "哼", "嗯嗯", "啊啊", "um", "umm", "uh", "uhh", "hmm", "hm", "mm",
            "ah", "oh", "er", "erm", "uhhuh", "mhm", "mmhm", "mhmm", "ahha", "aha"}
 # 单个字/词也要算打断的（停止类）：其余单字当附和
@@ -195,10 +203,10 @@ def jev_says_not_for_her(text, spoken, timeout=1.2):
         "ignore": "Not meant for the assistant: a filler or backchannel sound, the assistant's own speech picked up "
                   "again by the microphone (possibly with recognition errors), the user talking to another person or "
                   "on the phone, or TV/background speech"},
-        "instructions": "While the voice assistant Vesper was speaking, the microphone picked up some speech and it "
-                        "was transcribed. Decide whether Vesper should stop and answer it, or ignore it and keep "
-                        "talking. The transcript can contain speech-recognition errors."}}
-    state = "Vesper had just said: %s\nThen the microphone heard: %s" % (" ".join(spoken[-2:])[:400], text[:300])
+        "instructions": "While the voice assistant %s was speaking, the microphone picked up some speech and it "
+                        "was transcribed. Decide whether %s should stop and answer it, or ignore it and keep "
+                        "talking. The transcript can contain speech-recognition errors." % (_name(), _name())}}
+    state = "%s had just said: %s\nThen the microphone heard: %s" % (_name(), " ".join(spoken[-2:])[:400], text[:300])
     body = json.dumps({"model": "jev-latest", "state": state, "questions": q}, ensure_ascii=False).encode()
     req = urllib.request.Request(JEV_URL, data=body, method="POST",
                                  headers={"Content-Type": "application/json", "Authorization": "Bearer " + key})

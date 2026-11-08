@@ -24,6 +24,34 @@ MAX_ROUNDS = 6          # 一次提问里最多连着调用几轮工具
 PROMISE = re.compile(r"(查|搜|看看|核实|确认)[^。！？\n]{0,8}(再|之后|以后|完)[^。！？\n]{0,4}(告诉|回复|跟你说|说给你|答复|回你)"
                      r"|(稍后|回头|晚点|等会儿?)[^。！？\n]{0,4}(告诉|回复|跟你说|答复|回你)"
                      r"|(I'?ll|let me) (check|look (it|that|this)? ?up|search)[^.]{0,40}(get back|let you know)", re.I)
+
+
+def assistant_name():
+    """助手现在叫什么：语音服务的 wake_name.txt 第一行（Deck 设置 → 助手 里改），没有就是 Vesper。"""
+    home = os.environ.get("DECK_VOICE_HOME") or os.environ.get("DECK_VOICE_ROOT") or \
+        os.path.join(os.path.expanduser("~"), "Library", "Application Support", "Deck", "voice")
+    try:
+        with open(os.path.join(home, "wake_name.txt"), encoding="utf-8") as f:
+            n = f.readline().strip()
+        if n and len(n) <= 12 and re.fullmatch(r"[A-Za-z\u4e00-\u9fff]+", n):
+            return n
+    except OSError:
+        pass
+    return "Vesper"
+
+
+def persona():
+    """人设第一段跟着名字走；改过名字时告诉它以前叫什么，聊天记录和记忆里的旧名字说的也是它。"""
+    n = assistant_name()
+    if n == "Vesper":
+        return PERSONA
+    head, rest = PERSONA.split("\n", 1)
+    i = head.find("大脑是 DeepSeek。")
+    lead = head[: i + len("大脑是 DeepSeek。")].replace("Vesper", n) if i >= 0 else "你是 %s，Deck 里内置的助手，大脑是 DeepSeek。" % n
+    return (lead + "你的名字是 %s，说话时就这么自称；你以前叫 Vesper，聊天记录或记忆里出现这些名字说的都是你。\n" % n
+            + rest)
+
+
 HISTORY_TURNS = 24      # 发给模型的最近几条对话
 MEMORY_IN_PROMPT = 120  # 系统提示里最多放几条记忆
 KEEP_MESSAGES = 3000    # 聊天记录最多留多少条，旧的自动丢掉
@@ -516,7 +544,7 @@ class Friday:
             pend_txt += "\n\n## 等他确认的屏幕操作\n他同意就调用 screen_confirm(id)。\n" + _dumps(self.hands.describe_pending(), 1500)
         # 分两段：不变的（人设 + 记忆）放最前面，DeepSeek 的前缀缓存能命中，首字更快；
         # 每次都变的（时间、屏幕、卡片数据、待确认的清理）放在这次提问前面。
-        static = PERSONA + "\n\n## 关于用户的长期记忆（[编号] 内容）\n" + mem_txt
+        static = persona() + "\n\n## 关于用户的长期记忆（[编号] 内容）\n" + mem_txt
         voice = "\n这句是用语音说的，你的回答会被念出来：口语化，先说结论，一般两三句话，不要列表、表格和 markdown。\n" if (ui or {}).get("voice") else ""
         dynamic = ("## 现在\n时间：%s\n屏幕：%s 页%s\n" % (time.strftime("%Y-%m-%d %H:%M %A"), page,
                                                      "，打开着「%s」的详情" % opened if opened else "") + voice + pend_txt +
