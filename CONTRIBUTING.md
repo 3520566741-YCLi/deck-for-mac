@@ -18,6 +18,8 @@
 3. 改了界面，附白天和夜里的截图；检查文字不贴边、不重叠、不被遮挡。
    If you touched the UI, attach day and night screenshots, and check nothing touches an edge, overlaps or gets clipped.
 4. **截图和日志里不要带个人信息**（名字、路径、key、聊天记录）。 / **No personal data in screenshots or logs** (names, paths, keys, chats).
+5. 新功能的截图出中英两版：中文图放 `docs/images/`，内容一模一样的英文图放 `docs/images/en/`（同名）。新加的界面文字同时在英文词典里补一行。
+   Screenshots of a new feature come in two versions: Chinese in `docs/images/`, an identical English one in `docs/images/en/` (same file name). Add new UI strings to the English dictionary too.
 
 ## 几条规矩 / House rules
 

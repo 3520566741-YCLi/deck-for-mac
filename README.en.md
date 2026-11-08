@@ -15,7 +15,7 @@
 [![Setup](https://img.shields.io/badge/setup-by%20your%20AI-7259e0?style=flat-square)](AI_SETUP.en.md)
 [![Stars](https://img.shields.io/github/stars/3520566741-YCLi/deck-for-mac?style=flat-square&color=c27a0c)](https://github.com/3520566741-YCLi/deck-for-mac/stargazers)
 
-<a href="#gallery"><img src="docs/images/banner.jpg" width="900" alt="Deck: dashboard and notch mode"></a>
+<a href="#gallery"><img src="docs/images/en/banner.jpg" width="900" alt="Deck: dashboard and notch mode"></a>
 
 <a href="https://github.com/3520566741-YCLi/deck-for-mac/releases/latest"><img src="https://img.shields.io/github/v/release/3520566741-YCLi/deck-for-mac?style=for-the-badge&label=Download&logo=apple&logoColor=white&color=2f6fe0" alt="Download the latest release" height="40"></a>
 &nbsp;
@@ -30,7 +30,7 @@
 
 ## What it does
 
-> The interface is in Chinese for now. Your AI can translate the UI strings while it sets Deck up for you.
+> The screenshots show Deck's English mode (Settings → Appearance → Language: System / 中文 / English), which ships with the next release; v0.2.1 and earlier are Chinese only. News headlines, chats and app names in the screenshots are demo content.
 
 | | Feature | In one line |
 |---|---|---|
@@ -47,63 +47,63 @@ One web page, one set of features, wherever you like: **Settings → Display**, 
 
 | External screen / old iPad | Dropped down from the notch |
 |:---:|:---:|
-| <img src="docs/images/home-day.png" alt="External screen"> | <img src="docs/images/notch-l.png" alt="Notch mode"> |
+| <img src="docs/images/en/home-day.png" alt="External screen"> | <img src="docs/images/en/notch-l.png" alt="Notch mode"> |
 | Fills a second screen when one is plugged in | Hover the notch to open, move away to close |
 
 **Notch mode** comes in large, medium and small, laid out in a row (swipe left / right) or a column (scroll), and you can talk to the assistant right inside it.
 
 | Medium | Small |
 |:---:|:---:|
-| <img src="docs/images/notch-m.png" alt="Notch mode, medium"> | <img src="docs/images/notch-s.png" alt="Notch mode, small"> |
+| <img src="docs/images/en/notch-m.png" alt="Notch mode, medium"> | <img src="docs/images/en/notch-s.png" alt="Notch mode, small"> |
 
 ## Gallery
 
 #### Dark at night, automatically
-<img src="docs/images/home-night.png" width="860" alt="Dashboard at night">
+<img src="docs/images/en/home-night.png" width="860" alt="Dashboard at night">
 
 #### Swipe, scroll and chat in the notch
 | Row · swipe | Column · scroll |
 |:---:|:---:|
-| <img src="docs/images/notch-row.png" alt="Row layout"> | <img src="docs/images/notch-col.png" alt="Column layout"> |
+| <img src="docs/images/en/notch-row.png" alt="Row layout"> | <img src="docs/images/en/notch-col.png" alt="Column layout"> |
 
-<img src="docs/images/notch-vesper.png" width="860" alt="Chatting with the assistant in the notch">
+<img src="docs/images/en/notch-vesper.png" width="860" alt="Chatting with the assistant in the notch">
 
 #### Voice assistant: call its name
-<img src="docs/images/assistant.png" width="860" alt="Talking to the assistant">
+<img src="docs/images/en/assistant.png" width="860" alt="Talking to the assistant">
 
 #### "Read today's brief": the assistant reads it in its own voice, sentence by sentence
-<img src="docs/images/vesper-brief.png" width="860" alt="The assistant playing the daily brief">
+<img src="docs/images/en/vesper-brief.png" width="860" alt="The assistant playing the daily brief">
 
 #### Disk: what grows, what's new, who writes
-<img src="docs/images/disk.png" width="860" alt="Disk panel">
+<img src="docs/images/en/disk.png" width="860" alt="Disk panel">
 
 #### Toolbox and daily cleanup: Trash only, one tap to undo
 | Toolbox | Daily cleanup |
 |:---:|:---:|
-| <img src="docs/images/toolbox.png" alt="Toolbox"> | <img src="docs/images/cleanup.png" alt="Daily cleanup"> |
+| <img src="docs/images/en/toolbox.png" alt="Toolbox"> | <img src="docs/images/en/cleanup.png" alt="Daily cleanup"> |
 
 #### Tools: lock the keyboard while you wipe it
 | Keyboard cleaning | Display mode in Settings |
 |:---:|:---:|
-| <img src="docs/images/toolbox-tools.png" alt="Toolbox · Tools · keyboard cleaning"> | <img src="docs/images/settings-display.png" alt="Settings · display mode"> |
-| Duration, black screen, trackpad too; unlock by holding the on-screen button 1 s, both ⌘ keys 2 s, the timer, or telling the assistant | Auto / External screen / Notch, same setting as the menu bar (UI is Chinese) |
+| <img src="docs/images/en/toolbox-tools.png" alt="Toolbox · Tools · keyboard cleaning"> | <img src="docs/images/en/settings-display.png" alt="Settings · display mode"> |
+| Duration, black screen, trackpad too; unlock by holding the on-screen button 1 s, both ⌘ keys 2 s, the timer, or telling the assistant | Auto / External screen / Notch, same setting as the menu bar |
 
 #### Assistant: your own name, your own voiceprint
 | Rename | Voiceprint |
 |:---:|:---:|
-| <img src="docs/images/settings-assistant.png" alt="Settings · Assistant · Name"> | <img src="docs/images/settings-voiceprint.png" alt="Settings · Assistant · Voiceprint"> |
-| English or Chinese names, with an optional pronunciation hint; "check" a name first, wake switches instantly | Step-by-step prompts that advance on their own; then test the wake rate and whether someone else can impersonate you (UI is Chinese) |
+| <img src="docs/images/en/settings-assistant.png" alt="Settings · Assistant · Name"> | <img src="docs/images/en/settings-voiceprint.png" alt="Settings · Assistant · Voiceprint"> |
+| English or Chinese names, with an optional pronunciation hint; "check" a name first, wake switches instantly | Step-by-step prompts that advance on their own; then test the wake rate and whether someone else can impersonate you |
 
 #### Butler and GitHub: which app crashed, which repo went red
 | Butler | GitHub |
 |:---:|:---:|
-| <img src="docs/images/butler.png" alt="Butler page"> | <img src="docs/images/github.png" alt="GitHub manager"> |
+| <img src="docs/images/en/butler.png" alt="Butler page"> | <img src="docs/images/en/github.png" alt="GitHub manager"> |
 
 #### News: a personal tech paper three times a day
-<img src="docs/images/news.png" width="860" alt="News page">
+<img src="docs/images/en/news.png" width="860" alt="News page">
 
 #### Settings: turn cards on and off, switch skins
-<img src="docs/images/settings.png" width="860" alt="Settings">
+<img src="docs/images/en/settings.png" width="860" alt="Settings">
 
 > App names, repo names and conversations in the screenshots are demo content; the numbers come from a real running Mac.
 
