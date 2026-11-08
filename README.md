@@ -83,6 +83,12 @@
 | <img src="docs/images/toolbox-tools.png" alt="工具箱 · 小工具 · 键盘清洁"> | <img src="docs/images/settings-display.png" alt="设置 · 显示方式"> |
 | 锁多久、黑屏、连触控板；按住屏幕按钮 1 秒、左右 ⌘ 同按 2 秒、倒计时、对助手说「解锁键盘」都能解开 | 自动 / 扩展屏 / 刘海，和菜单栏是同一个设置 |
 
+#### 助手：名字自己起，声纹自己录
+| 改名字 | 录声纹 |
+|:---:|:---:|
+| <img src="docs/images/settings-assistant.png" alt="设置 · 助手 · 名字"> | <img src="docs/images/settings-voiceprint.png" alt="设置 · 助手 · 声纹录入"> |
+| 中英文名字都行，可填读法；先「体检」看好不好叫醒，改完唤醒当场换 | 一步步提示怎么说，录好一遍自动跳下一步；录完还能测唤醒率、会不会被别人冒充 |
+
 #### 管家和 GitHub：哪个软件崩了、哪个仓库红了
 | 管家 | GitHub |
 |:---:|:---:|
@@ -123,6 +129,8 @@ git clone https://github.com/3520566741-YCLi/deck-for-mac.git ~/deck-for-mac
 你的设置（`config.json`、`apps.json`）、聊天记录、记忆和声纹都不会被覆盖。
 
 ## 最近更新
+
+**v0.3.0**（2026-11-08）：设置里新增**「助手」**：助手名字自己起（中英文都行，唤醒当场换）、名字体检、引导式声纹录入、三种唤醒 / 声纹测试。
 
 **v0.2.0**（2026-11-08）：工具箱新增「小工具」页和**键盘清洁**（锁键盘方便擦，可选黑屏 / 连触控板，多重解锁、进程卡死也会自动恢复）；设置页可以直接切换显示方式（自动 / 扩展屏 / 刘海）。
 
@@ -178,7 +186,7 @@ Deck 本身免费。只有助手的「大脑」调用云端大模型会花钱（
 
 <details><summary><b>助手能改名字吗？</b></summary>
 
-能，改 <code>wake_name.txt</code> 后重新录一次声纹即可，见 <a href="AI_SETUP.md">AI_SETUP.md</a>。
+能。Deck 设置 →「助手」里直接改（英文或中文名字都行），改之前可以先「体检」一下好不好叫醒；改完在同一处重录声纹、做唤醒测试。见 <a href="AI_SETUP.md">AI_SETUP.md</a>。
 </details>
 
 <details><summary><b>股票只能用长桥吗？</b></summary>

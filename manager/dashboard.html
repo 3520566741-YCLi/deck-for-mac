@@ -928,6 +928,65 @@ html.skin-soft .kc-ic { background: var(--nm-bg); box-shadow: inset 3px 3px 6px 
 .kc-row .t { line-height: 1.35; }
 .kc-row .t small { font-size: 12px; }
 .btn.kc-go { min-width: 132px; }
+/* ---- 设置 → 助手（static/deck-assist.js）：改名字、声纹录入、唤醒测试。两套皮肤共用，新拟态的差异在下面 html.skin-soft 里 ---- */
+.as-box { padding: 0; }
+.as-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; min-height: 58px; }
+.as-row + .as-row { border-top: 1px solid var(--line); }
+.as-row > .btn { flex: none; }
+.as-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.as-t small { font-size: 12px; color: var(--text2); line-height: 1.45; }
+.as-t small .dot { display: inline-block; vertical-align: 1px; margin-right: 6px; }
+.as-tt { font-size: 15px; }
+.as-name { font-size: 18px; font-weight: 650; letter-spacing: -.2px; overflow-wrap: anywhere; }
+.as-quiet { flex-wrap: wrap; }
+.as-quiet .as-t { flex-basis: 220px; }
+.as-qa { display: flex; align-items: center; gap: 8px 10px; flex-wrap: wrap; }
+.as-qa .seg { min-width: 228px; }
+.as-sec { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.as-sec .field input { width: 100%; box-sizing: border-box; }
+.as-act { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.as-foot { margin: 0 2px; }
+.as-err { margin: 0 2px; }
+.as-bar, .as-meter { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.as-bar.thin { height: 6px; border-radius: 3px; }
+.as-bar i, .as-meter i { display: block; height: 100%; border-radius: inherit; background: var(--accent); transition: width .25s ease; }
+.as-meter i { background: linear-gradient(90deg, var(--ok), var(--accent)); transition: width .1s linear; }
+.as-hero { display: flex; align-items: center; gap: 14px; }
+.as-hero > b { font-size: 40px; font-weight: 640; letter-spacing: -.8px; line-height: 1.05; }
+.as-hero > span { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; min-width: 0; }
+.as-hero small { font-size: 13px; color: var(--text2); }
+.as-chip { font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 10px; white-space: nowrap; color: var(--text2); background: rgba(127,127,127,.14); }
+.as-chip.ok { color: var(--ok); background: color-mix(in srgb, var(--ok) 15%, transparent); }
+.as-chip.mid { color: var(--warn); background: color-mix(in srgb, var(--warn) 15%, transparent); }
+.as-chip.bad { color: var(--err); background: color-mix(in srgb, var(--err) 14%, transparent); }
+.as-kv { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 14px; }
+.as-kv span { color: var(--text2); min-width: 0; }
+.as-kv b { font-weight: 600; text-align: right; white-space: nowrap; }
+.as-steps { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 2px; }
+.as-step { width: 34px; height: 34px; border-radius: 17px; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text2);
+  background: var(--glass-hi); box-shadow: inset 0 0 0 1px var(--edge); }
+.as-step.opt { color: var(--text3); }
+.as-step.done { background: var(--ok); color: #fff; box-shadow: none; }
+.as-step.cur { box-shadow: inset 0 0 0 2px var(--accent); color: var(--text); }
+.as-step.done.cur { box-shadow: inset 0 0 0 2px var(--accent), inset 0 0 0 4px rgba(255,255,255,.55); }
+.as-stephd { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 10px; }
+.as-stephd b { font-size: 15px; font-weight: 600; }
+.as-prompt { font-size: 26px; font-weight: 640; letter-spacing: -.3px; line-height: 1.3; overflow-wrap: anywhere; }
+.as-prompt.sent { font-size: 18px; font-weight: 560; letter-spacing: 0; line-height: 1.55; }
+.as-ph { min-height: 1.5em; }
+.group.as-rec.live, .group.as-run.live { outline: 2px solid var(--accent); outline-offset: -2px; }
+.as-dots { display: flex; flex-wrap: wrap; gap: 7px; min-height: 12px; }
+.as-d { width: 12px; height: 12px; border-radius: 6px; background: var(--idle); }
+.as-d.ok { background: var(--ok); } .as-d.rej { background: var(--warn); } .as-d.bad { background: var(--err); }
+.as-d.miss { background: transparent; box-shadow: inset 0 0 0 2px var(--idle); }
+.as-big { font-size: 44px; font-weight: 640; letter-spacing: -.8px; line-height: 1.05; }
+html.skin-soft .as-step { background: var(--nm-bg); box-shadow: var(--nm-up-xs), var(--nm-rim); }
+html.skin-soft .as-step.done { background: var(--nm-bg); color: var(--ok); box-shadow: var(--nm-in-s); }
+html.skin-soft .as-step.cur { box-shadow: var(--nm-up-xs), inset 0 0 0 2px var(--accent); }
+html.skin-soft .as-step.done.cur { box-shadow: var(--nm-in-s), inset 0 0 0 2px var(--accent); }
+html.skin-soft .as-bar, html.skin-soft .as-meter { height: 10px; border-radius: 5px; background: var(--nm-bg); box-shadow: var(--nm-in-s); }
+html.skin-soft .as-bar.thin { height: 8px; border-radius: 4px; }
+html.skin-soft .as-row + .as-row { border-top-color: var(--line); }
 /* 工具箱里的搜索框、下拉框（deck-tools.js 写的是行内样式，所以要 !important） */
 html.skin-soft .sheet-b input[type="search"] { border: 0 !important; border-radius: 12px !important; background: var(--nm-bg) !important; box-shadow: var(--nm-in-s); outline: none; padding-left: 12px !important; padding-right: 10px !important; }
 html.skin-soft .sheet-b select { border: 0 !important; border-radius: 12px !important; background-color: var(--nm-bg) !important; box-shadow: var(--nm-up-xs); outline: none; }
@@ -1206,6 +1265,58 @@ html.skin-soft .dk-av { box-shadow: var(--nm-up-xs); }
 (function () {
 "use strict";
 var BOOT = /*__BOOT__*/{};
+// ---------- 助手的名字（11-08：设置 → 助手 里可以改）----------
+// 页面里写死的都是「Vesper」。名字改过时，把显示出来的文字、aria-label、title、placeholder 里的 Vesper 换成新名字；
+// 以后各处新加的「Vesper」文案也自动跟着换，不用每处改。另一个网页窗口（刘海 / 对话玻璃）改了名字，这里也跟着变。
+(function () {
+  var CUR = "Vesper", obs = null, prev = [];
+  var ATTRS = ["aria-label", "title", "placeholder"];
+  function fix(node) {
+    // 要换掉的：源码里的 Vesper 和这次打开后用过的旧名字，但不含现在的名字（不然换成自己会触发观察器、无限循环）
+    var olds = ["Vesper"].concat(prev).filter(function (x) { return x !== CUR; });
+    if (!olds.length) return;
+    // 前后不能紧挨着英文字母（不用 \b：中文名字没有词边界）
+    var re = new RegExp("(?<![A-Za-z])(" + olds.map(function (x) { return x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }).join("|") + ")(?![A-Za-z])", "g");
+    function txt(t) {
+      var p = t.parentNode;
+      if (!p || /^(SCRIPT|STYLE|TEXTAREA|INPUT)$/.test(p.nodeName) || (p.closest && p.closest("[data-keep-name]"))) return;
+      var v = t.nodeValue; if (v && re.test(v)) { re.lastIndex = 0; var nv = v.replace(re, CUR); if (nv !== v) t.nodeValue = nv; }
+      re.lastIndex = 0;
+    }
+    function el(e) {
+      if (e.closest && e.closest("[data-keep-name]")) return;
+      ATTRS.forEach(function (a) { var v = e.getAttribute && e.getAttribute(a); if (v && re.test(v)) { re.lastIndex = 0; var nv = v.replace(re, CUR); if (nv !== v) e.setAttribute(a, nv); } re.lastIndex = 0; });
+    }
+    if (node.nodeType === 3) return txt(node);
+    if (node.nodeType !== 1) return;
+    el(node);
+    var w = document.createTreeWalker(node, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT), n;
+    while ((n = w.nextNode())) { if (n.nodeType === 3) txt(n); else el(n); }
+  }
+  function set(name) {
+    if (!name || !/^[A-Za-z\u4e00-\u9fff]{2,12}$/.test(name) || name === CUR) return;
+    if (CUR !== "Vesper" && prev.indexOf(CUR) < 0) prev.push(CUR);
+    prev = prev.filter(function (x) { return x !== name; });
+    CUR = name;
+    try { localStorage.setItem("deck.aname", name); } catch (e) {}
+    if (document.title.indexOf("Vesper") >= 0) document.title = document.title.replace(/Vesper/g, name);
+    if (document.body) fix(document.body);
+    if (!obs && window.MutationObserver) {
+      obs = new MutationObserver(function (ms) {
+        ms.forEach(function (m) {
+          if (m.type === "characterData") fix(m.target);
+          else if (m.type === "attributes") fix(m.target);
+          else m.addedNodes.forEach(fix);
+        });
+      });
+      var go = function () { obs.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ATTRS }); fix(document.body); };
+      if (document.body) go(); else document.addEventListener("DOMContentLoaded", go);
+    }
+  }
+  window.addEventListener("storage", function (e) { if (e.key === "deck.aname" && e.newValue) set(e.newValue); });
+  window.DeckAName = { set: set, get: function () { return CUR; } };
+  set(BOOT.aname);
+})();
 var DEF_ORDER = ["system", "claude", "codex", "deepseek", "cleanup", "butler", "github", "tools", "makerworld"];
 var POLL_MS = 2000;
 var IN_APP = /[?&]app=1/.test(location.search); // 在 Fusion Workbench 应用窗口里打开
@@ -2041,13 +2152,14 @@ function openSheet(key) {
   $("sheet").classList.toggle("fixed-h", key === "__tools" || key === "__disk");  // 磁盘面板内容加载时高度不跳
   $("sheet").classList.toggle("gh-wide", key === "github");
   if (key === "github") GV.push = false;
-  if (key === "__settings") renderSettings(); else if (key === "__add") renderAdd(); else if (key === "__memory") renderMemory(); else if (key === "__proc") renderProc(); else if (key === "__disk") renderDisk(); else if (key === "__tools") DeckTools.render(); else renderDetail(key);
+  if (key === "__settings") renderSettings(); else if (key === "__add") renderAdd(); else if (key === "__memory") renderMemory(); else if (key === "__proc") renderProc(); else if (key === "__disk") renderDisk(); else if (key === "__tools") DeckTools.render(); else if (key === "__assist" && window.DeckAssist) DeckAssist.render(); else renderDetail(key);
   if (!$("sheet").classList.contains("show")) sfx("open");
   $("scrim").classList.add("show"); $("sheet").classList.add("show");
   setTimeout(function () { var sh = $("sheet"); sh.setAttribute("tabindex", "-1"); sh.focus({ preventScroll: true }); }, 50);
 }
 function closeSheet() {
   if (openKey === "__proc") procStop();
+  if (openKey === "__assist" && window.DeckAssist) DeckAssist.leave();
   if (openKey === "__disk") diskStop();
   openKey = null;
   if ($("sheet").classList.contains("show")) sfx("close");
@@ -2133,6 +2245,7 @@ function renderSettings() {
     '<div class="row-btn" style="padding:0 4px"><span style="flex:1">按键音效</span><button class="switch" role="switch" data-act="sfx" aria-checked="' + layout.sfx + '" aria-label="按键音效"></button></div>' +
     (layout.sfx ? seg("sfxVol", [["s", "轻"], ["m", "中"], ["l", "响"]]) + '<p class="note muted" style="padding:0 4px">夜里 23:00–7:00 自动减半；Vesper 在听、在说时不响。</p>' : "") +
     '<div class="row-btn" style="padding:0 4px"><span style="flex:1">减少动画</span><button class="switch" role="switch" data-act="reduce" aria-checked="' + layout.reduce + '" aria-label="减少动画"></button></div></div>' +
+    (BOOT.local ? '<div id="assistBox"></div>' : "") +
     (BOOT.local ? '<div id="fridayUsage"></div>' : "") +
     lan +
     '<div class="gtitle">小贴士</div><div class="group" style="padding:12px 14px"><p class="note">' + (IN_APP ? "换显示屏、铺满屏幕、开机自启：点菜单栏里的监控台图标。" : "iPad 一直亮屏：设置 → 显示与亮度 → 自动锁定 → 永不，并接上电源。") +
@@ -2140,6 +2253,7 @@ function renderSettings() {
   $("sheetBody").__html = null;
   if (BOOT.local && BOOT.lan && BOOT.pair_urls && BOOT.pair_urls.length) drawQR(BOOT.pair_urls[0]);
   if (typeof loadVoices === "function") loadVoices();
+  if (BOOT.local && window.DeckAssist) DeckAssist.box();
   if (BOOT.local) loadFridayUsage();
 }
 
@@ -3528,6 +3642,7 @@ window.DeckHost = { post: post, esc: esc, icon: icon, toast: toast, openSheet: o
 (function () {
   if (!BOOT.local || PANE) return;
   var s = document.createElement("script"); s.src = "/static/deck-tools.js"; document.head.appendChild(s);
+  var a = document.createElement("script"); a.src = "/static/deck-assist.js"; document.head.appendChild(a);  // 设置 → 助手
 })();
 // ================= 刘海模式（?app=1&notch=1，Deck 原生壳的刘海窗口里）=================
 // 和扩展屏同一个页面：卡片、Vesper、设置、语音全都照旧，只是装进刘海下面的抽屉。

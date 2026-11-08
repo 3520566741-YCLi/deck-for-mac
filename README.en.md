@@ -85,6 +85,12 @@ One web page, one set of features, wherever you like: **Settings → Display**, 
 | <img src="docs/images/toolbox-tools.png" alt="Toolbox · Tools · keyboard cleaning"> | <img src="docs/images/settings-display.png" alt="Settings · display mode"> |
 | Duration, black screen, trackpad too; unlock by holding the on-screen button 1 s, both ⌘ keys 2 s, the timer, or telling the assistant | Auto / External screen / Notch, same setting as the menu bar (UI is Chinese) |
 
+#### Assistant: your own name, your own voiceprint
+| Rename | Voiceprint |
+|:---:|:---:|
+| <img src="docs/images/settings-assistant.png" alt="Settings · Assistant · Name"> | <img src="docs/images/settings-voiceprint.png" alt="Settings · Assistant · Voiceprint"> |
+| English or Chinese names, with an optional pronunciation hint; "check" a name first, wake switches instantly | Step-by-step prompts that advance on their own; then test the wake rate and whether someone else can impersonate you (UI is Chinese) |
+
 #### Butler and GitHub: which app crashed, which repo went red
 | Butler | GitHub |
 |:---:|:---:|
@@ -125,6 +131,8 @@ Click **Watch → Custom → Releases** at the top right of the repo to get noti
 Your settings (`config.json`, `apps.json`), chat history, memories and voiceprint are never overwritten.
 
 ## What's new
+
+**v0.3.0** (2026-11-08): a new **Assistant** section in Settings: name the assistant yourself (English or Chinese, wake switches instantly), check a name before using it, guided voiceprint recording, and three wake / voiceprint tests.
 
 **v0.2.0** (2026-11-08): a new **Tools** tab in the toolbox with **keyboard cleaning** (lock the keyboard to wipe it, optional black screen / trackpad lock, several unlock paths, recovers even if the process hangs); the display mode (Auto / External screen / Notch) can now be switched in Settings.
 
@@ -180,7 +188,7 @@ Apple silicon only for now (M1 and later): the native shell is built for arm64 a
 
 <details><summary><b>Can I rename the assistant?</b></summary>
 
-Yes: edit <code>wake_name.txt</code> and record your voiceprint again. See <a href="AI_SETUP.en.md">AI_SETUP.en.md</a>.
+Yes, in Deck Settings → Assistant (English or Chinese names). You can "check" a name first to see how easy it is to wake; then re-record the voiceprint and run the wake tests in the same place. See <a href="AI_SETUP.en.md">AI_SETUP.en.md</a>.
 </details>
 
 <details><summary><b>Only Longbridge for stocks?</b></summary>

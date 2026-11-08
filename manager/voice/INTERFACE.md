@@ -11,7 +11,8 @@
   `window.DeckVoice = { on(type, cb), mic(on), listen(), stop(), say(text, done), status() }`，内部用 EventSource 连 8778。
   字幕、对话气泡、边缘光都由文字对话线程画在 Deck 的对话面板里。`server.py` 只负责把 `/static/deck-voice.js` 原样发出去。
 - 8778 的 CORS 只允许 `http://127.0.0.1:8777` 和 `http://localhost:8777`；只听 127.0.0.1。
-- 声纹录入：唤醒线程写 `service/enroll.py` + 录入页面，由 service 的 HTTP 挂在 `GET /voiceprint`（识别线程在 service/server.py 里留一行挂载）。Deck 设置里用 iframe 打开它。录入时录音也走 helper 的音频（`hub.subscribe_audio`），不要另开麦。
+- 声纹录入：唤醒线程写 `service/enroll.py` + 录入页面，由 service 的 HTTP 挂在 `GET /voiceprint`（识别线程在 service/server.py 里留一行挂载）。Deck 设置里用 iframe 打开它。
+- 11-08 起：Deck 设置 →「助手」直接调 `/enroll/api/*` 和 `/assist/*`（改名、名字体检、唤醒/声纹测试，见 `service/assist.py` 和 `service/WAKE.md`），不再用 iframe。录入时录音也走 helper 的音频（`hub.subscribe_audio`），不要另开麦。
 - 唤醒后流程：`wake`（speaker_ok=true）→ hub 进入 listening，开 Apple 实时字幕 → 说完 → `user.final` → 页面调 `/api/chat` 问 Vesper → 页面把回答增量 `POST /assistant` → TTS 按句播报 → `assistant.done` 后回到 idle。`speaker_ok=false` 不进入 listening。
 - 「停」：任何时候 `stop` → 页面中止 `/api/chat`（AbortController），helper 清空播放队列。
 

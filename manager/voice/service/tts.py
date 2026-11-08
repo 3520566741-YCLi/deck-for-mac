@@ -66,6 +66,18 @@ DEFAULTS = {"voice": "design:D1", "speed": 1.0, "instruct": ""}  # 试听后定�
 FALLBACK_VOICES = ["design:D1", "qwen:Vivian"]  # 选的音色没装时按顺序退
 
 
+def _aname() -> str:
+    """助手现在叫什么（Deck 设置里可以改）。"""
+    try:
+        from . import voicepaths as P
+    except ImportError:
+        try:
+            import voicepaths as P
+        except ImportError:
+            return "Vesper"
+    return P.NAME
+
+
 def load_config() -> dict:
     cfg = dict(DEFAULTS)
     try:
@@ -798,7 +810,7 @@ def http(method: str, path: str, body: bytes | None = None):
         vid = data.get("voice")
         if vid and vid not in VOICES:
             return 404, "application/json", b'{"error":"unknown voice"}'
-        text = (data.get("text") or "你好，我是 Vesper。今天想让我帮你做点什么？")[:200]
+        text = (data.get("text") or "你好，我是 %s。今天想让我帮你做点什么？" % _aname())[:200]
         sr, pcm = synth(text, vid, data.get("speed"))
         if data.get("play"):
             hub and hub.play(pcm, sr)

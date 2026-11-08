@@ -278,6 +278,7 @@ def _load_modules():
         ("stopword", lambda m: m.start()),
         ("wake", lambda m: m.start(hub)),
         ("enroll", lambda m: m.register(hub)),
+        ("assist", lambda m: m.register(hub)),  # Deck 设置 → 助手：改名、名字体检、唤醒/声纹测试
         ("tts", lambda m: m.start()),
         ("earcon", lambda m: m.start()),  # 开/关提示音
         ("barge", lambda m: m.start()),  # 开口打断：先暂停后决定

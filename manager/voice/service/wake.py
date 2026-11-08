@@ -16,8 +16,9 @@ from pathlib import Path
 import numpy as np
 
 try:
-    from . import speaker, voicepaths as P
+    from . import names, speaker, voicepaths as P
 except ImportError:  # wake_cli.py 直接运行
+    import names
     import speaker
     import voicepaths as P
 
@@ -74,20 +75,34 @@ NAME_ZH = {"KIRA": "琪拉", "LUNA": "露娜", "NOVA": "诺娃", "MIA": "米娅"
            "VESPER": "维斯帕"}
 
 
-def _token_variants(phrase, phones, limit=8):
-    """英文词可能有几种读法（Kira：K IY1 R AH0 / K IH1 R AH0 / q í l ā），每种组合各写一行，命中哪个都算。"""
+def _token_variants(phrase, phones, limit=8, name=None, hint=None):
+    """英文词可能有几种读法（Kira：K IY1 R AH0 / K IH1 R AH0 / q í l ā），每种组合各写一行，命中哪个都算。
+    11-08：名字可以由用户随便起。词典里没有的名字按规则猜读法（names.rules_g2p），用户填了读法提示的排最前。"""
     import itertools
     import re
+    name = P.NAME if name is None else name
+    hint = getattr(P, "NAME_HINT", "") if hint is None else hint
     parts = re.findall(r"[\u4e00-\u9fff]+|[A-Za-z']+", phrase)
     choices = []
     for part in parts:
+        is_name = part.upper() == name.upper() or part == name
         if re.match(r"[\u4e00-\u9fff]", part):
+            # 中文前缀（你好）和中文名字（你好小美）粘在一起：把名字单独拆出来，好加读法提示
+            if name in part and CJK_NAME(name):
+                pre = part[: part.index(name)]
+                if pre:
+                    choices.append([_tokens(pre)])
+                nm = [_tokens(name)] + [h for h in names.hint_prons(hint) if h != _tokens(name)]
+                choices.append(nm[:3])
+                continue
             toks = _tokens(part)
             if toks is None:
                 return []
             choices.append([toks])
         else:
             extra = list(EXTRA_PRONS.get(part.upper(), []))
+            if is_name:
+                extra = [h for h in names.hint_prons(hint) if h not in extra] + extra
             zh = NAME_ZH.get(part.upper())
             if zh and part.upper() not in EXTRA_PRONS:
                 extra.append(_tokens(zh))
@@ -95,16 +110,27 @@ def _token_variants(phrase, phones, limit=8):
             for x in (phones or {}).get(part.upper()) or []:
                 if x not in prons:
                     prons.append(x)
+            if is_name and not (phones or {}).get(part.upper()):
+                for x in names.rules_g2p(part, 3):   # 词典里没有的名字：按拼写猜
+                    if x not in prons:
+                        prons.append(x)
+                extra = extra or prons[:1]
             if not prons:
                 return []
             # 自己写的几种全要，再加词典里的第一种（KIRA 在 en.phone 里是 K IH1 R AA0）
             choices.append(prons[:len(extra) + 1] if extra else prons[:2])
     out = []
     for combo in itertools.product(*choices):
-        out.append([t for toks in combo for t in toks])
+        toks = [t for toks in combo for t in toks]
+        if toks not in out:          # 读法提示和内置中文念法一样时（Mochi / 莫奇）别写两行
+            out.append(toks)
         if len(out) >= limit:
             break
     return out
+
+
+def CJK_NAME(name):
+    return bool(re.search(r"[\u4e00-\u9fff]", name or ""))
 
 
 def _tokens(phrase, phones=None):
@@ -126,23 +152,16 @@ def _tokens(phrase, phones=None):
     return out
 
 
-def ensure_keywords(threshold, score, threshold_en=None, score_en=None):
-    """生成 keywords-wake.txt，例：n ǐ h ǎo K IY1 R AH0 :2.0 #0.15 @你好Kira"""
-    out = P.KWS_DIR / "keywords-wake.txt"
+def build_keywords(words, main, threshold, score, threshold_en=None, score_en=None, name=None, hint=None):
+    """把叫法列表变成 sherpa 关键词文件的内容。返回 (内容, 主唤醒词有几种读法)。"""
     vocab = {ln.split()[0] for ln in (P.KWS_DIR / "tokens.txt").read_text(encoding="utf-8").splitlines() if ln.strip()}
     body = ""
-    phones = {}
-    lex = P.KWS_DIR / "en.phone"
-    if lex.exists():
-        for ln in lex.read_text(encoding="utf-8").splitlines():
-            t = ln.split()
-            if len(t) >= 2:
-                prons = phones.setdefault(re.sub(r"\(\d+\)$", "", t[0].upper()), [])  # CMU 的 FRIDAY(1) 算同一个词
-                if t[1:] not in prons:
-                    prons.append(t[1:])
-    for w in getattr(P, "WAKE_WORDS", [P.WAKE_WORD]):
+    phones = names.lexicon()
+    name = P.NAME if name is None else name
+    main_n = 0
+    for w in words:
         en = re.search(r"[A-Za-z]", w) is not None
-        variants = _token_variants(w, phones) if en else [_tokens(w)]
+        variants = _token_variants(w, phones, name=name, hint=hint) if (en or CJK_NAME(name)) else [_tokens(w)]
         if not variants or variants[0] is None:
             print(f"[wake] 「{w}」里有词不在英文音素表里，跳过", flush=True)
             continue
@@ -158,8 +177,17 @@ def ensure_keywords(threshold, score, threshold_en=None, score_en=None):
                 continue
             body += " ".join(toks) + f" :{sc} #{th} @{label}\n"
             n += 1
-        if n == 0 and w == P.WAKE_WORD:
-            raise FileNotFoundError(f"主唤醒词「{w}」没有一种读法在模型词表里")
+        if w == main:
+            main_n = n
+    return body, main_n
+
+
+def ensure_keywords(threshold, score, threshold_en=None, score_en=None):
+    """生成 keywords-wake.txt，例：n ǐ h ǎo K IY1 R AH0 :2.0 #0.15 @你好Kira"""
+    out = P.KWS_DIR / "keywords-wake.txt"
+    body, main_n = build_keywords(getattr(P, "WAKE_WORDS", [P.WAKE_WORD]), P.WAKE_WORD, threshold, score, threshold_en, score_en)
+    if main_n == 0:
+        raise FileNotFoundError(f"主唤醒词「{P.WAKE_WORD}」没有一种读法在模型词表里")
     if not out.exists() or out.read_text(encoding="utf-8") != body:
         out.write_text(body, encoding="utf-8")
     return str(out)
@@ -169,20 +197,62 @@ _spotter = None
 _spot_lock = threading.Lock()
 
 
+def make_spotter(keywords_file):
+    import sherpa_onnx
+    s = settings()
+    return sherpa_onnx.KeywordSpotter(
+        tokens=str(P.KWS_DIR / "tokens.txt"),
+        encoder=P.kws_file("encoder*chunk-16*int8.onnx", "encoder*int8.onnx", "encoder*.onnx"),
+        decoder=P.kws_file("decoder*chunk-16*.onnx", "decoder*.onnx"),
+        joiner=P.kws_file("joiner*chunk-16*int8.onnx", "joiner*int8.onnx", "joiner*.onnx"),
+        keywords_file=keywords_file,
+        num_threads=1, max_active_paths=4, num_trailing_blanks=1,
+        keywords_score=s["kws_score"], keywords_threshold=s["kws_threshold"], provider="cpu")
+
+
 def spotter():
     global _spotter
     if _spotter is None:
-        import sherpa_onnx
         s = settings()
-        _spotter = sherpa_onnx.KeywordSpotter(
-            tokens=str(P.KWS_DIR / "tokens.txt"),
-            encoder=P.kws_file("encoder*chunk-16*int8.onnx", "encoder*int8.onnx", "encoder*.onnx"),
-            decoder=P.kws_file("decoder*chunk-16*.onnx", "decoder*.onnx"),
-            joiner=P.kws_file("joiner*chunk-16*int8.onnx", "joiner*int8.onnx", "joiner*.onnx"),
-            keywords_file=ensure_keywords(s["kws_threshold"], s["kws_score"], s["kws_threshold_en"], s["kws_score_en"]),
-            num_threads=1, max_active_paths=4, num_trailing_blanks=1,
-            keywords_score=s["kws_score"], keywords_threshold=s["kws_threshold"], provider="cpu")
+        _spotter = make_spotter(ensure_keywords(s["kws_threshold"], s["kws_score"], s["kws_threshold_en"], s["kws_score_en"]))
     return _spotter
+
+
+def check_name(name, hint=""):
+    """改名前先看唤醒模型念不念得出来。返回 (主唤醒词的读法数, 示例读法)。不改任何东西。"""
+    s = settings()
+    zh, en = P.phrases(name)
+    body, n = build_keywords(zh[:1] + en[:1], "你好" + name, s["kws_threshold"], s["kws_score"],
+                             s["kws_threshold_en"], s["kws_score_en"], name=name, hint=hint)
+    first = body.splitlines()[0].split(" :")[0] if body else ""
+    return n, first
+
+
+def rename(name, hint=""):
+    """改名：写文件 → 重建关键词和唤醒模型（当场生效，不用重启服务）→ 第二条路换成新名字。
+    新模型建不起来就退回旧名字，绝不让唤醒整个挂掉。"""
+    global _spotter
+    old = (P.NAME, getattr(P, "NAME_HINT", ""))
+    P.save_name(name, hint)
+    try:
+        with _spot_lock:
+            _spotter = None
+            sp = spotter()
+            if engine is not None:
+                engine.kws = sp
+                engine.stream = sp.create_stream()
+                engine._since_reset = 0
+    except Exception:
+        P.save_name(*old)
+        with _spot_lock:
+            _spotter = None
+            sp = spotter()
+            if engine is not None:
+                engine.kws = sp
+                engine.stream = sp.create_stream()
+        raise
+    _reset_matcher()
+    return P.NAME
 
 
 def spot_offline(samples):
@@ -266,6 +336,7 @@ class WakeEngine:
         self.last_kws_total = -10 ** 12     # 最近一次 KWS 命中时 ring.total（第二条路据此避免重复）
         self.asr_path = AsrWake(self) if self.cfg.get("asr_wake", True) else None
         self.health = {"ok": True, "problems": [], "t": None}
+        self.tap = None                     # 唤醒测试（Deck 设置 → 助手）：结果交给它，不真的唤醒
         self._t = threading.Thread(target=self._run, name="friday-wake", daemon=True)
         self._t.start()
         threading.Thread(target=self._health_loop, name="wake-health", daemon=True).start()
@@ -370,7 +441,7 @@ class WakeEngine:
             return
         start, how = self._segment_start(ts)
         self.pending = {"kw": kw, "start": start, "until": self.ring.total + int(0.15 * SR), "how": how, "t": now}
-        if self.cfg.get("early_listen", True) and state == "idle":
+        if self.cfg.get("early_listen", True) and state == "idle" and self.tap is None:
             # 先开始听（提示音、窗口马上出来），声纹 0.2 秒后核对；没过会再发 wake(speaker_ok=False) 取消
             self.emit({"type": "wake.hit", "kws": (kw or P.WAKE_WORD).replace("_", " ")})
 
@@ -418,10 +489,20 @@ class WakeEngine:
             ok, r, soft, lang = best
             info.update(score=r["score"], td=r["td"], ti=r["ti"], threshold=r["threshold"], enrolled=True,
                         strict_ok=r["ok"], lang=lang, pool=r.get("pool"), soft=soft)
-            if r["ok"] and prof.maybe_adapt(e, r["score"], lang):
+            if r["ok"] and self.tap is None and prof.maybe_adapt(e, r["score"], lang):  # 测试时绝不补录（可能是别人在试）
                 info["adapted"] = True
         info.update(p.get("extra") or {})
         info["latency_ms"] = int((time.time() - p["t"]) * 1000)
+        tap = self.tap
+        if tap is not None:
+            # 测试中：只记结果，不唤醒、不补录声纹。冷却短一点，下一遍马上能测
+            self.cool_until = time.time() + 0.8
+            self._log(dict(info, ok=ok, event="test"))
+            try:
+                tap(dict(info, ok=ok, path=p.get("path") or "kws"))
+            except Exception:  # noqa: BLE001
+                pass
+            return
         self.cool_until = time.time() + (self.cfg["cooldown_s"] if ok else self.cfg["reject_cooldown_s"])
         ev = {"type": "wake", "speaker_ok": ok, "score": info.get("score"), "enrolled": info["enrolled"],
               "kws": (p["kw"] or P.WAKE_WORD).replace("_", " ")}
@@ -453,11 +534,15 @@ class WakeEngine:
         if a["ok"] and self.last_processed and time.time() - self.last_processed > 5:
             problems.append("唤醒检测卡住了（声音在进来，但没在处理）")
         clip = _selftest_clip()
+        prof = speaker.profile()
+        # 改过名字、声纹还是按旧名字录的：那段录音里说的是旧名字，拿它测新名字必然「认不出」，先不测（设置里会提示重录）
+        if clip is not None and prof.enrolled and prof.meta.get("wake_word", "你好星期五") != P.WAKE_WORD:
+            clip = None
         if clip is not None:
             kw, _ = spot_offline(clip)
             asr_hit = self.asr_path.match_clip(clip) if self.asr_path is not None else None
             if not kw and not asr_hit:
-                problems.append("拿你的录音自测，两条唤醒路都没认出「Vesper」")
+                problems.append(f"拿你的录音自测，两条唤醒路都没认出「{P.NAME}」")
         health = {"ok": not problems, "problems": problems, "t": time.strftime("%H:%M:%S"),
                   "asr_path": self.asr_path is not None and self.asr_path.ready}
         return health
@@ -518,10 +603,28 @@ _CJK = re.compile(r"[一-鿿]")
 _GREET = re.compile(r"(你好|您好|嘿|嗨|哈喽|喂|早上好|晚上好|在吗|HEY|HI\b|HELLO|OK\b|OKAY|GOOD)")
 
 
-def match_name(text):
-    """SenseVoice 的结果里有没有在叫她。返回 (名字结束在第几个字符, 名字前面的话, 后面的话) 或 None。"""
-    t = (text or "").upper()
-    t = re.sub(r"[，。！？、,.!?;；:：\"'“”‘’]", " ", t)
+_matcher = None
+_matcher_lock = threading.Lock()
+
+
+def _reset_matcher():
+    global _matcher
+    with _matcher_lock:
+        _matcher = None
+
+
+def matcher():
+    """当前名字的认名器（名字 + 读法提示 + 录入时学到的写法）。改名或录完声纹后会重建。"""
+    global _matcher
+    with _matcher_lock:
+        if _matcher is None or _matcher.name != P.NAME:
+            _matcher = names.Matcher(P.NAME, getattr(P, "NAME_HINT", ""), names.load_aliases(P.NAME),
+                                     min_sim=settings().get("name_match_min", 0.8))
+        return _matcher
+
+
+def _match_vesper(t):
+    """11-08 按用户真人录音调好的 Vesper 专用写法，名字还是 Vesper 时继续用（不让他的唤醒率变差）。"""
     for m in list(_NAME_ZH.finditer(t)) + [m for m in _NAME_EN.finditer(t) if m.group(1) not in _NAME_EN_NOT]:
         before, after = t[:m.start()].strip(), t[m.end():].strip()
         words = [w for w in re.split(r"\s+", re.sub(r"[一-鿿]", " ", before)) if w]
@@ -530,6 +633,20 @@ def match_name(text):
         if cjk <= 4 and len(words) <= 2 and cjk + len(words) <= 4:
             return m.end(), before, after
     return None
+
+
+def match_name(text):
+    """SenseVoice 的结果里有没有在叫她。返回 (名字结束在第几个字符, 名字前面的话, 后面的话) 或 None。"""
+    t = (text or "").upper()
+    t = re.sub(r"[，。！？、,.!?;；:：\"'“”‘’]", " ", t)
+    if P.NAME.upper() == "VESPER":
+        hit = _match_vesper(t)
+        if hit:
+            return hit
+    try:
+        return matcher().find(t)
+    except Exception:  # noqa: BLE001  认名器出错不能影响第一条路
+        return None
 
 
 class AsrWake:

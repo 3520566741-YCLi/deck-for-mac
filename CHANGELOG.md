@@ -3,6 +3,41 @@
 版本号规则：小修小补升第三位（0.1.0 → 0.1.1），加新功能升第二位（0.1.x → 0.2.0）。旧版本一直保留在 [Releases](../../releases)。
 Versioning: fixes bump the patch number (0.1.0 → 0.1.1), new features bump the minor number (0.1.x → 0.2.0). Every old version stays on the [Releases](../../releases) page.
 
+## v0.3.0 · 2026-11-08
+
+新功能：助手名字自己起，声纹录入和唤醒测试搬进 Deck。
+New: name the assistant yourself; voiceprint recording and wake tests inside Deck.
+
+**新增 / Added**
+
+- 设置 →「助手」→「名字」：英文 3–12 个字母或 2–4 个汉字，可填读法提示（中文谐音或英文单词）。保存后唤醒当场换，不用重启；页面上的名字和大模型人设自动跟着变。Siri、Alexa、小爱这类别的助手的名字不收。
+  Settings → Assistant → Name: 3–12 English letters or 2–4 Chinese characters, with an optional pronunciation hint. Wake switches immediately without a restart; the name on the page and the LLM persona follow. Names of other assistants (Siri, Alexa…) are refused.
+- 「名字体检」：用 macOS 合成声音把各种叫法说一遍、再混进 28 句普通聊天，看两条唤醒路各认出几成、会不会误认。
+  "Check this name": macOS synthetic voices say every wake phrase plus 28 ordinary sentences, showing how often each wake path catches the name and whether it misfires.
+- 「声纹」：原来 8778/enroll 的引导录入搬进 Deck（新拟态和液态玻璃两套皮肤），录好一遍自动跳下一步；中文名字没有英文那几步。
+  Voiceprint: the guided recording from 8778/enroll now lives in Deck (neumorphic and Liquid Glass skins) and moves to the next step automatically; Chinese names skip the English steps.
+- 「测试」：自己叫 10 遍（唤醒率 + 声纹通过率）、请别人叫 10 遍（会不会被冒充）、安静听 1 / 3 / 5 分钟（会不会误醒）。
+  Tests: say it 10 times (wake rate and voiceprint pass rate), have someone else say it 10 times (impersonation), or listen quietly for 1 / 3 / 5 minutes (false wakes).
+
+**怎么实现 / How it works**
+
+- 读法：先查唤醒模型自带的 CMU 词典；查不到的名字按简化的字母发音规则（思路来自公有领域的 NRL 规则）猜几种读法；读法提示排最前（`manager/voice/service/names.py`）。
+  Pronunciation: the wake model's CMU lexicon first; unknown names get a few guesses from simplified letter-to-sound rules (after the public-domain NRL rules); the hint goes first.
+- 第二条唤醒路认名字：名字和识别结果都换成「粗音标」再比相似度，常用英文词要几乎一样才算；录声纹时识别器把名字写成什么会记下来。
+  The second wake path compares a coarse phonetic key of the name and the transcript; common English words must match almost exactly; spellings the recognizer produced during enrollment are remembered.
+
+**安全和稳定 / Safety and stability**
+
+- 测试时结果只交给测试、不真的唤醒，也绝不拿测试时的声音补录声纹（可能是别人）；测试最长 12 分钟自动结束。
+  Tests never actually wake the assistant and never adapt the voiceprint (it might be someone else); a test ends after 12 minutes at most.
+- 录入期间唤醒暂停，网页关了没退出时 15 分钟自动收尾；改名失败自动退回原名。
+  Wake is paused while enrolling; if the page is closed mid-way it cleans up after 15 minutes. A failed rename falls back to the old name.
+- 英文词典按需查，不整份读进内存（省约 60 MB）。
+  The English lexicon is looked up on demand instead of loaded whole (saves about 60 MB).
+
+**更新 / Updating**：拉代码后重启语音服务（`pkill -f service.server`，DeckVoice 会重新拉起）和 Deck。
+After pulling, restart the voice service (`pkill -f service.server`; DeckVoice starts it again) and Deck.
+
 ## v0.2.0 · 2026-11-08
 
 新功能：键盘清洁；设置页切换显示方式。

@@ -19,8 +19,8 @@ SILERO_VAD = MODELS / "silero_vad" / "silero_vad.onnx"  # 和识别线程共用�
 VOICEPRINT = HOME / "voiceprint"
 WAKE_LOG = Path.home() / "Library" / "Logs" / "Deck" / "friday-wake.jsonl"  # 文件名沿用，别的工具在读
 
-# 助手的名字（：只用英文名；Kira → Vesper）。改名只改这里（或 HOME/wake_name.txt 写一行），重启语音服务生效，
-# 然后到 8778/enroll 按新名字重录。名字的读法见 wake.EXTRA_PRONS / wake.NAME_ZH。
+# 助手的名字（：只用英文名；Kira → Vesper）。11-08 起在 Deck 设置 →「助手」里直接改（写 HOME/wake_name.txt，
+# 唤醒模型当场重建，不用重启），改完按新名字重录声纹。读法见 names.py（词典 + 规则 + 用户填的读法提示）。
 ZH_PREFIXES = ["你好", "嘿", "嗨", "哈喽", "你好呀", "喂", "在吗", "醒醒", "早上好", "早安", "下午好", "晚上好"]
 EN_PREFIXES = ["hey", "hi", "hello", "okay", "ok", "yo", "hey there", "good morning", "good afternoon",
                "good evening", "wake up"]
@@ -29,23 +29,46 @@ EN_PREFIXES = ["hey", "hi", "hello", "okay", "ok", "yo", "hey there", "good morn
 
 
 def phrases(name):
+    """名字 → 中文叫法、英文叫法。中文名字（小美）只配中文前缀：英文前缀 + 汉字在唤醒模型里读不准。"""
+    if any("\u4e00" <= c <= "\u9fff" for c in name):
+        return [p + name for p in ZH_PREFIXES], []
     return [p + name for p in ZH_PREFIXES], [f"{p} {name.lower()}" for p in EN_PREFIXES]
 
 
-def _name():
+DEFAULT_NAME = "Vesper"  # 选定（合成声音测 41 个候选，少见名字里它最好叫醒：约 72%，零误唤醒）
+
+
+def _read_name():
+    """wake_name.txt：第一行名字，第二行（可选）读法提示，例如「维斯帕」或「vest per」。"""
     try:
-        n = (HOME / "wake_name.txt").read_text(encoding="utf-8").strip()
+        lines = (HOME / "wake_name.txt").read_text(encoding="utf-8").splitlines()
+        n = lines[0].strip() if lines else ""
         if n:
-            return n
+            return n, (lines[1].strip() if len(lines) > 1 else "")
     except Exception:
         pass
-    return "Vesper"  # 选定（合成声音测 41 个候选，少见名字里它最好叫醒：约 72%，零误唤醒）
+    return DEFAULT_NAME, ""
 
 
-NAME = _name()
-WAKE_WORD = "你好" + NAME
-WAKE_WORDS_ZH, WAKE_WORDS_EN = phrases(NAME)
-WAKE_WORDS = WAKE_WORDS_ZH + WAKE_WORDS_EN
+def _apply(name, hint):
+    global NAME, NAME_HINT, WAKE_WORD, WAKE_WORDS_ZH, WAKE_WORDS_EN, WAKE_WORDS
+    NAME, NAME_HINT = name, hint
+    WAKE_WORD = "你好" + NAME
+    WAKE_WORDS_ZH, WAKE_WORDS_EN = phrases(NAME)
+    WAKE_WORDS = WAKE_WORDS_ZH + WAKE_WORDS_EN
+
+
+_apply(*_read_name())
+
+
+def save_name(name, hint=""):
+    """写 wake_name.txt 并更新本模块里的名字（调用方负责重建唤醒模型，见 wake.rename）。
+    别的进程（Deck 管家 8777）每次用到名字时自己读这个文件。"""
+    HOME.mkdir(parents=True, exist_ok=True)
+    tmp = HOME / "wake_name.txt.tmp"
+    tmp.write_text(name + ("\n" + hint if hint else "") + "\n", encoding="utf-8")
+    tmp.replace(HOME / "wake_name.txt")
+    _apply(name, hint)
 
 
 def kws_file(*patterns):
