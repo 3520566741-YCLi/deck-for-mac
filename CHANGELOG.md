@@ -3,6 +3,24 @@
 版本号规则：小修小补升第三位（0.1.0 → 0.1.1），加新功能升第二位（0.1.x → 0.2.0）。旧版本一直保留在 [Releases](../../releases)。
 Versioning: fixes bump the patch number (0.1.0 → 0.1.1), new features bump the minor number (0.1.x → 0.2.0). Every old version stays on the [Releases](../../releases) page.
 
+## v0.2.1 · 2026-11-08
+
+### 修复 / Fixed
+
+- 日报里的股价不会再写错：编稿时把长桥自选的实时行情交给编辑，规定现价只能用行情里的数字；编完逐句核对口播和各栏标题摘要，和行情差 3% 以上的股价所在的句子自动删掉（目标价、市值、营收、产品售价不受影响）。拿不到行情时不写具体股价。
+  Stock prices in the daily brief are now checked: the editor gets your Longbridge watchlist's live quotes and may only use those for current prices; afterwards every sentence in the script and headlines is checked, and any stock price more than 3% off the quotes is removed (target prices, market caps, revenue and product prices are left alone). Without quotes, no specific prices are written.
+- 重启 Deck 时，还在念的日报会停下来。以前语音服务会接着念，新页面不知道，再按播放就叠成两遍。
+  Restarting Deck now stops a brief that was still being read. Before, the voice service kept reading, the new page didn't know, and pressing play doubled it.
+- 服务端日志改成按行写入，不会再卡在缓冲里或在进程退出时丢失。
+  Server logs are now line-buffered, so they no longer sit in a buffer or get lost when the process exits.
+- 助手强制调用工具被模型接口拒绝时会记一行日志。
+  The assistant now logs when the model API rejects a forced tool call.
+
+### 更新 / Updating
+
+拉取新代码后重启 Deck（退出 Deck → 结束 8777 上的 server.py → 重新打开）。下一期日报开始生效。
+Pull the new code and restart Deck (quit Deck → stop server.py on port 8777 → reopen). Takes effect from the next issue of the brief.
+
 ## v0.2.0 · 2026-11-08
 
 这一版合并了原先分开准备的 0.2.0 和 0.3.0（都没正式发布过），一起发布：助手能读日报、能操作 Deck 的全部功能；每个按钮都有按压反馈和音效；键盘清洁；助手名字和声纹在 Deck 里自己设；设置页切换显示方式。

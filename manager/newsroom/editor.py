@@ -12,6 +12,8 @@ import urllib.error
 import urllib.request
 from datetime import datetime, timedelta, timezone
 
+from . import prices
+
 BJ = timezone(timedelta(hours=8))
 
 # 元 / 百万 tokens（非高峰价；高峰 ×2）。来源：DeepSeek 8 月公布的分时定价（TechNode 转述），开工前以官方价格页为准，可在 config.json 的 news.price 覆盖。
@@ -71,6 +73,10 @@ SYSTEM = """你是「{title}」的总编辑，给一位读者编一份个人科�
   先写口播、在 script_ids 里列出讲了哪些 id；再选 briefs 时优先挑口播没讲的事，和 script_ids 最多重合 2 条。重合的那两件，口播里要讲跑马灯标题以外的细节。
 - 他在长桥只授权了自选，不知道他的持仓：说「你的自选」，不要说「你的持仓」「你持有的」。
 - 不要念网址和英文缩写的全称；每句不超过 60 个字，方便逐句高亮。
+- 股价：用户消息末尾有长桥自选的实时行情。提到自选股的现价、涨跌只能用那里的数字；新闻里的股价可能是几天前的，不要照抄，也不要自己估算。
+  分析师目标价可以引用候选新闻，但要说清是目标价。没给行情时不要写任何具体股价。写错的价格会被程序整句删掉。
+- 自选股的行情单独成句，不要硬接在别的新闻后面（例如不要把「月球基地」和「你的自选涨了多少」放进一句）。
+- 不写没有信息量的句子，比如「这边细节太少，我不展开」：没东西可讲的栏目就直接跳过。
 """
 
 
@@ -276,8 +282,9 @@ def assemble(ed, keep, raw_items):
     return out
 
 
-def edit(items, key, cfg, log=print):
-    """跑一次编辑。返回 (edition_body, meta)。"""
+def edit(items, key, cfg, log=print, market=None):
+    """跑一次编辑。返回 (edition_body, meta)。market 是长桥快照（market.json），用来给编辑报价、编完核对股价。"""
+    snap = prices.snapshot(market)
     interests = cfg.get("interests") or DEFAULT_INTERESTS
     system = SYSTEM.format(interests=interests, title=cfg.get("title") or DEFAULT_TITLE)
     lines, keep = pack_candidates(items, int(cfg.get("max_candidates", 170)))
@@ -287,12 +294,18 @@ def edit(items, key, cfg, log=print):
     hello = "早上好" if now.hour < 11 else "中午好" if now.hour < 13 else "下午好" if now.hour < 18 else "晚上好"
     user = "现在是 %s（北京时间，口播稿开头说「%s」）。候选共 %d 条：\n%s" % (
         now.strftime("%Y年%m月%d日 %A %H:%M"), hello, len(keep), lines)
+    user += "\n\n" + prices.prompt_block(snap, (market or {}).get("updated"))
     t0 = time.time()
     ed, usage, model = call_deepseek(key, cfg, system, user)
     body = assemble(ed, keep, items)
+    fixes = prices.check_edition(body, snap)
+    for f in fixes:
+        log("[news] 股价核对：" + f)
     peak = is_peak(now)
     meta = {"model": model, "usage": usage, "cost": cost_cny(usage, cfg.get("price"), peak), "peak": peak,
             "seconds": round(time.time() - t0, 1), "candidates": len(keep)}
+    if fixes:
+        meta["price_fixes"] = fixes[:20]
     return body, meta
 
 
@@ -302,10 +315,11 @@ INVEST_SYSTEM = """你帮用户看自选股相关的新闻。给你一批新闻�
 这些股票是他的自选，不代表他持有：说「你的自选」，不要说「你的持仓」「你持有的」。"""
 
 
-def tag_invest(stock_items, key, cfg):
+def tag_invest(stock_items, key, cfg, market=None):
     lines, keep = pack_candidates(stock_items, 40)
     if not keep:
         return [], {}
     ed, usage, model = call_deepseek(key, cfg, INVEST_SYSTEM, lines, max_tokens=1500, timeout=90)
     out = assemble({"invest": ed.get("invest")}, keep, [])["invest"]
+    prices.check_edition({"invest": out}, prices.snapshot(market))
     return out, {"model": model, "usage": usage, "cost": cost_cny(usage, cfg.get("price"), is_peak())}

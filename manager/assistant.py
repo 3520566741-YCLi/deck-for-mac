@@ -804,8 +804,10 @@ class Friday:
             except urllib.error.HTTPError as e:
                 if e.code == 400 and force_tool and not retried_plain:
                     # 带 tool_choice 被拒：去掉重发一次；报错里点名 tool_choice 才记住以后都不带（别因为别的 400 永久关掉）
-                    if b"tool_choice" in (e.read(800) or b""):
+                    detail = e.read(800) or b""
+                    if b"tool_choice" in detail:
                         self.no_required = True
+                    print("[vesper] 强制调用工具被拒（400），去掉 tool_choice 重发：%s" % detail[:200].decode("utf-8", "replace"), flush=True)
                     e.close()
                     retried_plain = True
                     req = make(False)

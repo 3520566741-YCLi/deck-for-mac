@@ -155,7 +155,7 @@ class NewsRoom:
             items, report = sources.gather(self.cfg, self.log)
             self.last_report = report
             stock = self.stock_items()
-            body, meta = editor.edit(items + stock, key, self.cfg, self.log)
+            body, meta = editor.edit(items + stock, key, self.cfg, self.log, market=self.market())
             slot = self.current_slot()
             now = _now()
             ed = {"v": 1, "made_at": int(time.time()), "slot_ts": int(slot.timestamp()),
@@ -228,7 +228,7 @@ class NewsRoom:
             return
         self.invest_last = time.time()
         try:
-            tagged, meta = editor.tag_invest(new, self.key(), self.cfg)
+            tagged, meta = editor.tag_invest(new, self.key(), self.cfg, market=self.market())
         except editor.EditorError as e:
             if e.usage:
                 self._add_usage(editor.cost_cny(e.usage, self.cfg.get("price"), editor.is_peak()), "自选资讯（失败）")

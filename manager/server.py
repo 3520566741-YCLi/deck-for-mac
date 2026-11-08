@@ -931,7 +931,25 @@ class Handler(BaseHTTPRequestHandler):
         return self._send(404, {"error": "not found"})
 
 
+def stop_orphan_speech():
+    """Deck 重启时语音服务还在念上一个页面交给它的整篇日报，新页面不知道，按播放会叠一遍（11-08 实测）。
+    8777 刚起来说明页面都是新的：让语音服务停下没人管的那段话。语音服务没开就算了。"""
+    try:
+        req = urllib.request.Request("http://127.0.0.1:8778/stop", data=json.dumps({"source": "restart", "page": "server"}).encode(),
+                                     headers={"Content-Type": "application/json"})
+        urllib.request.urlopen(req, timeout=2).close()
+    except (OSError, ValueError):
+        pass
+
+
 def main():
+    # Deck.app 把输出接到 server.log，写文件时 Python 默认整块缓冲：[news] 之类的日志一直卡在内存里，被 kill 时还会丢。改成按行写
+    for f in (sys.stdout, sys.stderr):
+        try:
+            f.reconfigure(line_buffering=True)
+        except (AttributeError, ValueError):
+            pass
+    threading.Thread(target=stop_orphan_speech, daemon=True).start()
     ThreadingHTTPServer.allow_reuse_address = True
     srv = ThreadingHTTPServer(("0.0.0.0" if LAN else "127.0.0.1", PORT), Handler)
     url = "http://127.0.0.1:%d/" % PORT
