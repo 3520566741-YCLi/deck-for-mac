@@ -6,7 +6,8 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 REPO="$(cd "$HERE/../../.." && pwd)"
 BUILD="$HERE/build"
 APP="$BUILD/DeckVoice.app"
-VERSION="1.0.0"
+VERSION="$(tr -d '[:space:]' < "$HERE/../../VERSION" 2>/dev/null || echo 0.0.0)"  # 对外只有 Deck 一个版本号（docs/VERSIONING.md 第 4 节）
+BUILDNO="$(git -C "$HERE" rev-list --count HEAD 2>/dev/null || echo 1)"  # 构建号：每次打包都增加
 
 # 不删旧产物：直接覆盖（swiftc / codesign --force）
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
@@ -29,7 +30,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>CFBundleExecutable</key><string>DeckVoice</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>$VERSION</string>
-  <key>CFBundleVersion</key><string>$VERSION</string>
+  <key>CFBundleVersion</key><string>$BUILDNO</string>
   <key>LSMinimumSystemVersion</key><string>14.0</string>
   <key>LSUIElement</key><true/>
   <key>NSMicrophoneUsageDescription</key><string>Deck 的语音助手需要听你说话（唤醒词、语音指令、「停」）。音频只在本机处理。</string>

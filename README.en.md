@@ -21,7 +21,7 @@
 &nbsp;
 <a href="CHANGELOG.md"><img src="https://img.shields.io/github/release-date/3520566741-YCLi/deck-for-mac?style=for-the-badge&label=Updated&color=7259e0" alt="Last updated" height="40"></a>
 
-<p><a href="#what-it-does">Features</a> · <a href="#three-ways-to-show-it">Display modes</a> · <a href="#gallery">Gallery</a> · <a href="#download-and-install">Download &amp; install</a> · <a href="#whats-new">What's new</a> · <a href="#faq">FAQ</a> · <a href="#contributing">Contributing</a></p>
+<p><a href="#what-it-does">Features</a> · <a href="#three-ways-to-show-it">Display modes</a> · <a href="#gallery">Gallery</a> · <a href="#download-and-install">Download &amp; install</a> · <a href="#whats-new">What's new</a> · <a href="#faq">FAQ</a> · <a href="#contributing">Contributing</a> · <a href="#-release-history">Releases</a></p>
 
 </div>
 
@@ -37,7 +37,7 @@
 | 🖥️ | **Dashboard** | A local web page shown on an external screen or an old iPad, or dropped down from the MacBook notch (⌥Space). Neumorphic skin, automatic day / night, cards you can drag and resize. |
 | 📊 | **Live status** | CPU, memory, GPU, disk, network, top processes; Claude Code / Codex quota left; DeepSeek balance; GitHub repos. Each card answers one question. |
 | 💽 | **Disk watch** | Tap the disk ring: what is growing, what was added recently, who is writing to the disk. |
-| 🎙️ | **Voice assistant** | Wake it by name. Speech recognition and synthesis run on your Mac; only the "brain" is a cloud LLM. A voiceprint makes sure only you can wake or interrupt it. It reads card data, opens cards, searches the web and can click things for you. |
+| 🎙️ | **Voice assistant** | Wake it by name. Speech recognition and synthesis run on your Mac; only the "brain" is a cloud LLM. A voiceprint makes sure only you can wake or interrupt it. It reads cards and the daily brief, checks quotes, manages processes and apps, changes Deck settings, searches the web and can click things for you. |
 | 🗞️ | **News page** | A personal tech paper three times a day: frontier tech, trending open source, AI labs, art × code, and news on your watchlist (Longbridge Securities as the example broker). Capped at about ¥1 a day. |
 | 🧹 | **Toolbox + daily cleanup** | Uninstall apps with leftovers, clear caches, find large and duplicate files, update apps. **Everything goes to the Trash, nothing is deleted outright**, and one tap puts it back. The **Tools** tab adds **keyboard cleaning**: lock the keyboard (optionally black out the screen) while you wipe it, with several ways to unlock and no way to get stuck. |
 
@@ -70,6 +70,9 @@ One web page, one set of features, wherever you like: **Settings → Display**, 
 
 #### Voice assistant: call its name
 <img src="docs/images/assistant.png" width="860" alt="Talking to the assistant">
+
+#### "Read today's brief": the assistant reads it in its own voice, sentence by sentence
+<img src="docs/images/vesper-brief.png" width="860" alt="The assistant playing the daily brief">
 
 #### Disk: what grows, what's new, who writes
 <img src="docs/images/disk.png" width="860" alt="Disk panel">
@@ -132,11 +135,15 @@ Your settings (`config.json`, `apps.json`), chat history, memories and voiceprin
 
 ## What's new
 
-**v0.3.0** (2026-11-08): a new **Assistant** section in Settings: name the assistant yourself (English or Chinese, wake switches instantly), check a name before using it, guided voiceprint recording, and three wake / voiceprint tests.
+**v0.2.0** (2026-11-08)
 
-**v0.2.0** (2026-11-08): a new **Tools** tab in the toolbox with **keyboard cleaning** (lock the keyboard to wipe it, optional black screen / trackpad lock, several unlock paths, recovers even if the process hangs); the display mode (Auto / External screen / Notch) can now be switched in Settings.
+- 🎙️ **The assistant can read the daily brief and operate all of Deck**: say "read today's brief" and it reads it in its own voice, highlighting each sentence. News sections, watchlist quotes, processes, disk, GitHub, apps, toolbox, settings, display mode and daily cleanup can all be asked about and changed by voice. Anything that changes your Mac asks first, and things only go to the Trash.
+- 👆 **Every button gives press feedback and sound**: buttons on the news page, the butler page and the chat page used to be silent; now they all respond, and "Re-edit this issue" shows a spinner.
+- ⌨️ **Keyboard cleaning**: a new Tools tab in the toolbox locks the keyboard so you can wipe it, with optional black screen and trackpad lock, several ways to unlock, and no way to get stuck.
+- 🪪 **Name the assistant and record your voiceprint yourself**: Settings → Assistant lets you rename it (wake switches instantly), check a name first, record a guided voiceprint and run wake / voiceprint tests.
+- 🖥️ **Switch the display mode in Settings**: Auto / External screen / Notch, the same setting as the menu bar.
 
-**v0.1.1** (2026-11-08): the voice assistant wakes up more reliably (a second, name-based wake path and a self-test every 10 minutes); "let me check" now means it searches the web right away; optional DeckVoice watchdog. Every version is in [CHANGELOG.md](CHANGELOG.md) and on [Releases](https://github.com/3520566741-YCLi/deck-for-mac/releases); old versions are kept.
+See every version in the [release history](#-release-history) below, and the details in [CHANGELOG.md](CHANGELOG.md).
 
 ## Requirements
 
@@ -225,6 +232,16 @@ Issues and PRs are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) and t
 - [docs/services.en.md](docs/services.en.md): outside services, how to verify them, the Longbridge example
 - [docs/voice-latency.en.md](docs/voice-latency.en.md): how the assistant starts speaking 2–3 s after you stop
 - [CHANGELOG.md](CHANGELOG.md): release notes
+
+## 📦 Release history
+
+| Version | Date | What changed | Download |
+|---|---|---|---|
+| **v0.2.0** `latest` | 2026-11-08 | The assistant reads the daily brief and operates all of Deck; button feedback and sound; keyboard cleaning; name the assistant and record your voiceprint; display mode in Settings · [details](CHANGELOG.md#v020--2026-11-08) | [Download](https://github.com/3520566741-YCLi/deck-for-mac/releases/tag/v0.2.0) |
+| v0.1.1 | 2026-11-08 | Wakes up reliably; "let me check" searches right away; optional voice watchdog · [details](CHANGELOG.md#v011--2026-11-08) | [Download](https://github.com/3520566741-YCLi/deck-for-mac/releases/tag/v0.1.1) |
+| v0.1.0 | 2026-11-07 | First public release: dashboard, voice assistant, news page, toolbox, notch mode · [details](CHANGELOG.md#v010--2026-11-07) | [Download](https://github.com/3520566741-YCLi/deck-for-mac/releases/tag/v0.1.0) |
+
+Every version stays on [Releases](https://github.com/3520566741-YCLi/deck-for-mac/releases); each release page has the full source code of that version under **Assets**.
 
 ## Acknowledgements
 

@@ -5,7 +5,8 @@ set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 BUILD="$HERE/build"
 APP="$BUILD/DeckHands.app"
-VERSION="1.1.0"
+VERSION="$(tr -d '[:space:]' < "$HERE/../VERSION" 2>/dev/null || echo 0.0.0)"  # 对外只有 Deck 一个版本号（docs/VERSIONING.md 第 4 节）
+BUILDNO="$(git -C "$HERE" rev-list --count HEAD 2>/dev/null || echo 1)"  # 构建号：每次打包都增加
 mkdir -p "$APP/Contents/MacOS"
 # 多个源文件时顶层代码只能在 main.swift 里，所以把 DeckHands.swift 复制成 main.swift 再编译
 cp "$HERE/DeckHands.swift" "$BUILD/main.swift"
@@ -20,7 +21,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>CFBundleExecutable</key><string>DeckHands</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>$VERSION</string>
-  <key>CFBundleVersion</key><string>$VERSION</string>
+  <key>CFBundleVersion</key><string>$BUILDNO</string>
   <key>LSMinimumSystemVersion</key><string>14.0</string>
   <key>LSUIElement</key><true/>
 </dict></plist>

@@ -53,6 +53,8 @@
     retry = Math.min(retry * 2, 15000);
   }
 
+  // 哪个窗口发的（扩展屏 / 刘海 / 对话页），语音服务日志里记下来，查「谁在反复播放 / 停」用（11-08）
+  var PAGE = /[?&]notch=1/.test(location.search) ? "notch" : /[?&]pane=chat/.test(location.search) ? "pane" : /[?&]app=1/.test(location.search) ? "ext" : "web";
   function post(path, body) {
     return fetch(BASE + path, {
       method: "POST",
@@ -72,14 +74,14 @@
   api.stop = function () {
     sayBuf = ""; sayDone = false;
     if (Date.now() - lastStopEvent < 1000) return Promise.resolve({ ok: true, skipped: true });
-    return post("/stop", { source: "ui" });
+    return post("/stop", { source: "ui", page: PAGE });
   };
   // 助手的增量文字按顺序一段一段送：同时发多个请求可能乱序到达，念出来就颠三倒四。
   // 上一个请求还没回来时，新来的字先攒着，回来后合成一次发出去。
   var sayBuf = "", sayDone = false, sayBusy = false;
   function sayFlush() {
     if (sayBusy || (!sayBuf && !sayDone)) return;
-    var body = { text: sayBuf, done: sayDone };
+    var body = { text: sayBuf, done: sayDone, page: PAGE };
     sayBuf = ""; sayDone = false; sayBusy = true;
     post("/assistant", body).catch(function () {}).then(function () { sayBusy = false; sayFlush(); });
   }

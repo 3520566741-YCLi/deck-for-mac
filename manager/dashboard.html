@@ -17,7 +17,7 @@ try { var _l = JSON.parse(localStorage.getItem("mbdash.layout") || "{}"); if (_l
 <script src="/static/gridstack-all.js"></script>
 <script src="/static/reactbits-strands.js"></script>
 <script src="/static/reactbits-orb.js"></script>
-<script>if (!/[?&]pane=chat/.test(location.search)) document.write('<script src="/static/deck-sfx.js"><\/script>');</script>
+<script src="/static/deck-sfx.js"></script>
 <style>
 /* 兼容 老 iPad（iOS 15 / Safari 15）：不用容器查询、color-mix、CSS 嵌套、dvh。 */
 :root {
@@ -1058,6 +1058,7 @@ html.notch.ns-s.nl-scroll main#grid { grid-auto-rows: auto; }
 html.notch.nl-pages #ndots { display: flex; }
 #ndots button { width: 7px; height: 7px; border-radius: 4px; background: var(--text3); opacity: .5; transition: width .25s, opacity .25s; }
 #ndots button.on { width: 20px; opacity: 1; background: var(--text2); }
+#ndots button.pressed { transform: scale(.8); opacity: 1; transition: transform .1s, opacity .1s; }
 #nkira { position: absolute; right: 16px; top: calc(var(--nh) + 10px); bottom: 16px; width: var(--kw); border-radius: 20px; background: var(--nm-bg); box-shadow: var(--nm-up-s);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; padding: 12px 8px; }
 #nkira.awake { box-shadow: var(--nm-in); }
@@ -1212,6 +1213,24 @@ html.skin-soft .dk-sum > div, html.skin-soft .dk-rows { background: var(--nm-bg)
 html.skin-soft .dk-mini, html.skin-soft .dk-g { background: var(--nm-bg); box-shadow: var(--nm-in-s); }
 html.skin-soft .dk-mini i { box-shadow: 0 0 5px -1px currentColor; }
 html.skin-soft .dk-av { box-shadow: var(--nm-up-xs); }
+
+/* ---------- 按压手感补全（：所有按钮都要有反馈）----------
+   .pressed 由 static/deck-sfx.js 在按下时加（鼠标立刻，手指 0.1 秒或快点闪一下）；scripts/deck-press-check.js 会挨个检查。
+   新拟态：凹下去 + 轻缩；液态玻璃：轻缩 + 略暗。没写到的元素由 deck-sfx.js 的兜底规则（缩到 96%）接住。 */
+.seg button, .gh-chip, .dk-chip, .dk-drive, .why-g, .state[data-act], .switch, .ring[data-act], summary { transition: transform .4s var(--spring), box-shadow .2s, background-color .2s, color .2s, opacity .2s; }
+.seg button.pressed, .gh-chip.pressed, .dk-chip.pressed, .dk-drive.pressed, .state[data-act].pressed { transform: scale(.94); transition: transform .12s var(--ease-out), box-shadow .1s, background-color .1s; }
+html:not(.skin-soft) .seg button.pressed:not([aria-pressed="true"]), html:not(.skin-soft) .gh-chip.pressed, html:not(.skin-soft) .dk-chip.pressed { background: rgba(127,127,127,.16); }
+html.skin-soft .seg button.pressed:not([aria-pressed="true"]), html.skin-soft .gh-chip.pressed, html.skin-soft .dk-chip.pressed, html.skin-soft .dk-drive.pressed { box-shadow: var(--nm-in-s); color: var(--accent); }
+.why-g.pressed { transform: scale(.985); background: rgba(127,127,127,.12); transition: transform .12s var(--ease-out), background-color .1s; }
+html.skin-soft .why-g.pressed { background: transparent; box-shadow: var(--nm-in-s); }
+.switch.pressed { transform: scale(.93); transition: transform .12s var(--ease-out); }
+.switch.pressed::after { width: 31px; }
+.switch[aria-checked="true"].pressed::after { transform: translateX(16px); }
+html.skin-soft .switch.pressed::after { width: 29px; }
+.ring[data-act].pressed, html.skin-soft .ring[data-act].pressed { transform: scale(.94); transition: transform .12s var(--ease-out); }
+summary.pressed { opacity: .65; transition: opacity .1s; }
+.del-btn.pressed { transform: scale(.86); transition: transform .12s var(--ease-out); }
+:root.reduce .seg button.pressed, :root.reduce .gh-chip.pressed, :root.reduce .dk-chip.pressed, :root.reduce .dk-drive.pressed, :root.reduce .switch.pressed, :root.reduce .ring[data-act].pressed, :root.reduce .why-g.pressed, :root.reduce .state[data-act].pressed { transform: none; }
 </style>
 </head>
 <body class="fit">
@@ -1255,7 +1274,7 @@ html.skin-soft .dk-av { box-shadow: var(--nm-up-xs); }
   <div class="chat-log" id="chatLog" aria-live="polite"></div>
   <div class="chat-caption" id="chatCaption" aria-live="polite"></div>
   <div class="chat-in"><textarea id="chatText" rows="1" placeholder="问点什么，或者说「打开系统卡片」" aria-label="给 Vesper 发消息"></textarea>
-    <button class="mic-btn" data-press id="micBtn" aria-label="说话" aria-pressed="false"></button>
+    <button class="mic-btn" data-press data-sfx="none" id="micBtn" aria-label="说话" aria-pressed="false"></button>
     <button class="send-btn" data-press id="sendBtn" aria-label="发送"></button></div>
 </aside>
 <div id="whyPop" role="dialog" aria-label="需要注意的事" hidden></div>
@@ -2024,7 +2043,8 @@ function sizeGrid() {
     if (GS.getColumn() !== want) { GS.column(want, want === COLS ? "none" : "moveScale"); if (want !== COLS) GS.compact(); }
   }
   var tall = GS ? GS.getRow() * cell + 20 > h - 64 : false;
-  document.body.className = (tall || layout.mode === "scroll" ? "scroll" : "fit") + (tab !== "dash" ? " on-butler" : "") + (editing ? " editing" : "") + (GS && GS.getColumn() !== COLS ? " narrow" : "");
+  document.body.className = (tall || layout.mode === "scroll" ? "scroll" : "fit") + (tab !== "dash" ? " on-butler" : "") + (editing ? " editing" : "") + (GS && GS.getColumn() !== COLS ? " narrow" : "") +
+    (typeof chat !== "undefined" && chat && chat.open ? " chat-open" : ""); // 重排时别把对话面板关掉（Vesper 改设置、隐藏卡片会走到这里）
 }
 
 // ---------- 滚动边缘渐隐 ----------
@@ -2143,7 +2163,11 @@ function refresh(src) {
 
 // ---------- 按键音效（static/deck-sfx.js；按下就响的部分在那个文件里自动处理）----------
 function sfx(n) { if (n && window.DeckSfx) DeckSfx.play(n); }
-function sfxApply() { if (window.DeckSfx) DeckSfx.config({ on: layout.sfx, vol: layout.sfxVol, token: BOOT.local ? BOOT.token : "" }); }
+function sfxApply() {
+  if (!window.DeckSfx) return;
+  if (PANE) { DeckSfx.config({ forward: function (n) { relay({ cmd: "sfx", n: n }); } }); return; }   // 玻璃对话页：转给主页面放
+  DeckSfx.config({ on: layout.sfx, vol: layout.sfxVol, token: BOOT.local ? BOOT.token : "" });
+}
 
 // ---------- 详情 / 设置弹层 ----------
 function openSheet(key) {
@@ -2770,20 +2794,7 @@ document.addEventListener("mouseout", function (e) {
   if (r && !(e.relatedTarget && r.contains(e.relatedTarget))) flipRing(r, r.getAttribute("data-src"), false);
 });
 
-// 按压手感
-(function () {
-  var cur = null, timer = null, sx = 0, sy = 0;
-  function clear() { clearTimeout(timer); if (cur) cur.classList.remove("pressed", "touch"); cur = null; }
-  document.addEventListener("pointerdown", function (e) {
-    var el = e.target.closest ? e.target.closest("[data-press]") : null;
-    if (!el || el.disabled) return;
-    cur = el; sx = e.clientX; sy = e.clientY;
-    if (e.pointerType === "mouse") el.classList.add("pressed");
-    else timer = setTimeout(function () { if (cur === el) el.classList.add("pressed", "touch"); }, 100);
-  }, { passive: true });
-  document.addEventListener("pointermove", function (e) { if (cur && (Math.abs(e.clientX - sx) > 10 || Math.abs(e.clientY - sy) > 10)) clear(); }, { passive: true });
-  ["pointerup", "pointercancel", "pointerleave"].forEach(function (ev) { document.addEventListener(ev, clear, { passive: true }); });
-})();
+// 按压手感：统一在 static/deck-sfx.js 里（所有能点的东西按下就加 .pressed，和音效走同一套判断）
 
 // 时钟
 function tick() {
@@ -2916,6 +2927,13 @@ function chipHtml(ev) {
     else if (a === "set_voice") { text = g.voice ? "换成了「" + (ev.title || g.voice) + "」" : "语速改成了 " + g.speed; ic = "mic"; }
     else if (a === "open_path") text = "在访达里打开了「" + (ev.title || g.path || "") + "」";
     else if (a === "kbclean") { text = g.state === "locked" ? "锁住了键盘，擦吧" : "键盘已解锁"; ic = "keyboard"; }
+    else if (a === "news_brief") { text = { play: "播放", resume: "接着播", pause: "暂停了", restart: "从头播", next: "下一句", prev: "上一句" }[g.action] + "「" + (ev.title || "Vesper 日报") + "」"; ic = "page"; }
+    else if (a === "deck_setting") { text = g.name === "card" ? (g.value === "show" ? "显示了「" : "隐藏了「") + (ev.title || g.card) + "」" : "设置 · " + (ev.title || ""); ic = "page"; }
+    else if (a === "display_mode") { text = "显示方式改成「" + (ev.title || g.mode) + "」"; ic = "page"; }
+    else if (a === "ask") { text = "等你确认：" + (ev.title || ""); ic = "hand"; }
+    else if (a === "done") { text = (g.ok ? "做好了：" : "") + (ev.title || ""); ic = g.ok ? "open" : "close"; }
+    else if (a === "app_open") text = "打开了「" + (ev.title || "") + "」";
+    else if (a === "app_reveal") text = "在访达里显示「" + (ev.title || "") + "」";
     else if (a && a.indexOf("hands_") === 0) { // Jev / DeckHands 动手的每一步
       var verb = { hands_look: "看了看", hands_click: "点了", hands_type: "输入到", hands_key: "按了", hands_open: "打开了", hands_scroll: "滚动了" }[a] || "操作了";
       text = verb + (ev.title ? "「" + ev.title + "」" : "") + (g.app && a !== "hands_open" ? " · " + g.app : ""); ic = "hand";
@@ -3089,7 +3107,8 @@ function setChat(on) {
 }
 function uiCtx() {
   if (PANE) return chat.ctx || { tab: "dash", open: null, cards: [] };
-  return { tab: tab, open: openKey && openKey.indexOf("__") !== 0 ? titleOf(openKey) : null,
+  var sec = null; if (tab === "news") try { sec = $("newsFrame").contentWindow.DeckNews.section(); } catch (e) {}
+  return { tab: tab, section: sec, open: openKey && openKey.indexOf("__") !== 0 ? titleOf(openKey) : null,
     cards: visibleKeys().map(function (k) { var w = webOf(k); return w ? { key: k, title: w.title, url: w.url } : { key: k, title: titleOf(k) }; }) };
 }
 function runUi(ev) {
@@ -3101,6 +3120,54 @@ function runUi(ev) {
   else if (a === "set_theme") { layout.theme = g.theme; saveLayout(); applyTheme(); if (openKey === "__settings") renderSettings(); }
   else if (a === "refreshed") setTimeout(poll, 1500);
   else if (a === "set_voice" && openKey === "__settings") loadVoices();
+  else if (a === "news_brief") newsBrief(g.action);
+  else if (a === "deck_setting") deckSetting(g);
+  else if (a === "display_mode") { if (/^(auto|ext|notch)$/.test(g.mode) && WKH.deckMode) { DM.mode = g.mode; dmSend({ t: "set", v: g.mode }); if (openKey === "__settings") renderSettings(); } }
+}
+// Vesper 改 Deck 设置：和设置页里点按钮走同一条路
+var SET_OK = { skin: /^(soft|glass)$/, mode: /^(fit|scroll)$/, notchSize: /^[sml]$/, notchLayout: /^(scroll|pages)$/, glass: /^(70|60|50|40|30)$/, sfxVol: /^[sml]$/ };
+function deckSetting(g) {
+  var k = g.name, v = String(g.value || "");
+  if (k === "card") {
+    if (!g.card) return;
+    layout.hidden = v === "show" ? layout.hidden.filter(function (x) { return x !== g.card; }) : layout.hidden.indexOf(g.card) < 0 ? layout.hidden.concat([g.card]) : layout.hidden;
+    saveLayout(); render();
+  } else if (k === "sfx" || k === "reduce") { layout[k] = v === "on"; saveLayout(); applyTheme(); sfxApply(); }
+  else if (SET_OK[k] && SET_OK[k].test(v)) { layout[k] = v; saveLayout(); applyTheme(); sizeGrid(); sfxApply(); }
+  else return;
+  if (openKey === "__settings") renderSettings();
+}
+// Vesper 让资讯页的日报播放器动起来。要等她自己这句话说完再播，不然两段声音叠在一起：
+// 等这一轮对话结束（chat.busy 变 false），再等语音服务不在说话（念完她那句「好，开始播」），最多等 25 秒。
+var nbT = 0;
+function newsBrief(act) {
+  if (!/^(play|resume|pause|restart|next|prev)$/.test(act || "")) return;
+  if (tab !== "news") showTab("news");
+  clearInterval(nbT);
+  var t0 = Date.now(), quietAt = 0, spoke = false;
+  function api() { try { var w = $("newsFrame").contentWindow; return w && w.DeckNews && w.DeckNews.brief ? w.DeckNews : null; } catch (e) { return null; } }
+  if (act === "pause" || act === "next" || act === "prev") { // 这几个不出声，直接做（页面还没加载好就稍等）
+    nbT = setInterval(function () { var n = api(); if (n || Date.now() - t0 > 8000) { clearInterval(nbT); if (n) n.brief(act); } }, 200);
+    return;
+  }
+  var lastSpeak = 0;
+  nbT = setInterval(function () {
+    var n = api(), st = window.DeckVoice && DeckVoice.state, now = Date.now();
+    if (st === "speaking") { spoke = true; lastSpeak = now; quietAt = 0; }
+    // 她一说完，语音服务会开几秒「追问窗口」（状态是 listening）。那不是他在说话：先关掉窗口再播，
+    // 不然一直等不到安静，而且窗口会把日报的声音当成他说的话（11-08 实测）。他自己按键说话的 listening 不算。
+    var followup = st === "listening" && spoke && now - lastSpeak < 6000;
+    var idle = !chat.busy && st !== "speaking" && (st !== "listening" || followup);
+    if (idle && !quietAt) quietAt = now;
+    if (!idle) quietAt = 0;
+    // 她说过话：安静 700ms 就算说完（追问窗口 400ms）；她这轮没出声（打字问的）：安静 1.5 秒就开始
+    var ready = n && quietAt && now - quietAt > (followup ? 400 : spoke || !chat.lastVoice ? 700 : 1500);
+    if (!ready && now - t0 <= 25000) return;
+    clearInterval(nbT);
+    if (!n || (st === "listening" && !followup)) return; // 他正在说话：不抢
+    if (followup && window.DeckVoice && DeckVoice.stop) { try { DeckVoice.stop(); } catch (e) {} setTimeout(function () { n.brief(act); }, 450); }
+    else n.brief(act);
+  }, 150);
 }
 function setSendBtn() {
   var b = $("sendBtn");
@@ -3114,6 +3181,7 @@ function speakable(t) { return String(t || "").replace(/[*#`>_~|]/g, "").replace
 function sendChat(text, voice, tries) {
   text = (text || "").trim();
   if (!text) return;
+  chat.lastVoice = !!voice;
   if (GLASS) { if (!chat.open) setChat(true); relay({ cmd: "send", text: text, voice: !!voice, ctx: uiCtx() }); return; }
   // 一次只有一轮（见 voice/ORCHESTRATION.md）：上一轮还在想或还在念，就先停掉它，再开始这一轮
   if (chat.busy) { chat.next = { text: text, voice: voice }; stopChat(); return; }
@@ -3617,6 +3685,7 @@ window.__deckRelay = function (m) {
   else if (m.cmd === "ui") { runUi(m.ev || {}); relay({ cmd: "ctx", ctx: uiCtx() }); }
   else if (m.cmd === "memory") openMemory();
   else if (m.cmd === "busy") chat.busy = !!m.on;
+  else if (m.cmd === "sfx") sfx(m.n);   // 玻璃对话页里按的按钮：声音在主页面放（同一套开关、音量、静音）
   else if (m.cmd === "glow" && window.DeckGlow) {
     if (m.op === "show") DeckGlow.show(m.o || {}); else if (m.op === "set") DeckGlow.set(m.o || {}); else if (m.op === "hide" && DeckGlow.on) DeckGlow.hide();
   }
@@ -3731,7 +3800,7 @@ window.DeckHost = { post: post, esc: esc, icon: icon, toast: toast, openSheet: o
   function buildDots() {
     var n = nl() === "pages" ? pages() : 0;
     if (dots.children.length !== n) {
-      var h = ""; for (var i = 0; i < n; i++) h += '<button type="button" aria-label="第 ' + (i + 1) + ' 页"></button>';
+      var h = ""; for (var i = 0; i < n; i++) h += '<button type="button" data-sfx="none" aria-label="第 ' + (i + 1) + ' 页"></button>';   // 声音由 goPage 出（翻页声 / 到头轻点）
       dots.innerHTML = h;
     }
     var c = curPage(); Array.prototype.forEach.call(dots.children, function (d, i) { d.classList.toggle("on", i === c); });
