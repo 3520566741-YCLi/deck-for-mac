@@ -1,4 +1,5 @@
 // DeckHands：Vesper 的「手」。只做四件事：读出当前应用里能点的元素、点一个、打字、按快捷键。
+// 另有键盘清洁模式（--clean，见 CleanMode.swift），是单独的进程。
 // 怎么点由 Vesper（DeepSeek + Jev）在 Deck 服务里决定；这里只执行，并且自己守住几条底线：
 // - 菜单栏开关「允许 Vesper 操作电脑」关着时，什么都不做。
 // - 急停：Deck 的停止（说「停」/ ⌥⌘. / → 键 / 页面停止按钮，经 Deck 发 stop）、菜单「立即停止」、连按 3 次 Esc。
@@ -501,6 +502,9 @@ final class Actions: NSObject, NSMenuDelegate {
 }
 
 // MARK: - 启动
+
+// 键盘清洁模式（CleanMode.swift）：Deck 用 `open -n` 另起一个进程，和这个菜单栏实例互不影响
+if CommandLine.arguments.contains("--clean") { runCleanMode() }
 
 signal(SIGPIPE, SIG_IGN)  // 对方先断开时 write 不能把整个程序带走
 let app = NSApplication.shared

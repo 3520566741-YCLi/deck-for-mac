@@ -154,6 +154,8 @@ cd ~/deck-for-mac/manager/hands && ./build.sh   # DeckHands.app; asks for Access
 
 The LLM decides what to do; DeckHands clicks. Deleting, sending, paying, quitting apps **always show a confirmation card first** and run only after they tap it; "stop" aborts at once; it never types into password fields.
 
+The same DeckHands also powers **keyboard cleaning** in the toolbox's Tools tab (a separate `--clean` process using the same Accessibility permission). After installing, have them press Start once in Toolbox → Tools (30 s, no black screen) to check: the keyboard does nothing, and Unlock brings it back. If it reports missing Accessibility permission, walk them to System Settings → Privacy & Security → Accessibility and enable DeckHands.
+
 ## 8. Before you say "done"
 
 - **Security**: all three ports (8777/8778/8779) listen on 127.0.0.1 only; requests without the token, with a wrong Host or a foreign Origin are rejected; `git status` shows no `config.json`, keys, voiceprints or `*.db`.

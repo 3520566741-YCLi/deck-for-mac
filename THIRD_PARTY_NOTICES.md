@@ -18,6 +18,13 @@ They may be used and distributed as part of an application, but **the components
 **snd-lib 音效 / snd-lib sounds:** 条款禁止把未加工的原始音频单独再分发或出售；这里的文件都经过加工、只作为 Deck 的按键音使用。请不要把 `sfx/` 里的文件单独拿去分发。
 The terms forbid redistributing or selling the unprocessed audio on its own; these files are processed and used only as Deck's UI sounds. Please don't redistribute the `sfx/` files on their own.
 
+## 参考过写法的 / Approach borrowed from (no code copied)
+
+| 项目 / Project | 许可 / License | 参考了什么 / What we borrowed |
+|---|---|---|
+| [Lockpaw](https://github.com/sorkila/lockpaw) | MIT | 拦截被系统停用时立刻重开、各种兜底 / re-enabling a disabled event tap, failsafes |
+| [keylock](https://github.com/kfv/keylock) | MIT | HID 层 CGEventTap 吞按键 / swallowing keys with an HID-level CGEventTap |
+
 ## 安装时下载的 / Downloaded during setup (not in this repository)
 
 | 组件 / Component | 许可 / License | 用途 / Used for |

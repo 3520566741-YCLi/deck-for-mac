@@ -54,6 +54,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
         NotificationCenter.default.addObserver(self, selector: #selector(screensChanged),
                                                name: NSApplication.didChangeScreenParametersNotification, object: nil)
         hotKey = HotKey { [weak self] in self?.hotKeyPressed() }
+        notch.onModeMessage = { [weak self] m, w in self?.handleModeMessage(m, from: w) }
         if useNotch { notchShown = true } else { placeWindow(); window.makeKeyAndOrderFront(nil) }
         connect()
     }
@@ -96,6 +97,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
         config.websiteDataStore = .default()
         // 页面把顶栏的高度和按钮位置报过来（deckTitlebar），用来决定哪里可以拖窗口
         config.userContentController.add(WeakScriptHandler(self), name: "deckTitlebar")
+        config.userContentController.add(WeakScriptHandler(self), name: "deckMode")  // 设置页「显示方式」
         webView = DeckWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = self
         webView.uiDelegate = self
@@ -176,7 +178,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
     private func applyMode(force: Bool) {
         guard let url = dashURL else { return }
         let notchNow = useNotch
-        if notchNow == notchShown && !force { rebuildStatusMenu(); return }
+        if notchNow == notchShown && !force { rebuildStatusMenu(); pushMode(); return }
         notchShown = notchNow
         if notchNow {
             window.orderOut(nil)
@@ -191,6 +193,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
             window.makeKeyAndOrderFront(nil)
         }
         rebuildStatusMenu()
+        pushMode()
+    }
+
+    /// 设置页「显示方式」：页面问现在是哪种（get）或者要换一种（set）。和菜单栏的「显示方式」是同一个设置。
+    private func handleModeMessage(_ message: WKScriptMessage, from web: WKWebView) {
+        let o = message.frameInfo.securityOrigin
+        guard message.frameInfo.isMainFrame, o.protocol == "http", o.host == "127.0.0.1",
+              let text = message.body as? String, text.count < 200, let data = text.data(using: .utf8),
+              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let t = obj["t"] as? String else { return }
+        if t == "set", let m = obj["v"] as? String, ["auto", "ext", "notch"].contains(m) {
+            let wasNotch = notchShown
+            UserDefaults.standard.set(m, forKey: modeKey)
+            applyMode(force: false)
+            if useNotch && !wasNotch { notch.toggle() }  // 刚换到刘海：先弹出来给你看一眼，4 秒后自己收
+            pushMode()
+        } else if t == "get" {
+            web.evaluateJavaScript(modeJS(), completionHandler: nil)
+        }
+    }
+
+    private func modeJS() -> String {
+        "window.__deckMode && window.__deckMode({mode:\"\(displayMode)\",active:\"\(useNotch ? "notch" : "ext")\"})"
+    }
+
+    /// 把现在的显示方式告诉开着的页面（菜单栏切了、插拔 iPad 自动切了，设置页跟着变）
+    private func pushMode() {
+        let js = modeJS()
+        if notchShown { notch.evaluate(js) } else { webView.evaluateJavaScript(js, completionHandler: nil) }
     }
 
     @objc private func chooseMode(_ sender: NSMenuItem) {
@@ -359,6 +390,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
         // 只认监控台主框架（网页卡片的 iframe 不能改窗口拖动区域）
         let origin = message.frameInfo.securityOrigin
         guard message.frameInfo.isMainFrame, origin.host == "127.0.0.1" else { return }
+        if message.name == "deckMode" { handleModeMessage(message, from: webView); return }
         guard message.name == "deckTitlebar", let text = message.body as? String,
               let data = text.data(using: .utf8),
               let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }

@@ -5,10 +5,12 @@ set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 BUILD="$HERE/build"
 APP="$BUILD/DeckHands.app"
-VERSION="1.0.0"
+VERSION="1.1.0"
 mkdir -p "$APP/Contents/MacOS"
-swiftc -O -swift-version 5 -target arm64-apple-macos14.0 -framework AppKit -framework ApplicationServices \
-  "$HERE/DeckHands.swift" -o "$APP/Contents/MacOS/DeckHands"
+# 多个源文件时顶层代码只能在 main.swift 里，所以把 DeckHands.swift 复制成 main.swift 再编译
+cp "$HERE/DeckHands.swift" "$BUILD/main.swift"
+swiftc -O -swift-version 5 -target arm64-apple-macos14.0 -framework AppKit -framework ApplicationServices -framework IOKit \
+  "$BUILD/main.swift" "$HERE/CleanMode.swift" -o "$APP/Contents/MacOS/DeckHands"
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

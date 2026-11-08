@@ -40,6 +40,7 @@ PERSONA = """你是 Vesper，用户的 Mac 控制台 Deck 里内置的助手，�
 - 问你自己用了多少、花了多少、余额还剩多少，用 my_usage（这是你自己这把 key 的用量）。注意：监控台上的 DeepSeek 卡片是 DeepSeek Harness 的用量和余额，不是你的，两者别混。
 - 他说「换成男声 / 换回女声 / 说慢一点」之类，用 set_voice 换你说话的声音和语速（只改 Deck 自己的设置，直接做）。
 - 清理：Claude、DeepSeek（Harness）、Codex 工作区里没用的东西（旧测试残留、日志、缓存、临时目录）。先调用 cleanup_scan，屏幕上会出一张确认卡；你用一两句话说清能腾出多少、主要是什么，然后问他要不要移到废纸篓。只有他明确同意（点卡片上的按钮，或者说「好 / 可以 / 清吧」）才调用 cleanup_confirm。东西只会进废纸篓，可以撤销，绝不直接删除。他没同意或者犹豫，就不要清。另外每晚 23:30 会自动做一次每日清理：清单先交给 DeepSeek 逐项核对，只把确认是 AI 生成的测试文件、临时文件、缓存、旧安装包移进废纸篓，拿不准的留着；他问起就照实说，结果在「每日清理」卡片上，能一键放回。
+- 键盘清洁：他说「我要擦键盘 / 锁一下键盘 / 清洁模式」，调用 keyboard_clean(action="start")，默认 90 秒、黑屏；他说时长、「不要黑屏」「触控板也锁」就照着填。锁好后一句话告诉他怎么解锁：屏幕上按住按钮 1 秒、同时按住左右两个 ⌘ 2 秒、倒计时结束自动解锁、或者对你说「解锁键盘」。他说「解锁 / 擦完了 / 好了，开锁」就调用 keyboard_clean(action="stop")；说「再给我点时间」用 action="extend"（每次 +30 秒，总共最多 10 分钟）。工具报错（比如 DeckHands 没有辅助功能权限）就照实说该去哪开。
 现在还不能做的事：除了上面的清理、找文件打开文件和下面的操作屏幕，改动、移动、删除 Mac 上的文件，改设置、替他发消息都还不行。被要求时直接说这些功能还在做，不要假装做了。
 
 ## 操作屏幕
@@ -93,6 +94,11 @@ TOOLS = [
                     "required": ["plan_id"]}},
     {"name": "my_usage", "description": "查你（Vesper）自己这把 DeepSeek key 的用量：今天/本周/本月/累计的 token、估算花费、余额。监控台上的 DeepSeek 卡片是 DeepSeek Harness 的，不是你的。",
      "parameters": {"type": "object", "properties": {}}},
+    {"name": "keyboard_clean", "description": "键盘清洁模式：锁住键盘（可选黑屏、连触控板一起锁）方便擦，或解锁 / 加时。",
+     "parameters": {"type": "object", "properties": {"action": {"type": "string", "enum": ["start", "stop", "extend", "status"]},
+                    "seconds": {"type": "integer", "description": "锁多久，10～600 秒，默认 90；锁触控板时最多 120"},
+                    "black": {"type": "boolean", "description": "黑屏，默认 true"},
+                    "mouse": {"type": "boolean", "description": "连触控板一起锁，默认 false"}}, "required": ["action"]}},
     {"name": "recall", "description": "按关键词搜以前的聊天记录和记忆。",
      "parameters": {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]}},
     {"name": "web_search", "description": "联网搜索（DeepSeek 官方搜索）。返回每条结果的标题、网址、日期和 600 字左右的摘要。查新闻、天气、价格、版本、人物、教程等你不确定或会变化的信息时用。",
@@ -599,6 +605,19 @@ class Friday:
             u = self.usage_stats()
             u.pop("days", None)
             return dict(u, note="花费是按官方价估算的（元/百万 token：缓存命中 %s、未命中 %s、输出 %s）" % (u["price"]["hit"], u["price"]["miss"], u["price"]["out"]))
+        if name == "keyboard_clean":
+            import kbclean
+            act = args.get("action")
+            if act == "start":
+                r = kbclean.start(args.get("seconds") or 90, args.get("black", True) is not False, bool(args.get("mouse")))
+            elif act == "stop":
+                r = kbclean.stop()
+            elif act == "extend":
+                r = kbclean.extend()
+            else:
+                r = kbclean.status()
+            emit({"t": "ui", "action": "kbclean", "args": {"state": r.get("state")}, "title": "键盘清洁"})
+            return r
         if name == "recall":
             return self.recall(args.get("query"))
         if name == "web_search":
