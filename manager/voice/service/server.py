@@ -58,6 +58,8 @@ def _on_helper_json(msg):
         hub.emit({"type": "helper." + str(t), **{k: v for k, v in msg.items() if k != "t"}})
 
 
+_say_open = False  # /assistant 正在收一段话（还没收到 done）
+
 class HelperHandler(socketserver.BaseRequestHandler):
     def handle(self):
         sock = self.request
@@ -219,7 +221,9 @@ class Http(BaseHTTPRequestHandler):
             hub.mic(self._json(body).get("on", True))
             return self._send(200, {"ok": True})
         if method == "POST" and path == "/stop":
-            hub.stop(self._json(body).get("source", "ui"))
+            d = self._json(body)
+            print("[page] /stop source=%s page=%s state=%s" % (str(d.get("source", "ui"))[:12], str(d.get("page", "?"))[:8], hub.state()), flush=True)
+            hub.stop(d.get("source", "ui"))
             return self._send(200, {"ok": True})
         if method == "POST" and path == "/listen":
             if "asr" not in _mods:
@@ -229,6 +233,11 @@ class Http(BaseHTTPRequestHandler):
         if method == "POST" and path == "/assistant":
             d = self._json(body)
             text = d.get("text", "")
+            global _say_open
+            if not _say_open and (text or d.get("done")):
+                # 一段新的话开始了：记下是哪个窗口发的（只记开头，不记每个增量）
+                print("[page] /assistant 开始 page=%s：%s" % (str(d.get("page", "?"))[:8], str(text)[:24].replace("\n", " ")), flush=True)
+            _say_open = not d.get("done")
             if text:
                 hub.emit({"type": "assistant.delta", "text": text})
             if d.get("done"):

@@ -612,6 +612,8 @@ from newsroom import NewsRoom  # noqa: E402
 NEWS = NewsRoom(dict({"base_url": CONFIG.get("deepseek", {}).get("base_url", "https://api.deepseek.com")},
                      **CONFIG.get("news", {})), deepseek_key)
 NEWS.start()
+FRIDAY.vt.ext.update(news=NEWS, do_action=do_action,
+                     apps=lambda: load_json("apps.json", load_json("apps.example.json", {"apps": []}))["apps"])
 CHAT_STOP = threading.Event()
 
 

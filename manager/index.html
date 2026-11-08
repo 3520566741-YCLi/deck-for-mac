@@ -98,7 +98,11 @@ html.embed.skin-soft label.auto input::after{background:var(--nm-knob,var(--nm-f
 html.embed.skin-soft label.auto input:checked{background:var(--ok);box-shadow:inset 2px 2px 5px rgba(0,0,0,.22)}
 html.embed.skin-soft label.auto input:checked::after{background:#fff}
 html.embed.skin-soft #toast{background:var(--nm-bg);-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 18px 40px -14px var(--nm-lo),var(--nm-up-xs),var(--nm-rim)}
+label.auto{cursor:pointer;transition:opacity .2s}label.auto.pressed{opacity:.6;transition:opacity .1s}
+input[type=checkbox].pressed,label.auto.pressed input{transform:scale(.88);transition:transform .1s}
 </style>
+<!-- 按键音效 + 按压手感（嵌在 Deck 管家页里时声音交给监控台放） -->
+<script src="/static/deck-sfx.js"></script>
 </head>
 <body>
 <main>
@@ -223,14 +227,7 @@ if (/[?&]embed=1/.test(location.search)) {
   var l = document.getElementById("dashLink"); if (l) l.style.display = "none";
   // 不用系统自带的悬停小字：说明挪到按钮旁的提示条
   Array.prototype.forEach.call(document.querySelectorAll("[title]"), function (el) { el.setAttribute("aria-description", el.title); el.removeAttribute("title"); });
-  // 按压反馈：鼠标立刻按下；触摸 0.1 秒后才下沉
-  var pt = null, pe = null;
-  document.addEventListener("pointerdown", function (e) {
-    var b = e.target.closest && e.target.closest("button"); if (!b) return; pe = b;
-    if (e.pointerType === "mouse") b.classList.add("pressed"); else pt = setTimeout(function () { b.classList.add("pressed", "touch"); }, 100);
-  });
-  var up = function () { clearTimeout(pt); if (pe) pe.classList.remove("pressed", "touch"); pe = null; };
-  document.addEventListener("pointerup", up); document.addEventListener("pointercancel", up);
+  // 按压手感（鼠标立刻按下；触摸 0.1 秒后才下沉，快点也闪一下）统一在 static/deck-sfx.js 里
 }
 </script>
 </body>

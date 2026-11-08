@@ -3,12 +3,56 @@
 版本号规则：小修小补升第三位（0.1.0 → 0.1.1），加新功能升第二位（0.1.x → 0.2.0）。旧版本一直保留在 [Releases](../../releases)。
 Versioning: fixes bump the patch number (0.1.0 → 0.1.1), new features bump the minor number (0.1.x → 0.2.0). Every old version stays on the [Releases](../../releases) page.
 
-## v0.3.0 · 2026-11-08
+## v0.2.0 · 2026-11-08
 
-新功能：助手名字自己起，声纹录入和唤醒测试搬进 Deck。
-New: name the assistant yourself; voiceprint recording and wake tests inside Deck.
+这一版合并了原先分开准备的 0.2.0 和 0.3.0（都没正式发布过），一起发布：助手能读日报、能操作 Deck 的全部功能；每个按钮都有按压反馈和音效；键盘清洁；助手名字和声纹在 Deck 里自己设；设置页切换显示方式。
+This release folds the separately prepared 0.2.0 and 0.3.0 (neither was published) into one: the assistant can read the daily brief and operate everything in Deck; every button gives press feedback and sound; keyboard cleaning; name the assistant and record your voiceprint inside Deck; switch the display mode from Settings.
 
-**新增 / Added**
+### 助手能读日报、能操作 Deck 的全部功能 / The assistant can read the brief and operate all of Deck
+
+#### 新增 / Added
+
+- 说「读一下今天的日报」：资讯页的日报播放器用助手的声音从头念，逐句高亮。助手先短短应一声，等它说完才开始播，两段声音不会叠在一起。「暂停」「继续」「从头读」「下一条」都能用嘴说。
+  Say "read today's brief": the news page's player reads it from the top in the assistant's voice, highlighting each sentence. The assistant answers in a few words first and the brief starts only after it finishes, so the two never overlap. "Pause", "continue", "from the top" and "next" work by voice.
+- 资讯各栏都能问：头版、前沿科技、开源热榜、AI 巨头、艺术 × 代码、投资新闻，还有整篇口播稿。助手知道你现在翻到了哪一栏。
+  Ask about any section: front page, frontier tech, trending open source, AI giants, art × code, investing news, or the whole script. The assistant knows which section you're looking at.
+- 行情：「我的自选今天怎么样」「英伟达现在多少钱」，读的是资讯页已经拿到的只读快照（涨跌幅、盘前盘后、指数、市场温度），不能也不会下单。
+  Quotes: "how's my watchlist today", "what's NVIDIA at": read from the news page's read-only snapshot (change, pre/after hours, indices, market temperature). It cannot and will not trade.
+- 进程、磁盘、GitHub：谁最占 CPU / 内存 / GPU，磁盘剩多少、谁在变大、最近新增、谁在写硬盘，某个仓库最近的提交、PR、Actions 和访客来源。
+  Processes, disk, GitHub: top CPU / memory / GPU users; free space, what's growing, what's new, who's writing; a repo's recent commits, PRs, Actions runs and referrers.
+- 应用和工具箱：打开 / 退出 / 重启应用、在访达里显示、卸载连残留；扫空间分布、垃圾、大文件和重复文件、应用更新，并能清垃圾。
+  Apps and toolbox: open / quit / restart apps, reveal in Finder, uninstall with leftovers; scan space, junk, large and duplicate files, and app updates, and clean junk.
+- Deck 设置和显示方式：皮肤、排版、刘海面板大小和排法、玻璃透明度、按键音效、减少动画、显示或隐藏某张卡片；切换 自动 / 扩展屏 / 刘海。
+  Deck settings and display: skin, layout, notch size and arrangement, glass opacity, key sounds, reduce motion, show or hide a card; switch Auto / External / Notch.
+- 每日清理：问最近清了什么、开关「直接清」、一句话把清掉的东西放回原处。
+  Daily cleanup: ask what was cleaned, turn auto-clean on or off, and put things back with one sentence.
+
+#### 安全和稳定 / Safety and stability
+
+- 会改动东西的操作（结束进程、退出或重启应用、卸载、清垃圾）一律先在屏幕上出「等你确认」，只有你最新一句话是简短明确的同意才执行；东西只进废纸篓，能撤销。网页、新闻、进程名里的文字只当数据，就算写着「帮我删掉」也不照做。
+  Anything that changes your Mac (ending a process, quitting or restarting an app, uninstalling, cleaning junk) shows a confirmation first and runs only if your latest sentence is a short, clear yes. Things only go to the Trash and can be put back. Text from web pages, news or process names is treated as data, never as instructions.
+- 系统进程和 Deck 自己要用的进程不能结束，系统应用和 Deck 自己的应用不能卸载。
+  System processes and the ones Deck needs can't be ended; system apps and Deck's own apps can't be uninstalled.
+- 助手只有真的调用了对应的功能才会说「已经暂停 / 开始播 / 退出了」：像命令的短句第一步必须执行操作，没做就说做了会当场补做。
+  The assistant only says "paused / playing / quit" after actually doing it: short commands must run an action first, and a claim without an action is caught and carried out on the spot.
+- 日报播放：连点、拖进度条、方向键不会让它反复重开；语音说「读日报」时不会被助手的追问窗口卡住。
+  Brief player: rapid taps, dragging the seek bar or arrow keys no longer restart it over and over; saying "read the brief" is no longer blocked by the assistant's follow-up listening.
+- 系统自带的应用（备忘录、计算器……）也能用中文名打开和退出。
+  Built-in apps (Notes, Calculator…) can be opened and quit by their localized names.
+- 修复：Deck 重新排版时（改皮肤、隐藏卡片）对话面板会被关掉。
+  Fix: the chat panel closed whenever Deck re-laid out the page (changing skin, hiding a card).
+
+### 每个按钮都有按压反馈和音效 / Every button gives press feedback and sound
+
+- 资讯页、管家页、玻璃对话页之前没加载按键音效，日报播放器、「从头再念」这些按钮按了没声音、看起来也没反应；现在 Deck 里所有按钮都有按下缩放 + 回弹和按键音效（音效沿用原来那套，夜里自动减半、助手在听 / 在说时不响）。
+  The news page, the butler page and the glass chat page never loaded the key sounds, so buttons like the brief player's play and "read again" made no sound and looked dead. Every button in Deck now has the press-and-spring feedback and the key sound (same sound set; half volume at night, silent while the assistant listens or speaks).
+- 手指快点（不到 0.1 秒）也会显示按下的样子。 / Quick taps under 0.1 s now show the pressed state too.
+- 「重编这一期」点了会转圈，编好之前不能重复点。 / "Re-edit this issue" shows a spinner and can't be pressed twice while it runs.
+- 日报播放器防连点：连按跳句只重开一次，拖完进度条后方向键不会误跳句。 / The brief player ignores double taps: rapid seeking restarts only once, and arrow keys no longer seek after you drag the bar.
+
+### 助手名字和声纹 / Assistant name and voiceprint
+
+#### 新增 / Added
 
 - 设置 →「助手」→「名字」：英文 3–12 个字母或 2–4 个汉字，可填读法提示（中文谐音或英文单词）。保存后唤醒当场换，不用重启；页面上的名字和大模型人设自动跟着变。Siri、Alexa、小爱这类别的助手的名字不收。
   Settings → Assistant → Name: 3–12 English letters or 2–4 Chinese characters, with an optional pronunciation hint. Wake switches immediately without a restart; the name on the page and the LLM persona follow. Names of other assistants (Siri, Alexa…) are refused.
@@ -19,7 +63,7 @@ New: name the assistant yourself; voiceprint recording and wake tests inside Dec
 - 「测试」：自己叫 10 遍（唤醒率 + 声纹通过率）、请别人叫 10 遍（会不会被冒充）、安静听 1 / 3 / 5 分钟（会不会误醒）。
   Tests: say it 10 times (wake rate and voiceprint pass rate), have someone else say it 10 times (impersonation), or listen quietly for 1 / 3 / 5 minutes (false wakes).
 
-**怎么实现 / How it works**
+#### 怎么实现 / How it works
 
 - 读法：先查唤醒模型自带的 CMU 词典；查不到的名字按简化的字母发音规则（思路来自公有领域的 NRL 规则）猜几种读法；读法提示排最前（`manager/voice/service/names.py`）。
   Pronunciation: the wake model's CMU lexicon first; unknown names get a few guesses from simplified letter-to-sound rules (after the public-domain NRL rules); the hint goes first.
@@ -28,7 +72,7 @@ New: name the assistant yourself; voiceprint recording and wake tests inside Dec
 - 记下的写法只收读音和名字像的（相似度 ≥ 0.6），会让普通聊天误醒的不收，免得名字被认成「太阳」之类常用词后一说就醒。
   Remembered spellings are kept only if they sound like the name (similarity ≥ 0.6) and don't trigger on ordinary sentences, so a name misheard as a common word won't cause false wakes.
 
-**安全和稳定 / Safety and stability**
+#### 安全和稳定 / Safety and stability
 
 - 测试时结果只交给测试、不真的唤醒，也绝不拿测试时的声音补录声纹（可能是别人）；测试最长 12 分钟自动结束。
   Tests never actually wake the assistant and never adapt the voiceprint (it might be someone else); a test ends after 12 minutes at most.
@@ -37,15 +81,9 @@ New: name the assistant yourself; voiceprint recording and wake tests inside Dec
 - 英文词典按需查，不整份读进内存（省约 60 MB）。
   The English lexicon is looked up on demand instead of loaded whole (saves about 60 MB).
 
-**更新 / Updating**：拉代码后重启语音服务（`pkill -f service.server`，DeckVoice 会重新拉起）和 Deck。
-After pulling, restart the voice service (`pkill -f service.server`; DeckVoice starts it again) and Deck.
+### 键盘清洁和显示方式 / Keyboard cleaning and display mode
 
-## v0.2.0 · 2026-11-08
-
-新功能：键盘清洁；设置页切换显示方式。
-New: keyboard cleaning; switch the display mode from Settings.
-
-**新增 / Added**
+#### 新增 / Added
 
 - 工具箱新增「小工具」页（放不碰文件的随手工具），第一个是**键盘清洁**：锁住键盘，按什么都没反应，方便擦键盘；可选黑屏（灰尘指纹看得清）和连触控板一起锁。
   A new **Tools** tab in the toolbox for small utilities that never touch files. The first one is **keyboard cleaning**: the keyboard does nothing while you wipe it; optionally black out the screen (dust shows up better) and lock the trackpad too.
@@ -56,18 +94,23 @@ New: keyboard cleaning; switch the display mode from Settings.
 - 设置 → 显示方式：自动 / 扩展屏 / 刘海，和菜单栏是同一个设置。皮肤选项「玻璃（原来的）」改名为「玻璃」。
   Settings → Display: Auto / External screen / Notch, the same setting as the menu bar. The skin option "Glass (original)" is now just "Glass".
 
-**怎么实现 / How it works**
+#### 怎么实现 / How it works
 
 - 拦按键的是 DeckHands 的清洁模式（`manager/hands/CleanMode.swift`，`--clean` 单独起进程），沿用 DeckHands 的辅助功能权限，不用另外授权。写法参考 MIT 开源的 [Lockpaw](https://github.com/sorkila/lockpaw) 和 [keylock](https://github.com/kfv/keylock)。更新后要重新跑一次 `manager/hands/build.sh`。
   Keys are blocked by DeckHands' clean mode (`manager/hands/CleanMode.swift`, a separate `--clean` process) using DeckHands' existing Accessibility permission. Approach based on the MIT-licensed Lockpaw and keylock. Re-run `manager/hands/build.sh` after updating.
 
-**安全和稳定 / Safety and stability**
+#### 安全和稳定 / Safety and stability
 
 - 绝不锁死：进程卡住 6 秒（心跳停了）或过了截止时间，服务端直接结束它；进程一退出系统就撤掉拦截。结束后恢复被误按的 Caps Lock。
   It can't get stuck: if the process hangs for 6 s (no heartbeat) or runs past its deadline, the server ends it, and the system drops the block as soon as the process exits. Caps Lock is restored afterwards.
 - 接口只认本机加口令；只会给确认过的 `DeckHands --clean` 进程发信号，不会误杀别的程序。
   The endpoints accept local requests with the token only, and signals go only to a verified `DeckHands --clean` process.
 - 修复：工具箱里的报错之前显示成灰字，现在是醒目的提醒色。 / Fix: toolbox errors were shown in grey; they now use the warning color.
+
+### 更新 / Updating
+
+拉代码后：重新跑一次 `manager/hands/build.sh`（键盘清洁要用），重启语音服务（`pkill -f service.server`，DeckVoice 会重新拉起），再退出 Deck、结束 8777 上的 `server.py`、重新打开 Deck。
+After pulling: re-run `manager/hands/build.sh` (needed for keyboard cleaning), restart the voice service (`pkill -f service.server`; DeckVoice starts it again), then quit Deck, end `server.py` on port 8777 and reopen Deck.
 
 ## v0.1.1 · 2026-11-08
 

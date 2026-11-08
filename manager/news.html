@@ -56,7 +56,6 @@ a:focus-visible, button:focus-visible, [tabindex]:focus-visible { outline: 2px s
 .issue b { color: var(--text2); font-weight: 600; }
 .pager { display: flex; gap: 6px; flex: none; }
 .ibtn { width: 30px; height: 30px; border-radius: 50%; border: 0; background: var(--face); box-shadow: var(--up-xs), var(--rim); cursor: pointer; color: var(--text2); display: grid; place-items: center; font-size: 16px; line-height: 1; }
-.ibtn:active { box-shadow: var(--in-s); }
 .ticker { overflow: hidden; margin: 0 18px 8px; border-radius: 10px; background: var(--bg); box-shadow: var(--in-s); flex: none;
   -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%); }
 .ticker[hidden] { display: none; }
@@ -96,7 +95,6 @@ a:focus-visible, button:focus-visible, [tabindex]:focus-visible { outline: 2px s
 .meta::before { content: ">"; color: var(--phos); }
 .plate { width: 100%; height: 150px; border-radius: 14px; box-shadow: var(--in), inset 0 0 0 1px color-mix(in srgb, var(--phos) 30%, transparent); display: block; margin-bottom: 14px; }
 a.story, .story { display: block; min-width: 0; border-radius: 10px; }
-a.story:active { opacity: .7; }
 .brief-h { font: 600 12px/1 var(--mono); letter-spacing: .1em; color: var(--text3); margin-bottom: 10px; }
 .briefs { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .briefs li a { display: grid; grid-template-columns: 22px minmax(0,1fr); gap: 6px; font-size: 13px; line-height: 1.6; color: var(--text); }
@@ -106,9 +104,23 @@ a.story:active { opacity: .7; }
 .empty { padding: 40px 20px; text-align: center; color: var(--text3); font-size: 13.5px; line-height: 1.8; }
 .empty b { color: var(--text); font-size: 16px; display: block; margin-bottom: 6px; }
 .btn { border: 0; padding: 9px 16px; border-radius: 999px; background: var(--face); box-shadow: var(--up-xs), var(--rim); cursor: pointer; color: var(--accent); font-weight: 700; font-size: 13px; }
-.btn:active { box-shadow: var(--in-s); }
 .btn[disabled] { opacity: .5; cursor: default; }
 .note { font-size: 12px; color: var(--text3); margin-top: 10px; line-height: 1.6; }
+
+/* ---------- 按压手感（11-08）：按下去凹进去 + 轻轻缩一下，手指快速点一下也会闪一下（.pressed 由 static/deck-sfx.js 加） ---------- */
+.ibtn, .btn, .play, .row, .art-tile, .imp, .wl-row { transition: transform .4s cubic-bezier(.34,1.56,.64,1), box-shadow .2s, opacity .2s, background-color .2s; }
+.ibtn.pressed, .btn.pressed, .play.pressed { box-shadow: var(--in-s); transform: scale(.94); transition: transform .12s cubic-bezier(.2,.8,.2,1), box-shadow .1s; }
+.btn.pressed, .seg button.pressed { color: var(--phos); }
+.seg button.pressed { box-shadow: var(--in-s); transform: scale(.96); transition: transform .12s cubic-bezier(.2,.8,.2,1), box-shadow .1s; }
+.row.pressed, .art-tile.pressed, .imp.pressed, .wl-row.pressed { box-shadow: var(--in-s); transform: scale(.985); transition: transform .12s cubic-bezier(.2,.8,.2,1), box-shadow .1s; }
+a.pressed:not(.row):not(.art-tile):not(.imp) { opacity: .62; transform: scale(.99); transition: opacity .1s, transform .12s cubic-bezier(.2,.8,.2,1); }
+:root.reduce .pressed { transform: none !important; }
+@media (prefers-reduced-motion: reduce) { .pressed { transform: none !important; } }
+/* 「重编这一期」点下去后：转圈 + 文字变成正在编，编好之前不能再点 */
+.btn.busy { color: var(--text3); box-shadow: var(--in-s); cursor: progress; opacity: 1; display: inline-flex; align-items: center; gap: 7px; }
+.btn.busy::before { content: ""; width: 11px; height: 11px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.btn.err { color: var(--rise); }
 
 /* ---------- Vesper 早报条 ---------- */
 .brief-bar { grid-column: 1 / -1; display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 16px; align-items: center; padding: 14px 18px; position: relative; isolation: isolate; border-radius: 18px; background: var(--bg); box-shadow: var(--up-s), var(--rim); }
@@ -263,6 +275,8 @@ html.reduce .track { transition: none; } html.reduce .ticker-in { animation: non
 </style>
 <script src="/static/reactbits-strands.js"></script>
 <script src="/static/reactbits-orb.js"></script>
+<!-- 按键音效 + 按压手感：嵌在 Deck 里时声音交给监控台放（同一套开关、音量、Vesper 说话时静音） -->
+<script src="/static/deck-sfx.js"></script>
 </head>
 <body>
 <div class="app">
@@ -342,7 +356,9 @@ html.reduce .track { transition: none; } html.reduce .ticker-in { animation: non
   });
   // 监控台（父页面）在切页或 Vesper 叫「看投资」时可以直接调用
   var ACTIVE = true;
-  window.DeckNews = { active: function (on) { ACTIVE = !!on; if (on) { loadNews(); pollMarket(true); } artLoop(); }, go: function (k) { var i = pages.findIndex(function (p) { return p.getAttribute("data-k") === k; }); if (i >= 0) go(i); } };
+  window.DeckNews = { active: function (on) { ACTIVE = !!on; if (on) { loadNews(); pollMarket(true); } artLoop(); }, go: function (k) { var i = pages.findIndex(function (p) { return p.getAttribute("data-k") === k; }); if (i >= 0) go(i); },
+    section: function () { return pages[cur] ? pages[cur].getAttribute("data-k") : null; },
+    brief: function (act) { briefCmd(act, 0); } };
 
   /* ---------- 小部件 ---------- */
   function storyLink(s, inner, cls) {
@@ -352,6 +368,25 @@ html.reduce .track { transition: none; } html.reduce .ticker-in { animation: non
     var k = s.kicker || fallback || "";
     return '<div class="kicker">' + esc(k) + ' <span class="t">' + esc(ago(s.ts) || s.src) + (s.n_src > 1 ? " · " + s.n_src + " 个来源" : "") + "</span></div>";
   }
+  // 「重编 / 现在编」按钮：正在编的时候显示转圈和「正在编…」，不能重复点（：按了像没反应）
+  var REFRESHING = false, REFRESH_AT = 0;
+  function refreshBtn(label, style) {
+    var busy = REFRESHING || (SNAP && SNAP.busy);
+    return '<button class="btn' + (busy ? " busy" : "") + '" data-act="refresh"' + (busy ? " disabled" : "") + (style ? ' style="' + style + '"' : "") + ' data-label="' + esc(label) + '">' + (busy ? "正在编…" : esc(label)) + "</button>";
+  }
+  function syncRefresh() {
+    var busy = REFRESHING || (SNAP && SNAP.busy);
+    Array.prototype.forEach.call(document.querySelectorAll('[data-act="refresh"]'), function (b) {
+      if (b.classList.contains("err")) return;
+      b.classList.toggle("busy", !!busy); b.disabled = !!busy; b.textContent = busy ? "正在编…" : b.getAttribute("data-label");
+    });
+  }
+  function flashRefresh(msg) {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-act="refresh"]'), function (b) {
+      b.classList.remove("busy"); b.classList.add("err"); b.disabled = false; b.textContent = String(msg).slice(0, 24);
+      setTimeout(function () { b.classList.remove("err"); syncRefresh(); }, 3500);
+    });
+  }
   function emptyState(title, body, act) {
     return '<div class="empty"><b>' + esc(title) + "</b>" + esc(body) + (act || "") + "</div>";
   }
@@ -359,7 +394,7 @@ html.reduce .track { transition: none; } html.reduce .ticker-in { animation: non
     var s = SNAP || {};
     if (s.busy) return emptyState("正在编第一期", "DeepSeek 正在挑新闻、写摘要，大约一两分钟。");
     var why = s.error ? s.error : (!s.has_key ? "还没找到 DeepSeek key。" : (s.peak ? "现在是 DeepSeek 高峰时段（价格翻倍），等到半价时段自动编。" : "下一期会自动编好。"));
-    var btn = BOOT.local && s.has_key ? '<div style="margin-top:14px"><button class="btn" data-act="refresh">现在编一期</button></div><div class="note">' + (s.peak ? "现在是高峰时段，这一期大约 ¥0.25。" : "大约 ¥0.12，算进每天 ¥" + esc(s.budget) + " 的预算。") + "</div>" : "";
+    var btn = BOOT.local && s.has_key ? '<div style="margin-top:14px">' + refreshBtn("现在编一期") + '</div><div class="note">' + (s.peak ? "现在是高峰时段，这一期大约 ¥0.25。" : "大约 ¥0.12，算进每天 ¥" + esc(s.budget) + " 的预算。") + "</div>" : "";
     return emptyState("还没有报纸", why + (s.next ? " 下一期：" + s.next.name + " " + s.next.at + "。" : ""), btn);
   }
 
@@ -437,7 +472,7 @@ html.reduce .track { transition: none; } html.reduce .ticker-in { animation: non
     }
     h += briefBar(e);
     h += '<div class="page-foot"><span>DeepSeek ' + esc(e.slot) + " 编排 · 本期约 ¥" + esc((e.meta && e.meta.cost) || 0) + " · 来源 " + esc((e.sources || []).filter(function (s) { return s.n; }).length) + " 个</span><span>" +
-      (BOOT.local ? '<button class="btn" data-act="refresh" style="padding:5px 12px;font-size:11.5px">重编这一期</button>' : "") + "</span></div></div>";
+      (BOOT.local ? refreshBtn("重编这一期", "padding:5px 12px;font-size:11.5px") : "") + "</span></div></div>";
     el.innerHTML = h;
     placeOrb(el);
   }
@@ -579,12 +614,43 @@ html.reduce .track { transition: none; } html.reduce .ticker-in { animation: non
     try { v && v.stop && v.stop(); } catch (e) {}
   }
   function brJump(i) { // 跳到第 i 句：在念就从那里接着念，没在念就只挪位置
-    var was = BR.playing;
-    if (was) { brPause(); BR.idx = i; brRender(); setTimeout(function () { brPlay(i); }, 400); }
-    else { BR.idx = i; brRender(); }
+    // 连按 / 连点合并成一次：位置马上挪，声音等停手 400ms 后才从那句重开（11-08：重启时日报 9 秒里重开了 5 次）
+    var was = BR.playing || !!BR.jumpT;
+    BR.idx = i;
+    if (!was) { brRender(); return; }
+    if (BR.playing) brPause();
+    BR.idx = i; brRender();
+    clearTimeout(BR.jumpT);
+    BR.jumpT = setTimeout(function () { BR.jumpT = 0; brPlay(BR.idx); }, 400);
   }
-  function playBrief() { if (BR.playing) brPause(); else brPlay(BR.idx); }
-  function briefAgain() { if (BR.playing) brJump(0); else brPlay(0); }
+  function playBrief() {
+    var now = Date.now();
+    if (now - (BR.tapAt || 0) < 350) return; // 防连点：两下之间不到 0.35 秒的第二下不算
+    BR.tapAt = now;
+    if (BR.jumpT) { clearTimeout(BR.jumpT); BR.jumpT = 0; brRender(); return; } // 正等着跳句重开：这一下当作暂停
+    if (BR.playing) brPause(); else brPlay(BR.idx);
+  }
+  function briefAgain() {
+    var now = Date.now();
+    if (now - (BR.tapAt || 0) < 350) return; // 防连点
+    BR.tapAt = now;
+    if (BR.playing || BR.jumpT) brJump(0); else brPlay(0);
+  }
+  // Vesper 叫的（「读一下今天的日报」）：先翻到头版（播放条在那里），这一期还没加载好就等一下
+  function briefCmd(act, tries) {
+    if (!(ED && ED.script && ED.script.length) && act !== "pause") { if (tries < 40) setTimeout(function () { briefCmd(act, tries + 1); }, 200); return; }
+    if (act !== "pause") {
+      var i = pages.findIndex(function (p) { return p.getAttribute("data-k") === "front"; }); if (i >= 0 && cur !== i) go(i);
+      setTimeout(function () { var bar = document.querySelector(".brief-bar"); if (bar && bar.scrollIntoView) bar.scrollIntoView({ block: "nearest", behavior: "smooth" }); }, 350);
+    }
+    var n = brLines().length;
+    if (act === "play") { if (BR.playing) brJump(0); else brPlay(0); }
+    else if (act === "resume") { if (!BR.playing) brPlay(BR.idx); }
+    else if (act === "restart") briefAgain();
+    else if (act === "pause") { if (BR.playing) brPause(); }
+    else if (act === "next") brJump(Math.min(n - 1, BR.idx + 1));
+    else if (act === "prev") brJump(Math.max(0, BR.idx - 1));
+  }
   // 拖进度条（鼠标和触屏都行）；←/→ 键一次挪一句
   document.addEventListener("pointerdown", function (e) {
     var seek = e.target.closest && e.target.closest(".bb-seek");
@@ -603,13 +669,15 @@ html.reduce .track { transition: none; } html.reduce .ticker-in { animation: non
   });
   function dragEnd() {
     if (!BR.drag) return;
-    var f = BR.drag.f; BR.drag.el.classList.remove("drag"); BR.drag = null;
+    var f = BR.drag.f, el = BR.drag.el; el.classList.remove("drag"); BR.drag = null;
+    try { el.blur(); } catch (x) {} // 鼠标 / 手指拖完把焦点还掉，之后按方向键（外接键盘 ← 是按住说话）不会误跳句
     brJump(brAt(f));
   }
   document.addEventListener("pointerup", dragEnd);
   document.addEventListener("pointercancel", dragEnd);
   document.addEventListener("keydown", function (e) {
     if (!e.target || !e.target.classList || !e.target.classList.contains("bb-seek")) return;
+    if (e.repeat) { e.preventDefault(); return; } // 按住不放的自动重复不算
     if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
       e.preventDefault(); e.stopPropagation();
       brJump(Math.max(0, Math.min(brLines().length - 1, BR.idx + (e.key === "ArrowLeft" ? -1 : 1))));
@@ -813,7 +881,15 @@ html.reduce .track { transition: none; } html.reduce .ticker-in { animation: non
     else if (a === "grp") { mktGroup = +t.getAttribute("data-v") || 0; selSym = null; renderInvest(); }
     else if (a === "play") playBrief();
     else if (a === "brief-again") briefAgain();
-    else if (a === "refresh") { t.disabled = true; api("/api/news/refresh", {}, function () { setTimeout(loadNews, 1500); }); }
+    else if (a === "refresh") {
+      REFRESHING = true; syncRefresh();
+      api("/api/news/refresh", {}, function (code, j) {
+        if (code === 200 && j && j.ok !== false) { REFRESH_AT = Date.now(); setTimeout(loadNews, 1500); return; }
+        // 没编起来（预算用完、没有 key、服务器没响应）：按钮上直接说，3 秒后恢复
+        REFRESHING = false;
+        flashRefresh((j && (j.error || j.msg)) || (code ? "没编起来" : "连不上管家服务"));
+      });
+    }
     else if (a === "connect") { t.disabled = true; api("/api/news/market/connect", {}, function () { pollMarket(true); }); }
   });
   document.addEventListener("keydown", function (ev) {
@@ -828,7 +904,12 @@ html.reduce .track { transition: none; } html.reduce .ticker-in { animation: non
       if (code === 200 && j) {
         var changed = !SNAP || !ED || !j.edition || j.edition.made_at !== ED.made_at || j.edition.invest_at !== ED.invest_at || j.busy !== SNAP.busy;
         SNAP = j; ED = j.edition;
+        if (REFRESHING && REFRESH_AT && (j.busy || Date.now() - REFRESH_AT > 1200)) {
+          REFRESHING = false;   // 服务器已经接手了，之后跟着 SNAP.busy 走；没开编（比如预算用完）就把原因写在按钮上
+          if (!j.busy && j.error) setTimeout(function () { flashRefresh(j.error); }, 0);
+        }
         if (changed) renderAll(); else renderIssue();
+        syncRefresh();
       }
       newsTimer = setTimeout(loadNews, SNAP && SNAP.busy ? 8000 : 300000);
     });
