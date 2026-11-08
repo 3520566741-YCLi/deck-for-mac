@@ -904,6 +904,30 @@ html.skin-soft .switch[aria-checked="true"]::after { transform: translateX(20px)
 html.skin-soft .switch:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 html.skin-soft .field input { background: var(--nm-bg); box-shadow: var(--nm-in-s); }
 html.skin-soft .field input:focus { box-shadow: var(--nm-in-s), inset 0 0 0 2px var(--accent); }
+/* .note 写在 .warn-t 后面会把颜色盖回灰色，工具箱里的报错一直显示成灰字；这里提高一级 */
+.note.warn-t { color: var(--warn); } .note.ok-t { color: var(--ok); }
+/* 工具箱「小工具」页：每个工具一张卡（.group.kc-card），卡里分段（.kc-sec）用细线隔开，和「设置」里的分组一个手感 */
+.kc-card { padding: 4px 0; display: flex; flex-direction: column; }
+.kc-card > * + * { border-top: 1px solid var(--line); }
+.kc-head { display: flex; align-items: center; gap: 12px; padding: 10px 14px; }
+.kc-ic { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; flex: none; color: var(--text2); background: var(--track); }
+.kc-ic svg { width: 22px; height: 22px; }
+html.skin-soft .kc-ic { background: var(--nm-bg); box-shadow: inset 3px 3px 6px var(--nm-lo), inset -3px -3px 6px var(--nm-hi); }
+.kc-tt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.kc-tt b { font-size: 16px; font-weight: 650; }
+.kc-tt small { font-size: 12.5px; color: var(--text2); line-height: 1.35; }
+.badge.kc-on { background: var(--ok); color: #fff; }
+.kc-sec { padding: 10px 14px; display: flex; flex-direction: column; gap: 8px; }
+.kc-lab { font-size: 13px; color: var(--text3); }
+.kc-act { flex-direction: row; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
+.kc-last { font-size: 12px; }
+.kc-count { flex-direction: row; align-items: baseline; gap: 8px; }
+.kc-count b { font-size: 40px; font-weight: 640; letter-spacing: -.8px; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.kc-count small { font-size: 13px; color: var(--text2); }
+.kc-card .row-btn.kc-row { border-radius: 0; padding: 9px 14px; min-height: 52px; }
+.kc-row .t { line-height: 1.35; }
+.kc-row .t small { font-size: 12px; }
+.btn.kc-go { min-width: 132px; }
 /* 工具箱里的搜索框、下拉框（deck-tools.js 写的是行内样式，所以要 !important） */
 html.skin-soft .sheet-b input[type="search"] { border: 0 !important; border-radius: 12px !important; background: var(--nm-bg) !important; box-shadow: var(--nm-in-s); outline: none; padding-left: 12px !important; padding-right: 10px !important; }
 html.skin-soft .sheet-b select { border: 0 !important; border-radius: 12px !important; background-color: var(--nm-bg) !important; box-shadow: var(--nm-up-xs); outline: none; }
@@ -1189,6 +1213,15 @@ var IN_APP = /[?&]app=1/.test(location.search); // 在 Fusion Workbench 应用�
 //   主页面 GLASS：面板位置报给原生，自己的 #chat 只占位不显示；
 //   对话页 PANE（?pane=chat）：只显示对话，铺满玻璃，打开卡片/换主题/光效都转给主页面。
 var WKH = (window.webkit && webkit.messageHandlers) || {};
+// 显示方式（自动 / 扩展屏 / 刘海）：存在 Deck 原生壳里，和菜单栏「显示方式」是同一个设置。页面打开时问一次，原生改了（菜单栏切的）会推过来
+var DM = { mode: "", active: "" };
+function dmSend(m) { try { WKH.deckMode.postMessage(JSON.stringify(m)); } catch (e) {} }
+window.__deckMode = function (o) {
+  if (!o || !/^(auto|ext|notch)$/.test(o.mode)) return;
+  DM = { mode: o.mode, active: o.active === "notch" ? "notch" : "ext" };
+  if (typeof openKey !== "undefined" && openKey === "__settings") renderSettings();
+};
+if (WKH.deckMode) dmSend({ t: "get" });
 var PANE = IN_APP && /[?&]pane=chat/.test(location.search) && !!WKH.deckChat;
 var GLASS = IN_APP && !PANE && !!WKH.deckGlass;
 // 刘海模式：Deck 在 MacBook 刘海下面弹出的抽屉（没接 iPad 时用）。同一个页面，只换显示方式。
@@ -1289,7 +1322,8 @@ var P = {
   minus: '<path d="M6 12h12"/>',
   check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
   search: '<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/>',
-  hand: '<path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V11M11 10.5V4a1.5 1.5 0 0 1 3 0v6.5M14 10.5V5.5a1.5 1.5 0 0 1 3 0V13M17 9.5a1.5 1.5 0 0 1 3 0V14a7 7 0 0 1-7 7h-1a7 7 0 0 1-5.6-2.8L4 15.2a1.6 1.6 0 0 1 2.5-2L8 15"/>'
+  hand: '<path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V11M11 10.5V4a1.5 1.5 0 0 1 3 0v6.5M14 10.5V5.5a1.5 1.5 0 0 1 3 0V13M17 9.5a1.5 1.5 0 0 1 3 0V14a7 7 0 0 1-7 7h-1a7 7 0 0 1-5.6-2.8L4 15.2a1.6 1.6 0 0 1 2.5-2L8 15"/>',
+  keyboard: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"/>'
 };
 // 官方图标：LobeHub Icons（MIT）与 Simple Icons（CC0）；商标归各公司所有
 var BRAND = {"system": "<svg class=\"__C__\" aria-hidden=\"true\" fill=\"currentColor\" fill-rule=\"evenodd\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M11.932 6.908c.95 0 2.727-1.291 4.595-1.1.782.032 2.976.316 4.388 2.38-.113.069-2.622 1.528-2.593 4.565.034 3.617 3.166 4.828 3.221 4.85-.029.086-.506 1.723-1.658 3.416-1.002 1.463-2.039 2.919-3.675 2.95-1.606.03-2.125-.955-3.96-.955s-2.409.923-3.931.984c-1.581.06-2.78-1.58-3.79-3.037-2.065-2.98-3.64-8.422-1.527-12.087 1.051-1.824 2.93-2.98 4.969-3.009 1.549-.032 3.011 1.043 3.96 1.043zM16.552 0c.153 1.407-.411 2.817-1.251 3.833-.837 1.013-2.214 1.804-3.555 1.7-.185-1.378.495-2.814 1.27-3.712C13.883.805 15.346.05 16.553 0z\"></path></svg>", "claude": "<svg class=\"__C__\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path clip-rule=\"evenodd\" d=\"M20.998 10.949H24v3.102h-3v3.028h-1.487V20H18v-2.921h-1.487V20H15v-2.921H9V20H7.488v-2.921H6V20H4.487v-2.921H3V14.05H0V10.95h3V5h17.998v5.949zM6 10.949h1.488V8.102H6v2.847zm10.51 0H18V8.102h-1.49v2.847z\" fill=\"#D97757\" fill-rule=\"evenodd\"></path></svg>", "codex": "<svg class=\"__C__\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M19.503 0H4.496A4.496 4.496 0 000 4.496v15.007A4.496 4.496 0 004.496 24h15.007A4.496 4.496 0 0024 19.503V4.496A4.496 4.496 0 0019.503 0z\" fill=\"#fff\"></path><path d=\"M9.064 3.344a4.578 4.578 0 012.285-.312c1 .115 1.891.54 2.673 1.275.01.01.024.017.037.021a.09.09 0 00.043 0 4.55 4.55 0 013.046.275l.047.022.116.057a4.581 4.581 0 012.188 2.399c.209.51.313 1.041.315 1.595a4.24 4.24 0 01-.134 1.223.123.123 0 00.03.115c.594.607.988 1.33 1.183 2.17.289 1.425-.007 2.71-.887 3.854l-.136.166a4.548 4.548 0 01-2.201 1.388.123.123 0 00-.081.076c-.191.551-.383 1.023-.74 1.494-.9 1.187-2.222 1.846-3.711 1.838-1.187-.006-2.239-.44-3.157-1.302a.107.107 0 00-.105-.024c-.388.125-.78.143-1.204.138a4.441 4.441 0 01-1.945-.466 4.544 4.544 0 01-1.61-1.335c-.152-.202-.303-.392-.414-.617a5.81 5.81 0 01-.37-.961 4.582 4.582 0 01-.014-2.298.124.124 0 00.006-.056.085.085 0 00-.027-.048 4.467 4.467 0 01-1.034-1.651 3.896 3.896 0 01-.251-1.192 5.189 5.189 0 01.141-1.6c.337-1.112.982-1.985 1.933-2.618.212-.141.413-.251.601-.33.215-.089.43-.164.646-.227a.098.098 0 00.065-.066 4.51 4.51 0 01.829-1.615 4.535 4.535 0 011.837-1.388zm3.482 10.565a.637.637 0 000 1.272h3.636a.637.637 0 100-1.272h-3.636zM8.462 9.23a.637.637 0 00-1.106.631l1.272 2.224-1.266 2.136a.636.636 0 101.095.649l1.454-2.455a.636.636 0 00.005-.64L8.462 9.23z\" fill=\"url(#lobe-icons-codex-_R_0_)\"></path><defs><linearGradient gradientUnits=\"userSpaceOnUse\" id=\"lobe-icons-codex-_R_0_\" x1=\"12\" x2=\"12\" y1=\"3\" y2=\"21\"><stop stop-color=\"#B1A7FF\"></stop><stop offset=\".5\" stop-color=\"#7A9DFF\"></stop><stop offset=\"1\" stop-color=\"#3941FF\"></stop></linearGradient></defs></svg>", "github": "<svg class=\"__C__\" aria-hidden=\"true\" fill=\"currentColor\" fill-rule=\"evenodd\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M12 0c6.63 0 12 5.276 12 11.79-.001 5.067-3.29 9.567-8.175 11.187-.6.118-.825-.25-.825-.56 0-.398.015-1.665.015-3.242 0-1.105-.375-1.813-.81-2.181 2.67-.295 5.475-1.297 5.475-5.822 0-1.297-.465-2.344-1.23-3.169.12-.295.54-1.503-.12-3.125 0 0-1.005-.324-3.3 1.209a11.32 11.32 0 00-3-.398c-1.02 0-2.04.133-3 .398-2.295-1.518-3.3-1.209-3.3-1.209-.66 1.622-.24 2.83-.12 3.125-.765.825-1.23 1.887-1.23 3.169 0 4.51 2.79 5.527 5.46 5.822-.345.294-.66.81-.765 1.577-.69.31-2.415.81-3.495-.973-.225-.354-.9-1.223-1.845-1.209-1.005.015-.405.56.015.781.51.28 1.095 1.327 1.23 1.666.24.663 1.02 1.93 4.035 1.385 0 .988.015 1.916.015 2.196 0 .31-.225.664-.825.56C3.303 21.374-.003 16.867 0 11.791 0 5.276 5.37 0 12 0z\"></path></svg>", "deepseek": "<svg class=\"__C__\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M23.748 4.482c-.254-.124-.364.113-.512.234-.051.039-.094.09-.137.136-.372.397-.806.657-1.373.626-.829-.046-1.537.214-2.163.848-.133-.782-.575-1.248-1.247-1.548-.352-.156-.708-.311-.955-.65-.172-.241-.219-.51-.305-.774-.055-.16-.11-.323-.293-.35-.2-.031-.278.136-.356.276-.313.572-.434 1.202-.422 1.84.027 1.436.633 2.58 1.838 3.393.137.093.172.187.129.323-.082.28-.18.552-.266.833-.055.179-.137.217-.329.14a5.526 5.526 0 01-1.736-1.18c-.857-.828-1.631-1.742-2.597-2.458a11.365 11.365 0 00-.689-.471c-.985-.957.13-1.743.388-1.836.27-.098.093-.432-.779-.428-.872.004-1.67.295-2.687.684a3.055 3.055 0 01-.465.137 9.597 9.597 0 00-2.883-.102c-1.885.21-3.39 1.102-4.497 2.623C.082 8.606-.231 10.684.152 12.85c.403 2.284 1.569 4.175 3.36 5.653 1.858 1.533 3.997 2.284 6.438 2.14 1.482-.085 3.133-.284 4.994-1.86.47.234.962.327 1.78.397.63.059 1.236-.03 1.705-.128.735-.156.684-.837.419-.961-2.155-1.004-1.682-.595-2.113-.926 1.096-1.296 2.746-2.642 3.392-7.003.05-.347.007-.565 0-.845-.004-.17.035-.237.23-.256a4.173 4.173 0 001.545-.475c1.396-.763 1.96-2.015 2.093-3.517.02-.23-.004-.467-.247-.588zM11.581 18c-2.089-1.642-3.102-2.183-3.52-2.16-.392.024-.321.471-.235.763.09.288.207.486.371.739.114.167.192.416-.113.603-.673.416-1.842-.14-1.897-.167-1.361-.802-2.5-1.86-3.301-3.307-.774-1.393-1.224-2.887-1.298-4.482-.02-.386.093-.522.477-.592a4.696 4.696 0 011.529-.039c2.132.312 3.946 1.265 5.468 2.774.868.86 1.525 1.887 2.202 2.891.72 1.066 1.494 2.082 2.48 2.914.348.292.625.514.891.677-.802.09-2.14.11-3.054-.614zm1-6.44a.306.306 0 01.415-.287.302.302 0 01.2.288.306.306 0 01-.31.307.303.303 0 01-.304-.308zm3.11 1.596c-.2.081-.399.151-.59.16a1.245 1.245 0 01-.798-.254c-.274-.23-.47-.358-.552-.758a1.73 1.73 0 01.016-.588c.07-.327-.008-.537-.239-.727-.187-.156-.426-.199-.688-.199a.559.559 0 01-.254-.078c-.11-.054-.2-.19-.114-.358.028-.054.16-.186.192-.21.356-.202.767-.136 1.146.016.352.144.618.408 1.001.782.391.451.462.576.685.914.176.265.336.537.445.848.067.195-.019.354-.25.452z\" fill=\"#4D6BFE\"></path></svg>", "makerworld": "<svg fill=\"currentColor\" class=\"__C__\" aria-hidden=\"true\" role=\"img\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M12.662 24V8.959l8.535 3.369V24zm-9.859-.003v-7.521l8.534-3.371-.001 10.892zM2.803 0h8.533l.001 11.672-8.534 3.369zm9.859 0h8.535v10.892l-8.535-3.371z\"/></svg>"};
@@ -1734,7 +1768,7 @@ R.tools = function (d) {
   if (d.formula_updates) rows.push(li(d.formula_updates + " 个命令行工具能更新", "Homebrew", ""));
   if (d.junk_last) rows.push(li("上次清理移走 " + fmtSize(d.junk_last.bytes), ago(d.junk_last.at), "ok"));
   if (d.trash_bytes != null) rows.push(li("废纸篓里有 " + fmtSize(d.trash_bytes), "清空要你自己点", ""));
-  var detail = hero + '<div class="sub">卸载应用连带残留 · 清垃圾 · 找大文件 · 更新应用；只移进废纸篓</div>' + list(rows, "");
+  var detail = hero + '<div class="sub">卸载应用连带残留 · 清垃圾 · 找大文件 · 更新应用 · 键盘清洁；文件只移进废纸篓</div>' + list(rows, "");
   // 主页重排（11-06）：磁盘剩余已在「Mac 状态」里，卡片只一行说「有什么要你点的」
   var bits = [];
   if (d.updates) bits.push(d.updates + " 个应用能更新");
@@ -2076,9 +2110,14 @@ function renderSettings() {
     lan += "</div>";
   }
   $("sheetBody").innerHTML = '<div class="gtitle">' + (NOTCH ? "卡片（拖动、调大小、添加网页在扩展屏模式里做）" : "卡片（也可以点顶栏的 ▦ 直接拖动、调大小、添加网页）") + '</div><div class="group">' + rows + "</div>" +
+    (WKH.deckMode && DM.mode ? '<div class="gtitle">显示方式</div><div class="group" style="padding:10px;display:flex;flex-direction:column;gap:10px">' +
+      '<div class="seg">' + [["auto", "自动"], ["ext", "扩展屏"], ["notch", "刘海"]].map(function (o) {
+        return '<button data-act="dmode" data-v="' + o[0] + '" aria-pressed="' + (DM.mode === o[0]) + '">' + o[1] + "</button>"; }).join("") + "</div>" +
+      '<p class="note muted" style="padding:0 4px">' + (DM.mode === "auto" ? "插着 iPad 用扩展屏，拔掉就从刘海弹出。" : DM.mode === "ext" ? "一直铺在 iPad（或你选的那块屏）上，刘海不弹出。" : "鼠标碰到刘海就从顶上弹出，⌥空格也能呼出。") +
+      "现在用的是<b>" + (DM.active === "notch" ? "刘海" : "扩展屏") + "</b>。菜单栏的 Deck 图标里也能切。</p></div>" : "") +
     '<div class="gtitle">外观</div><div class="group" style="padding:10px;display:flex;flex-direction:column;gap:10px">' +
     '<div class="row-btn" style="padding:0 4px"><span style="flex:1">皮肤</span></div>' +
-    seg("skin", [["soft", "新拟态"], ["glass", "玻璃（原来的）"]]) +
+    seg("skin", [["soft", "新拟态"], ["glass", "玻璃"]]) +
     '<div class="row-btn" style="padding:0 4px"><span style="flex:1">深浅色</span></div>' +
     seg("theme", [["auto", "跟随系统"], ["dark", "深色"], ["light", "浅色"]]) +
     seg("mode", [["fit", "一屏看完"], ["scroll", "可滚动"]]) +
@@ -2181,6 +2220,9 @@ document.addEventListener("click", function (e) {
       o.splice(i, 1); o.splice(j, 0, k); layout.order = o; saveLayout(); render(); renderSettings();
       var btn = $("sheetBody").querySelector('[data-act="move"][data-src="' + k + '"][data-dir="' + t.getAttribute("data-dir") + '"]');
       if (btn && !btn.disabled) btn.focus();
+    } else if (act === "dmode") {
+      var v = t.getAttribute("data-v"); if (!/^(auto|ext|notch)$/.test(v) || v === DM.mode) return;
+      DM.mode = v; renderSettings(); dmSend({ t: "set", v: v });
     } else if (act === "set") {
       layout[t.getAttribute("data-k")] = t.getAttribute("data-v"); saveLayout(); applyTheme(); sizeGrid(); renderSettings(); sfxApply();
     } else if (act === "sfx") {
@@ -2759,6 +2801,7 @@ function chipHtml(ev) {
     else if (a === "refreshed") { text = ev.title ? "刷新了「" + ev.title + "」" : "刷新了全部卡片"; ic = "refresh"; }
     else if (a === "set_voice") { text = g.voice ? "换成了「" + (ev.title || g.voice) + "」" : "语速改成了 " + g.speed; ic = "mic"; }
     else if (a === "open_path") text = "在访达里打开了「" + (ev.title || g.path || "") + "」";
+    else if (a === "kbclean") { text = g.state === "locked" ? "锁住了键盘，擦吧" : "键盘已解锁"; ic = "keyboard"; }
     else if (a && a.indexOf("hands_") === 0) { // Jev / DeckHands 动手的每一步
       var verb = { hands_look: "看了看", hands_click: "点了", hands_type: "输入到", hands_key: "按了", hands_open: "打开了", hands_scroll: "滚动了" }[a] || "操作了";
       text = verb + (ev.title ? "「" + ev.title + "」" : "") + (g.app && a !== "hands_open" ? " · " + g.app : ""); ic = "hand";

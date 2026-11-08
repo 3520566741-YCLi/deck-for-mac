@@ -65,6 +65,11 @@ final class NotchPanel: NSObject, WKScriptMessageHandler, WKNavigationDelegate, 
 
     func reload() { if active { load() } }
 
+    /// 设置页「显示方式」的消息（deckMode）交给 AppDelegate 处理
+    var onModeMessage: ((WKScriptMessage, WKWebView) -> Void)?
+
+    func evaluate(_ js: String) { if active { web?.evaluateJavaScript(js, completionHandler: nil) } }
+
     /// 菜单栏「显示 Deck 面板」/ ⌥空格
     func toggle() {
         guard active else { return }
@@ -84,6 +89,7 @@ final class NotchPanel: NSObject, WKScriptMessageHandler, WKNavigationDelegate, 
         let config = WKWebViewConfiguration()
         config.websiteDataStore = .default()  // 和扩展屏共用存储：卡片顺序、隐藏、设置都一样
         config.userContentController.add(WeakScriptHandler(self), name: "deckNotch")
+        config.userContentController.add(WeakScriptHandler(self), name: "deckMode")  // 设置页「显示方式」，交给 AppDelegate
         let wv = NotchWebView(frame: .zero, configuration: config)
         wv.setValue(false, forKey: "drawsBackground")
         if #available(macOS 12.0, *) { wv.underPageBackgroundColor = .clear }
@@ -231,6 +237,7 @@ final class NotchPanel: NSObject, WKScriptMessageHandler, WKNavigationDelegate, 
     // MARK: - 网页 → 原生
 
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
+        if message.name == "deckMode" { if let web { onModeMessage?(message, web) }; return }
         // 只认监控台自己的主框架：网页卡片（iframe 里的第三方网站）不能开关面板
         let o = message.frameInfo.securityOrigin
         guard message.frameInfo.isMainFrame, o.protocol == "http", o.host == "127.0.0.1",

@@ -39,11 +39,11 @@
 | 💽 | **Disk watch** | Tap the disk ring: what is growing, what was added recently, who is writing to the disk. |
 | 🎙️ | **Voice assistant** | Wake it by name. Speech recognition and synthesis run on your Mac; only the "brain" is a cloud LLM. A voiceprint makes sure only you can wake or interrupt it. It reads card data, opens cards, searches the web and can click things for you. |
 | 🗞️ | **News page** | A personal tech paper three times a day: frontier tech, trending open source, AI labs, art × code, and news on your watchlist (Longbridge Securities as the example broker). Capped at about ¥1 a day. |
-| 🧹 | **Toolbox + daily cleanup** | Uninstall apps with leftovers, clear caches, find large and duplicate files, update apps. **Everything goes to the Trash, nothing is deleted outright**, and one tap puts it back. |
+| 🧹 | **Toolbox + daily cleanup** | Uninstall apps with leftovers, clear caches, find large and duplicate files, update apps. **Everything goes to the Trash, nothing is deleted outright**, and one tap puts it back. The **Tools** tab adds **keyboard cleaning**: lock the keyboard (optionally black out the screen) while you wipe it, with several ways to unlock and no way to get stuck. |
 
 ## Three ways to show it
 
-One web page, one set of features, wherever you like: menu bar Deck icon → **Display: Auto / External screen / Notch**, or ⌥Space at any time.
+One web page, one set of features, wherever you like: **Settings → Display**, or menu bar Deck icon → Display, then pick **Auto / External screen / Notch**; ⌥Space at any time.
 
 | External screen / old iPad | Dropped down from the notch |
 |:---:|:---:|
@@ -78,6 +78,12 @@ One web page, one set of features, wherever you like: menu bar Deck icon → **D
 | Toolbox | Daily cleanup |
 |:---:|:---:|
 | <img src="docs/images/toolbox.png" alt="Toolbox"> | <img src="docs/images/cleanup.png" alt="Daily cleanup"> |
+
+#### Tools: lock the keyboard while you wipe it
+| Keyboard cleaning | Display mode in Settings |
+|:---:|:---:|
+| <img src="docs/images/toolbox-tools.png" alt="Toolbox · Tools · keyboard cleaning"> | <img src="docs/images/settings-display.png" alt="Settings · display mode"> |
+| Duration, black screen, trackpad too; unlock by holding the on-screen button 1 s, both ⌘ keys 2 s, the timer, or telling the assistant | Auto / External screen / Notch, same setting as the menu bar (UI is Chinese) |
 
 #### Butler and GitHub: which app crashed, which repo went red
 | Butler | GitHub |
@@ -120,6 +126,8 @@ Your settings (`config.json`, `apps.json`), chat history, memories and voiceprin
 
 ## What's new
 
+**v0.2.0** (2026-11-08): a new **Tools** tab in the toolbox with **keyboard cleaning** (lock the keyboard to wipe it, optional black screen / trackpad lock, several unlock paths, recovers even if the process hangs); the display mode (Auto / External screen / Notch) can now be switched in Settings.
+
 **v0.1.1** (2026-11-08): the voice assistant wakes up more reliably (a second, name-based wake path and a self-test every 10 minutes); "let me check" now means it searches the web right away; optional DeckVoice watchdog. Every version is in [CHANGELOG.md](CHANGELOG.md) and on [Releases](https://github.com/3520566741-YCLi/deck-for-mac/releases); old versions are kept.
 
 ## Requirements
@@ -144,6 +152,7 @@ Your settings (`config.json`, `apps.json`), chat history, memories and voiceprin
 - [x] Disk panel, news page, Longbridge watchlist news
 - [x] Voice assistant: local wake word, voiceprint, recognition and synthesis, barge-in
 - [x] DeckHands: clicks via the Accessibility API, risky steps confirmed first
+- [x] Keyboard cleaning: lock the keyboard while you wipe it, several ways to unlock
 - [ ] More LLM presets (PRs welcome)
 - [ ] English UI (PRs welcome)
 

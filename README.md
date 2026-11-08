@@ -37,11 +37,11 @@
 | 💽 | **磁盘管家** | 点磁盘圆环：谁在变大、最近新增了什么、谁在狂写硬盘。 |
 | 🎙️ | **语音助手** | 喊名字唤醒，本机识别、本机合成，只有「大脑」用云端大模型。声纹确认是你才听、才能打断。能读卡片数据、打开卡片、联网搜、帮你点屏幕。 |
 | 🗞️ | **资讯页** | 每天三期个人科技日报：前沿科技、开源热榜、AI 巨头动态、艺术 × 代码、自选股资讯（以长桥证券为例）。每天花费封顶 1 元。 |
-| 🧹 | **工具箱 + 每日清理** | 卸载连残留、清缓存、找大文件和重复文件、应用更新。**只移到废纸篓，从不直接删除**，可一键放回。 |
+| 🧹 | **工具箱 + 每日清理** | 卸载连残留、清缓存、找大文件和重复文件、应用更新。**只移到废纸篓，从不直接删除**，可一键放回。「小工具」页里有**键盘清洁**：锁住键盘（可选黑屏）方便擦，多种方式解锁，绝不锁死。 |
 
 ## 三种放法
 
-同一个网页、同一套功能，放哪儿由你：菜单栏 Deck 图标 → **显示方式：自动 / 扩展屏 / 刘海**，⌥空格随时呼出。
+同一个网页、同一套功能，放哪儿由你：**设置 → 显示方式**，或菜单栏 Deck 图标 → 显示方式，选 **自动 / 扩展屏 / 刘海**；⌥空格随时呼出。
 
 | 外接屏 / 旧 iPad 铺满 | 从 MacBook 刘海弹出 |
 |:---:|:---:|
@@ -76,6 +76,12 @@
 | 工具箱 | 每日清理 |
 |:---:|:---:|
 | <img src="docs/images/toolbox.png" alt="工具箱"> | <img src="docs/images/cleanup.png" alt="每日清理"> |
+
+#### 小工具：擦键盘时把键盘锁住
+| 键盘清洁 | 设置里切显示方式 |
+|:---:|:---:|
+| <img src="docs/images/toolbox-tools.png" alt="工具箱 · 小工具 · 键盘清洁"> | <img src="docs/images/settings-display.png" alt="设置 · 显示方式"> |
+| 锁多久、黑屏、连触控板；按住屏幕按钮 1 秒、左右 ⌘ 同按 2 秒、倒计时、对助手说「解锁键盘」都能解开 | 自动 / 扩展屏 / 刘海，和菜单栏是同一个设置 |
 
 #### 管家和 GitHub：哪个软件崩了、哪个仓库红了
 | 管家 | GitHub |
@@ -118,6 +124,8 @@ git clone https://github.com/3520566741-YCLi/deck-for-mac.git ~/deck-for-mac
 
 ## 最近更新
 
+**v0.2.0**（2026-11-08）：工具箱新增「小工具」页和**键盘清洁**（锁键盘方便擦，可选黑屏 / 连触控板，多重解锁、进程卡死也会自动恢复）；设置页可以直接切换显示方式（自动 / 扩展屏 / 刘海）。
+
 **v0.1.1**（2026-11-08）：语音助手更容易叫醒（多了一条认名字的唤醒路，每 10 分钟自检）；说「我查一下」会当场联网查；新增可选的 DeckVoice 看门狗。全部版本见 [CHANGELOG.md](CHANGELOG.md) 和 [Releases](https://github.com/3520566741-YCLi/deck-for-mac/releases)，旧版本都保留着。
 
 ## 需要什么
@@ -142,6 +150,7 @@ git clone https://github.com/3520566741-YCLi/deck-for-mac.git ~/deck-for-mac
 - [x] 磁盘面板、资讯页、长桥自选股资讯
 - [x] 语音助手：本机唤醒、声纹、识别、合成，可打断
 - [x] DeckHands：用辅助功能 API 帮你点屏幕，风险操作先确认
+- [x] 键盘清洁：锁键盘擦键盘，多重解锁
 - [ ] 更多大模型预设（欢迎 PR）
 - [ ] 英文界面（欢迎 PR）
 
@@ -209,7 +218,7 @@ docs/               服务清单、语音提速笔记、截图
 
 ## 致谢
 
-站在这些开源项目的肩膀上：[sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx)、[Qwen3-ASR / Qwen3-TTS](https://huggingface.co/Qwen)、[mlx-audio](https://github.com/Blaizzy/mlx-audio)、[3D-Speaker](https://github.com/modelscope/3D-Speaker)、[Silero VAD](https://github.com/snakers4/silero-vad)、[GridStack.js](https://github.com/gridstack/gridstack.js)、[React Bits](https://github.com/DavidHDev/react-bits)、[snd-lib](https://github.com/snd-lib/snd-lib)、[Kenney](https://kenney.nl/)。完整清单见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+站在这些开源项目的肩膀上：[sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx)、[Qwen3-ASR / Qwen3-TTS](https://huggingface.co/Qwen)、[mlx-audio](https://github.com/Blaizzy/mlx-audio)、[3D-Speaker](https://github.com/modelscope/3D-Speaker)、[Silero VAD](https://github.com/snakers4/silero-vad)、[GridStack.js](https://github.com/gridstack/gridstack.js)、[React Bits](https://github.com/DavidHDev/react-bits)、[snd-lib](https://github.com/snd-lib/snd-lib)、[Kenney](https://kenney.nl/)、[Lockpaw](https://github.com/sorkila/lockpaw) 和 [keylock](https://github.com/kfv/keylock)（键盘清洁的写法参考）。完整清单见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
 
 ## 许可
 

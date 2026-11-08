@@ -537,13 +537,24 @@ from assistant import Friday  # noqa: E402
 from cleaner import public as cleaner_public  # noqa: E402
 import daily_clean  # noqa: E402
 import apptools  # noqa: E402
+import kbclean  # noqa: E402
 
 
 def tools_api(op, p):
-    """工具箱：卸载 / 垃圾 / 文件 / 更新。所有会动文件的操作都只认服务端记下的清单序号，且只移进废纸篓。"""
+    """工具箱：卸载 / 垃圾 / 文件 / 更新 / 键盘清洁。所有会动文件的操作都只认服务端记下的清单序号，且只移进废纸篓。"""
     s = lambda k: str(p.get(k) or "")  # noqa: E731
     if op == "apps":
         return {"apps": apptools.list_apps()}
+    if op == "clean/status":
+        return kbclean.status()
+    if op == "clean/start":
+        return kbclean.start(p.get("seconds") or 90, bool(p.get("black", True)), bool(p.get("mouse")), p.get("skin"), p.get("theme"))
+    if op == "clean/stop":
+        return kbclean.stop()
+    if op == "clean/extend":
+        return kbclean.extend()
+    if op == "clean/settings":
+        return kbclean.open_settings()
     if op == "uninstall/plan":
         return apptools.uninstall_plan(s("path"))
     if op == "quit":

@@ -1,4 +1,4 @@
-/* 工具箱面板：卸载应用（连同残留）、垃圾清理、文件管理、应用更新。
+/* 工具箱面板：卸载应用（连同残留）、垃圾清理、文件管理、应用更新、键盘清洁。
    后端在 manager/apptools.py。规矩：先列清单给你看，勾好后点按钮、再点一次确认，才移进废纸篓；不直接删除任何东西。
    这个文件只在本机打开监控台时加载（iPad 上只显示卡片摘要）。 */
 (function () {
@@ -7,8 +7,9 @@
   if (!H) return;
   var esc = H.esc, fmtB = H.fmtB, $ = H.$;
   var S = { tab: "apps", apps: null, q: "", sort: "name", plan: null, result: null, busy: "", junk: null, files: null, space: null,
-            updates: null, upJob: null, arm: null, minMb: 200, err: "", openD: {} };
-  var TABS = [["apps", "卸载应用"], ["junk", "垃圾清理"], ["files", "文件"], ["updates", "更新"]];
+            updates: null, upJob: null, arm: null, minMb: 200, err: "", openD: {},
+            clean: null, cOpt: { seconds: 90, black: true, mouse: false } };
+  var TABS = [["apps", "卸载应用"], ["junk", "垃圾清理"], ["files", "文件"], ["updates", "更新"], ["clean", "小工具"]];
 
   function api(op, body, cb) {
     H.post("/api/tools/" + op, body || {}, function (code, r) {
@@ -45,13 +46,14 @@
     var seg = '<div class="seg" role="tablist">' + TABS.map(function (t) {
       return '<button role="tab" data-t="tab" data-v="' + t[0] + '" aria-pressed="' + (S.tab === t[0]) + '">' + t[1] + "</button>";
     }).join("") + "</div>";
-    var body = S.tab === "apps" ? appsView() : S.tab === "junk" ? junkView() : S.tab === "files" ? filesView() : updatesView();
-    var html = seg + errBox() + body + note("所有东西只会移进废纸篓，不会直接删除。清空废纸篓之前，都能在这里一键撤销放回原处。", "muted");
+    var body = S.tab === "apps" ? appsView() : S.tab === "junk" ? junkView() : S.tab === "files" ? filesView() : S.tab === "clean" ? cleanView() : updatesView();
+    var html = seg + errBox() + body + (S.tab === "clean" ? "" : note("所有东西只会移进废纸篓，不会直接删除。清空废纸篓之前，都能在这里一键撤销放回原处。", "muted"));
     var el = $("sheetBody");
     var y = S.top ? 0 : el.scrollTop, focus = document.activeElement && document.activeElement.id;
     el.innerHTML = html; el.__html = null; el.scrollTop = y; S.top = false;
     if (focus === "tbq") { var q = $("tbq"); q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
     if (S.tab === "apps" && !S.apps && !S.busy) loadApps();
+    if (S.tab === "clean" && !S.clean && S.busy !== "clean") cleanLoad();
     if (S.tab === "updates" && !S.updates && !S.busy) api("updates/last", {}, function (r) { S.updates = r.at ? r : {}; draw(); });
   }
 
@@ -111,6 +113,90 @@
       (r.failed && r.failed.length ? '<div class="sec">没移动的</div><div class="list">' + r.failed.map(function (f) {
         return '<div class="li"><span class="dot warn"></span><span class="t">' + esc(f.path || f) + '</span><span class="r">' + esc(f.why || "") + "</span></div>"; }).join("") + "</div>" : "") +
       '<div style="display:flex;gap:8px">' + (r.run_id && r.count ? btn("undo", r.undone ? "已放回原处" : "撤销，放回原处", r.undone ? " disabled" : "") : "") + btn("done", "好") + "</div>";
+  }
+
+  // ------------------------------------------------ 键盘清洁（后端 manager/kbclean.py，拦按键的是 DeckHands 清洁模式）
+  var cTimer = null;
+  function cleanLoad() {
+    S.busy = "clean";
+    api("clean/status", {}, function (r) { S.busy = ""; cleanSet(r); });
+  }
+  // 服务器时间和本机时间差一点也没关系：倒计时按服务器给的 until - now 算，再用本机时钟往下走
+  function cleanSet(r) {
+    if (r && r.now) r.skew = Date.now() / 1000 - r.now;
+    S.clean = r || {};
+    if (r && r.error && r.state !== "locked") S.cErr = r.error; else if (r && r.state === "locked") S.cErr = "";
+    cleanWatch(); draw();
+  }
+  function cleanLeft() {
+    var c = S.clean;
+    return c && c.state === "locked" ? Math.max(0, Math.ceil(c.until - (Date.now() / 1000 - (c.skew || 0)))) : 0;
+  }
+  function mmss(n) { return Math.floor(n / 60) + ":" + ("0" + (n % 60)).slice(-2); }
+  // 锁着的时候：每秒刷新倒计时，每 2 秒问一次服务器（在 Mac 上用按钮、⌘⌘ 或 Vesper 解锁的，这里也要马上变回来）
+  function cleanWatch() {
+    var on = S.clean && S.clean.state === "locked";
+    if (on && !cTimer) {
+      var n = 0;
+      cTimer = setInterval(function () {
+        if (!open() || S.tab !== "clean") return;
+        var el = $("kcLeft"); if (el) el.textContent = mmss(cleanLeft());
+        if (++n % 2 === 0 || cleanLeft() <= 0) api("clean/status", {}, function (r) { if (r && !r.error) cleanSet(r); });
+      }, 1000);
+    } else if (!on && cTimer) { clearInterval(cTimer); cTimer = null; }
+  }
+  function sw(k, label, sub) {
+    return '<div class="row-btn kc-row"><span class="t" style="flex:1;min-width:0">' + label + (sub ? '<br><small class="muted">' + sub + "</small>" : "") +
+      '</span><button class="switch" role="switch" data-t="copt" data-v="' + k + '" aria-checked="' + !!S.cOpt[k] + '" aria-label="' + label + '"></button></div>';
+  }
+  function cleanView() {
+    var c = S.clean;
+    var intro = note("不动文件的随手小工具，以后新加的也放在这一页。", "muted");
+    if (!c) return intro + note("正在看键盘的状态…");
+    var locked = c.state === "locked";
+    var ways = [
+      [!c.mouse || !locked, "屏幕上的「按住解锁」按住 1 秒"],
+      [true, "同时按住左右两个 ⌘ 2 秒（中间别碰别的键）"],
+      [true, "倒计时结束自动解锁"],
+      [true, "在这里点「解锁」，或对 Vesper 说「解锁键盘」"],
+      [true, "合盖、睡眠、锁屏时自动解锁"]];
+    var waysHtml = '<details data-d="kc-ways"' + (("kc-ways" in S.openD ? S.openD["kc-ways"] : locked) ? " open" : "") + '><summary class="note">怎么解锁（任何一种都行）</summary>' +
+      '<div class="group" style="padding:4px 12px;margin-top:6px"><div class="list">' +
+      ways.filter(function (w) { return w[0]; }).map(function (w) { return '<div class="li"><span class="dot ok"></span><span class="t">' + w[1] + "</span></div>"; }).join("") + "</div></div></details>";
+    var errHtml = S.cErr ? '<div class="kc-sec kc-err">' + note(esc(S.cErr), "warn-t") +
+      (/辅助功能/.test(S.cErr) ? "<div>" + btn("cset", "打开辅助功能设置") + "</div>" : "") + "</div>" : "";
+    var head = '<div class="kc-head"><span class="kc-ic">' + H.icon("keyboard") + '</span><span class="kc-tt"><b>擦键盘</b><small>' +
+      (locked ? "键盘锁着" + (c.black ? " · 黑屏" : "") + (c.mouse ? " · 触控板也锁着" : "") : "锁住以后按什么都没反应，擦完再解锁") + "</small></span>" +
+      (locked ? '<span class="badge kc-on">锁定中</span>' : "") + "</div>";
+    var body;
+    if (locked) {
+      var full = c.max && c.until >= c.max - 1;
+      body = '<div class="kc-sec kc-count"><b class="num" id="kcLeft">' + mmss(cleanLeft()) + "</b><small>后自动解锁</small></div>" +
+        '<div class="kc-sec kc-act">' + btn("cstop", S.busy === "cstop" ? "正在解锁…" : "解锁", S.busy ? " disabled" : "", "primary kc-go") +
+        btn("cmore", full ? "已到 10 分钟上限" : "再给 30 秒", full || S.busy ? " disabled" : "") + "</div>";
+    } else {
+      var durs = (c.durations || [30, 60, 90, 120, 300]).filter(function (d) { return !S.cOpt.mouse || d <= 120; });
+      if (durs.indexOf(S.cOpt.seconds) < 0) S.cOpt.seconds = durs[durs.length - 1];
+      var seg = '<div class="seg" role="radiogroup" aria-label="锁多久">' + durs.map(function (d) {
+        var on = S.cOpt.seconds === d;
+        return '<button role="radio" data-t="cdur" data-v="' + d + '" aria-pressed="' + on + '" aria-checked="' + on + '">' + (d < 60 || d % 60 ? d + "\u00a0秒" : d / 60 + "\u00a0分钟") + "</button>";
+      }).join("") + "</div>";
+      var why = { button: "按住按钮解锁", "cmd+cmd": "按 ⌘⌘ 解锁", timer: "倒计时到了", deck: "在 Deck 里解锁", "sleep/lock": "睡眠或锁屏时自动解锁", "screen locked": "锁屏时自动解锁", watchdog: "到点兜底解锁" }[c.last_reason];
+      var last = why && c.last_at && Date.now() / 1000 - c.last_at < 1800 ? '<small class="muted kc-last">上次清洁 ' + ago(c.last_at) + "结束（" + why + "）</small>" : "";
+      body = (c.installed === false ? '<div class="kc-sec">' + note("没找到 DeckHands.app，键盘清洁靠它拦按键。在 Mac 上运行 manager/hands/build.sh 装一下。", "warn-t") + "</div>" : "") +
+        '<div class="kc-sec"><div class="kc-lab">锁多久</div>' + seg + "</div>" +
+        sw("black", "黑屏", "灰尘和指纹看得更清楚，也方便顺手擦屏幕") +
+        sw("mouse", "连触控板一起锁", "锁着时只能用 ⌘⌘ 或倒计时解锁，最多 2 分钟") +
+        '<div class="kc-sec kc-act">' + btn("cgo", S.busy === "cgo" ? "正在锁…" : "开始清洁", S.busy || c.installed === false ? " disabled" : "", "primary kc-go") + last + "</div>";
+    }
+    return intro + '<div class="gtitle">清洁</div><div class="group kc-card">' + head + errHtml + body + "</div>" + waysHtml +
+      note("电源键和 Touch ID 直连硬件，软件挡不住，擦到那里轻一点；按到让 Mac 睡眠时会自动解锁。", "muted");
+  }
+  // 原生锁屏面板跟着 Deck 的皮肤和白天/夜里走
+  function look() {
+    var r = document.documentElement, th = r.getAttribute("data-theme");
+    var dark = th ? th === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    return { skin: r.classList.contains("skin-soft") ? "soft" : "glass", theme: dark ? "dark" : "light" };
   }
 
   // ------------------------------------------------ 垃圾清理
@@ -230,6 +316,19 @@
       });
     }
     if (t === "done") { S.result = null; return draw(); }
+    if (t === "copt") { var k = el.getAttribute("data-v"); S.cOpt[k] = !S.cOpt[k]; return draw(); }
+    if (t === "cdur") { S.cOpt.seconds = +el.getAttribute("data-v"); return draw(); }
+    if (t === "cset") return api("clean/settings", {}, function () {});
+    if (t === "cgo") {
+      S.busy = "cgo"; S.cErr = ""; draw();
+      var lk = look();
+      return api("clean/start", { seconds: S.cOpt.seconds, black: S.cOpt.black, mouse: S.cOpt.mouse, skin: lk.skin, theme: lk.theme }, function (r) { S.busy = ""; cleanSet(r); if (r.state === "locked") H.toast("键盘锁好了，放心擦"); });
+    }
+    if (t === "cstop") {
+      S.busy = "cstop"; draw();
+      return api("clean/stop", {}, function (r) { S.busy = ""; cleanSet(r); if (r.state !== "locked") H.toast("键盘已解锁"); });
+    }
+    if (t === "cmore") return api("clean/extend", {}, function (r) { cleanSet(r); });
     if (t === "junkscan") {
       S.busy = "junk"; S.junk = null; S.prog = ""; draw();
       return job("junk/scan", {}, function (p) { S.prog = p; }, function (r) {
