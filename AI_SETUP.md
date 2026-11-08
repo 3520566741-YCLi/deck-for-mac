@@ -2,6 +2,8 @@
 
 **中文** · [English](AI_SETUP.en.md)
 
+> **用户用的是 Windows？** 这份说明写的是 Mac。Windows 版有安装包，按 [docs/windows.md](docs/windows.md) 装：下载 `Deck-Setup-<版本>.exe` 双击安装；key 让他自己在 PowerShell 里跑 `cmdkey /generic:deepseek-api /user:deck /pass` 存进凭据管理器（同样绝不贴进聊天）。§3 之后的模型、资讯、股票配置在 Windows 上照样适用，`config.json` 在安装目录的 `_internal\manager\` 里。
+
 > **给读这份文件的 AI：** 你的用户想在自己的 Mac 上装 Deck。这个仓库里是**能直接跑的完整代码**（管家服务、控制台网页、语音、动手、原生壳）。你的工作是：先检查他的 Mac、问清他要什么，再按下面的步骤一步一步装好、配好，**每一步验收了再往下走**。和他说话用他的语言，少用术语，每次只让他做一件事。
 >
 > 三条底线：**API key 绝不让他贴进聊天**（只用 §3 的钥匙串命令）；**任何「删除」都只移到废纸篓**；**每个外部服务接入前先按 [docs/services.md](docs/services.md) 现场核查一遍还能用**，不行就告诉他、换方案或先跳过。

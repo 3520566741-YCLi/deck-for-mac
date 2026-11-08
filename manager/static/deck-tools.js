@@ -6,6 +6,8 @@
   var H = window.DeckHost;
   if (!H) return;
   var esc = H.esc, fmtB = H.fmtB, $ = H.$;
+  // Windows 版（11-08）：后端是 winport/apptools.py、winport/kbclean.py；废纸篓 / 访达这类词由 deck-i18n.js 统一换成回收站 / 资源管理器
+  var WIN = document.documentElement.classList.contains("os-win");
   var S = { tab: "apps", apps: null, q: "", sort: "name", plan: null, result: null, busy: "", junk: null, files: null, space: null,
             updates: null, upJob: null, arm: null, minMb: 200, err: "", openD: {},
             clean: null, cOpt: { seconds: 90, black: true, mouse: false } };
@@ -74,12 +76,13 @@
     var bar = '<div style="display:flex;gap:8px;align-items:center"><input id="tbq" type="search" placeholder="搜应用" value="' + esc(S.q) +
       '" style="flex:1;min-height:36px;border-radius:10px;border:1px solid var(--line);background:transparent;color:inherit;padding:0 10px;font:inherit">' +
       '<select data-t="sort" aria-label="排序" style="min-height:36px;border-radius:10px;background:transparent;color:inherit;border:1px solid var(--line);padding:0 6px">' +
-      [["name", "按名字"], ["size", "按大小"], ["used", "最久没用的在前"]].map(function (o) { return '<option value="' + o[0] + '"' + (S.sort === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") +
+      [["name", "按名字"], ["size", "按大小"]].concat(WIN ? [] : [["used", "最久没用的在前"]]).map(function (o) { return '<option value="' + o[0] + '"' + (S.sort === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") +
       "</select></div>";
     var rows = apps.map(function (a) {
       var tags = (a.running ? '<span class="badge">开着</span>' : "") + (a.mas ? '<span class="badge" style="background:var(--glass-hi);color:var(--text2)">App Store</span>' : "") +
-        (a.brew ? '<span class="badge" style="background:var(--glass-hi);color:var(--text2)">Homebrew</span>' : "");
-      var sub = [a.version, a.bytes != null ? fmtB(a.bytes) : "", a.last_used ? "上次用 " + ago(a.last_used) : "没记录用过"].filter(Boolean).join(" · ");
+        (a.brew ? '<span class="badge" style="background:var(--glass-hi);color:var(--text2)">Homebrew</span>' : "") +
+        (WIN && a.scope ? '<span class="badge" style="background:var(--glass-hi);color:var(--text2)">' + esc(a.scope) + "</span>" : "");
+      var sub = [a.version, a.bytes != null ? fmtB(a.bytes) : "", WIN ? (a.publisher || "") : a.last_used ? "上次用 " + ago(a.last_used) : "没记录用过"].filter(Boolean).join(" · ");
       return '<div class="li" style="min-height:44px"><span class="t"><b style="font-weight:600">' + esc(a.name) + "</b> " + tags +
         '<br><small class="muted">' + esc(sub) + "</small></span>" +
         (a.protected ? '<span class="r">' + esc(a.protected) + "</span>" : btn("plan", "卸载…", ' data-path="' + esc(a.path) + '"')) + "</div>";
@@ -90,7 +93,7 @@
   function planView() {
     var p = S.plan, sel = 0, n = 0;
     p.items.forEach(function (it) { if (it.on && !it.admin) { sel += it.bytes; n++; } });
-    var head = p.kind === "uninstall" ? '<div class="hero"><b class="num">' + fmtB(sel) + "</b><small>卸载「" + esc(p.app.name) + "」会移进废纸篓</small></div>" +
+    var head = p.kind === "uninstall" ? '<div class="hero"><b class="num">' + fmtB(sel) + "</b><small>" + (WIN ? "卸载「" + esc(p.app.name) + "」：先运行它自己的卸载程序，残留移进回收站" : "卸载「" + esc(p.app.name) + "」会移进废纸篓") + "</small></div>" +
       (p.app.running ? note("它现在开着，要先退出才能卸载。" + " " + btn("quit", "退出它", ' data-path="' + esc(p.app.path) + '"'), "warn-t") : "") +
       (p.app.brew ? note("它是用 Homebrew 装的，清单里有 brew 的安装记录，一起移走后 brew 就不再认为它装着。", "muted") : "") +
       (p.app.mas ? note("它来自 App Store，以后想用可以在 App Store 的「已购项目」里重新下载。", "muted") : "")
@@ -108,8 +111,8 @@
   }
   function resultView() {
     var r = S.result, ok = r.count != null;
-    return '<div class="hero"><b class="num">' + (ok ? fmtB(r.bytes) : "–") + "</b><small>" + (ok ? "已移进废纸篓，共 " + r.count + " 项" : "没有完成") + "</small></div>" +
-      (r.error ? note(esc(r.error), "warn-t") : "") +
+    return '<div class="hero"><b class="num">' + (ok ? fmtB(r.bytes) : "–") + "</b><small>" + (ok ? (r.uninstalled && !r.count ? "已卸载" : "已移进废纸篓，共 " + r.count + " 项") : "没有完成") + "</small></div>" +
+      (r.error ? note(esc(r.error), "warn-t") : "") + (r.note ? note(esc(r.note), "muted") : "") +
       (r.failed && r.failed.length ? '<div class="sec">没移动的</div><div class="list">' + r.failed.map(function (f) {
         return '<div class="li"><span class="dot warn"></span><span class="t">' + esc(f.path || f) + '</span><span class="r">' + esc(f.why || "") + "</span></div>"; }).join("") + "</div>" : "") +
       '<div style="display:flex;gap:8px">' + (r.run_id && r.count ? btn("undo", r.undone ? "已放回原处" : "撤销，放回原处", r.undone ? " disabled" : "") : "") + btn("done", "好") + "</div>";
@@ -154,7 +157,7 @@
     var intro = note("不动文件的随手小工具，以后新加的也放在这一页。", "muted");
     if (!c) return intro + note("正在看键盘的状态…");
     var locked = c.state === "locked";
-    var ways = [
+    var ways = WIN && c.unlock_ways ? c.unlock_ways.map(function (w) { return [true, w]; }) : [
       [!c.mouse || !locked, "屏幕上的「按住解锁」按住 1 秒"],
       [true, "同时按住左右两个 ⌘ 2 秒（中间别碰别的键）"],
       [true, "倒计时结束自动解锁"],
@@ -166,7 +169,7 @@
     var errHtml = S.cErr ? '<div class="kc-sec kc-err">' + note(esc(S.cErr), "warn-t") +
       (/辅助功能/.test(S.cErr) ? "<div>" + btn("cset", "打开辅助功能设置") + "</div>" : "") + "</div>" : "";
     var head = '<div class="kc-head"><span class="kc-ic">' + H.icon("keyboard") + '</span><span class="kc-tt"><b>擦键盘</b><small>' +
-      (locked ? "键盘锁着" + (c.black ? " · 黑屏" : "") + (c.mouse ? " · 触控板也锁着" : "") : "锁住以后按什么都没反应，擦完再解锁") + "</small></span>" +
+      (locked ? "键盘锁着" + (c.black ? " · 黑屏" : "") + (c.mouse ? (WIN ? " · 鼠标也锁着" : " · 触控板也锁着") : "") : "锁住以后按什么都没反应，擦完再解锁") + "</small></span>" +
       (locked ? '<span class="badge kc-on">锁定中</span>' : "") + "</div>";
     var body;
     if (locked) {
@@ -181,16 +184,17 @@
         var on = S.cOpt.seconds === d;
         return '<button role="radio" data-t="cdur" data-v="' + d + '" aria-pressed="' + on + '" aria-checked="' + on + '">' + (d < 60 || d % 60 ? d + "\u00a0秒" : d / 60 + "\u00a0分钟") + "</button>";
       }).join("") + "</div>";
-      var why = { button: "按住按钮解锁", "cmd+cmd": "按 ⌘⌘ 解锁", timer: "倒计时到了", deck: "在 Deck 里解锁", "sleep/lock": "睡眠或锁屏时自动解锁", "screen locked": "锁屏时自动解锁", watchdog: "到点兜底解锁" }[c.last_reason];
+      var why = { button: "按住按钮解锁", "cmd+cmd": "按 ⌘⌘ 解锁", timer: "倒计时到了", deck: "在 Deck 里解锁", "sleep/lock": "睡眠或锁屏时自动解锁", "screen locked": "锁屏时自动解锁", watchdog: "到点兜底解锁", esc: "按住 Esc 解锁" }[c.last_reason];
       var last = why && c.last_at && Date.now() / 1000 - c.last_at < 1800 ? '<small class="muted kc-last">上次清洁 ' + ago(c.last_at) + "结束（" + why + "）</small>" : "";
-      body = (c.installed === false ? '<div class="kc-sec">' + note("没找到 DeckHands.app，键盘清洁靠它拦按键。在 Mac 上运行 manager/hands/build.sh 装一下。", "warn-t") + "</div>" : "") +
+      body = (!WIN && c.installed === false ? '<div class="kc-sec">' + note("没找到 DeckHands.app，键盘清洁靠它拦按键。在 Mac 上运行 manager/hands/build.sh 装一下。", "warn-t") + "</div>" : "") +
         '<div class="kc-sec"><div class="kc-lab">锁多久</div>' + seg + "</div>" +
-        sw("black", "黑屏", "灰尘和指纹看得更清楚，也方便顺手擦屏幕") +
-        sw("mouse", "连触控板一起锁", "锁着时只能用 ⌘⌘ 或倒计时解锁，最多 2 分钟") +
+        (WIN && c.black_supported === false ? "" : sw("black", "黑屏", "灰尘和指纹看得更清楚，也方便顺手擦屏幕")) +
+        (WIN ? sw("mouse", "连鼠标一起锁", "锁着时只能用按住 Esc、Ctrl+Alt+Del 或倒计时解锁，最多 2 分钟")
+             : sw("mouse", "连触控板一起锁", "锁着时只能用 ⌘⌘ 或倒计时解锁，最多 2 分钟")) +
         '<div class="kc-sec kc-act">' + btn("cgo", S.busy === "cgo" ? "正在锁…" : "开始清洁", S.busy || c.installed === false ? " disabled" : "", "primary kc-go") + last + "</div>";
     }
     return intro + '<div class="gtitle">清洁</div><div class="group kc-card">' + head + errHtml + body + "</div>" + waysHtml +
-      note("电源键和 Touch ID 直连硬件，软件挡不住，擦到那里轻一点；按到让 Mac 睡眠时会自动解锁。", "muted");
+      note(WIN ? "电源键和 Ctrl+Alt+Del 是系统保留的，软件挡不住，擦到那里轻一点；按到时会自动解锁。" : "电源键和 Touch ID 直连硬件，软件挡不住，擦到那里轻一点；按到让 Mac 睡眠时会自动解锁。", "muted");
   }
   // 原生锁屏面板跟着 Deck 的皮肤和白天/夜里走
   function look() {
@@ -202,7 +206,8 @@
   // ------------------------------------------------ 垃圾清理
   function junkView() {
     if (S.result && S.result.kind === "junk") return resultView();
-    var intro = note("参考 Mole 的分类：应用缓存、日志、崩溃报告、没下完的下载、Xcode 编译缓存、旧项目的依赖目录，外加「每日清理」的那份缓存清单（每晚 23:30 自动跑）。只移进废纸篓。", "muted");
+    var intro = note(WIN ? "临时文件、崩溃转储、错误报告、浏览器缓存、开发工具缓存、没下完的下载、旧项目的依赖目录，外加「每日清理」的那份缓存清单（每晚 23:30 自动跑）。只移进回收站。"
+      : "参考 Mole 的分类：应用缓存、日志、崩溃报告、没下完的下载、Xcode 编译缓存、旧项目的依赖目录，外加「每日清理」的那份缓存清单（每晚 23:30 自动跑）。只移进废纸篓。", "muted");
     if (!S.junk) return intro + btn("junkscan", S.busy === "junk" ? "正在扫描… " + esc(S.prog || "") : "扫描", S.busy ? " disabled" : "", "primary");
     var p = S.junk, sel = 0;
     p.rules.forEach(function (r) { if (r.pick) sel += r.bytes; });
@@ -245,18 +250,19 @@
     var u = S.updates || {};
     var top = '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">' + btn("upcheck", S.busy === "updates" ? "正在检查… " + esc(S.prog || "") : "检查更新", S.busy ? " disabled" : "", "primary") +
       (u.at ? '<span class="note muted">上次检查 ' + esc(ago(u.at)) + "</span>" : "") + "</div>";
-    if (!u.at) return top + note("参考 Latest：用 Sparkle 更新源和 App Store 查应用；Homebrew 装的用 brew 查。第一次要几十秒。", "muted");
+    if (!u.at) return top + note(WIN ? "用 winget（Windows 自带的应用安装程序）查哪些应用能更新，Microsoft Store 的应用也算。第一次要几十秒。"
+      : "参考 Latest：用 Sparkle 更新源和 App Store 查应用；Homebrew 装的用 brew 查。第一次要几十秒。", "muted");
     function sec(title, arr, row) { return arr && arr.length ? (title ? '<div class="sec">' + title + "</div>" : "") + '<div class="list">' + arr.map(row).join("") + "</div>" : ""; }
     function line(name, from, to, right) {
       return '<div class="li" style="min-height:44px"><span class="t"><b style="font-weight:600">' + esc(name) + '</b><br><small class="muted">' + esc((from || "?") + " → " + to) + "</small></span>" + right + "</div>";
     }
     var job = S.upJob;
     var html = top +
-      sec("Homebrew 装的应用", u.brew, function (x) {
+      sec(WIN ? "能用 winget 更新的应用" : "Homebrew 装的应用", u.brew, function (x) {
         var k = "cask:" + x.token, b = job && job.key === k;
-        return line(x.token, x.from, x.to, b ? '<span class="r">' + esc(job.msg) + "</span>" : btn("brewup", armed(k) ? "再点一次确认" : "更新", ' data-kind="cask" data-v="' + esc(x.token) + '"' + (job && job.running ? " disabled" : "")));
+        return line(WIN ? (x.name || x.token) : x.token, x.from, x.to, b ? '<span class="r">' + esc(job.msg) + "</span>" : btn("brewup", armed(k) ? "再点一次确认" : "更新", ' data-kind="cask" data-v="' + esc(x.token) + '"' + (job && job.running ? " disabled" : "")));
       }) +
-      sec("App Store", u.mas, function (x) { return line(x.name, x.from, x.to, btn("openup", "打开 App Store", ' data-kind="mas" data-v="' + esc(x.id) + '"')); }) +
+      sec(WIN ? "Microsoft Store" : "App Store", u.mas, function (x) { return line(x.name, x.from, x.to, btn("openup", WIN ? "打开 Microsoft Store" : "打开 App Store", ' data-kind="mas" data-v="' + esc(x.id) + '"')); }) +
       sec("应用自带更新（Sparkle）", u.sparkle, function (x) { return line(x.name, x.from, x.to, btn("openup", "打开它去更新", ' data-kind="app" data-v="' + esc(x.path) + '"')); }) +
       ((u.formula || []).length ? '<details data-d="formula"' + (S.openD.formula ? " open" : "") + '><summary class="note" style="cursor:pointer">' + u.formula.length + " 个命令行工具能更新（Homebrew）</summary>" : "") +
       sec("", u.formula, function (x) {
@@ -266,8 +272,9 @@
     if ((u.formula || []).length) html += "</details>";
     var none = !(u.brew || []).length && !(u.mas || []).length && !(u.sparkle || []).length && !(u.formula || []).length;
     if (none) html += '<div class="empty">都是最新的</div>';
-    if (job && job.output) html += '<details><summary class="note">brew 的输出</summary><pre class="mono" style="white-space:pre-wrap;font-size:11.5px;max-height:220px;overflow:auto">' + esc(job.output) + "</pre></details>";
-    html += note("Homebrew 更新应用前，会先把旧版用 APFS 克隆复制一份进废纸篓（几乎不占空间），命令行工具的旧版本也会留着不清。", "muted");
+    if (job && job.output) html += '<details><summary class="note">' + (WIN ? "winget 的输出" : "brew 的输出") + '</summary><pre class="mono" style="white-space:pre-wrap;font-size:11.5px;max-height:220px;overflow:auto">' + esc(job.output) + "</pre></details>";
+    html += WIN ? note("点「更新」会打开它自己的安装界面，你看着它装完；winget 不保留旧版。" + (u.note ? " " + esc(u.note) : ""), "muted")
+      : note("Homebrew 更新应用前，会先把旧版用 APFS 克隆复制一份进废纸篓（几乎不占空间），命令行工具的旧版本也会留着不清。", "muted");
     if ((u.unknown || []).length) html += '<details><summary class="note muted">' + u.unknown.length + " 个应用没法自动查更新（自己更新或没有公开的更新源）</summary><p class=\"note muted\">" + esc(u.unknown.join("、")) + "</p></details>";
     if ((u.errors || []).length) html += '<details><summary class="note warn-t">' + u.errors.length + " 个查询出错</summary><p class=\"note muted\">" + esc(u.errors.join("；")) + "</p></details>";
     return html;

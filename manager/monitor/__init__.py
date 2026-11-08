@@ -13,7 +13,12 @@ from .codex import CodexSource
 from .deepseek import DeepSeekSource
 from .github import GitHubSource
 from .makerworld import MakerWorldSource
-from .system import SystemSource
+# Windows 版（11-08）：同样的数据结构，用 psutil + Windows 性能计数器读。DECK_OS=win 可在 Linux 上模拟（开发 / CI）
+from deckos import WIN  # noqa: E402  manager/deckos.py
+if WIN:
+    from .system_win import SystemSource
+else:
+    from .system import SystemSource
 from .tools import ToolsSource
 from .util import SourceError
 
@@ -21,6 +26,9 @@ IDLE_AFTER = 120
 MIN_FORCE_GAP = 8
 DEFAULT_ORDER = ["system", "claude", "codex", "github", "deepseek", "butler", "cleanup", "tools", "makerworld"]
 DEFAULT_ENABLED = {"system", "claude", "codex", "github", "deepseek", "butler", "cleanup", "tools"}
+if WIN:
+    # 11-08 第二步：管家（我的应用）、每日清理、工具箱已换成 Windows 写法（winport/）
+    DEFAULT_ENABLED = {"system", "claude", "codex", "github", "deepseek", "butler", "cleanup", "tools"}
 
 
 class Hub:

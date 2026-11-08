@@ -121,7 +121,7 @@
       '<label class="field"><span>名字</span><input id="asName" maxlength="12" autocomplete="off" autocapitalize="words" spellcheck="false" value="' + esc(S.nameIn) + '" placeholder="比如 Vesper"></label>' +
       '<label class="field"><span>读法（可选）</span><input id="asHint" maxlength="24" autocomplete="off" spellcheck="false" value="' + esc(S.hintIn) + '" placeholder="写个中文谐音，比如 维斯帕；或英文 vest per"></label>' +
       note("英文 3–12 个字母（一个词），或 2–4 个汉字。少见、两三个音节的名字最好叫醒；Siri、小爱这类别的助手的名字不能用。", "muted") +
-      '<div class="as-act">' + btn("check", S.check && S.check.running ? "正在体检…" : "体检这个名字", S.check && S.check.running ? " disabled" : "") +
+      '<div class="as-act">' + (window.BOOT && BOOT.os === "win" ? "" : btn("check", S.check && S.check.running ? "正在体检…" : "体检这个名字", S.check && S.check.running ? " disabled" : "")) +   // 体检要用 macOS 的 say 合成，Windows 上没有
       btn("save", S.busy === "save" ? "正在换…" : "用这个名字", changed && !S.busy ? "" : " disabled", "primary") + "</div></div>";
     html += checkView();
     html += '<div class="gtitle">改名以后</div><div class="group as-sec">' +
@@ -200,7 +200,8 @@
   function voiceView() {
     var st = S.st, en = S.en;
     if (!en) return note("正在看声纹的状态…");
-    if (!en.models_ok) return note("声纹模型还没下载：在 Mac 上运行 manager/voice/service/models/fetch_wake_models.sh。", "warn-t");
+    if (!en.models_ok) return note(window.BOOT && BOOT.os === "win" ? "声纹模型还没下载：在 设置 → Vesper 的声音 里点「下载语音模型」（约 375MB）。" :
+      "声纹模型还没下载：在 Mac 上运行 manager/voice/service/models/fetch_wake_models.sh。", "warn-t");
     if (en.result) return resultView(en.result);
     if (!en.session) {
       var status = !st.enrolled ? note("还没录声纹。录好以后，只有你的声音叫得醒 " + esc(st.name) + "，别人叫它不理。") :

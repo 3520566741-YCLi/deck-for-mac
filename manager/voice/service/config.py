@@ -1,11 +1,47 @@
 """路径和可调参数。用户可在 ~/Library/Application Support/Deck/voice/config.json 覆盖任意键。"""
 import json
 import os
+import sys
 
 HOME = os.path.expanduser("~")
-ROOT = os.environ.get("DECK_VOICE_ROOT", os.path.join(HOME, "Library", "Application Support", "Deck", "voice"))
-MODELS = os.path.join(ROOT, "models")
 HERE = os.path.dirname(os.path.abspath(__file__))
+
+
+def _deckos():
+    """Windows 版（11-08）：Deck 跑在哪个系统上看 manager/deckos.py。服务可能在 manager/ 不在 sys.path 时启动
+    （Mac 的 run.sh 是 cd manager/voice 再 -m service.server），这时按文件路径加载它；找不到就按 sys.platform 判断。"""
+    if "deckos" in sys.modules:
+        return sys.modules["deckos"]
+    try:
+        import deckos  # noqa: PLC0415
+        return deckos
+    except ImportError:
+        pass
+    p = os.path.join(os.path.dirname(os.path.dirname(HERE)), "deckos.py")
+    try:
+        import importlib.util  # noqa: PLC0415
+        spec = importlib.util.spec_from_file_location("deckos", p)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        sys.modules["deckos"] = mod
+        return mod
+    except Exception:  # noqa: BLE001
+        return None
+
+
+_OS = _deckos()
+WIN = bool(_OS.WIN) if _OS is not None else sys.platform == "win32"
+if WIN:
+    # Windows：数据在 %APPDATA%\Deck\voice（和 Deck 其它数据放一起），日志在 %LOCALAPPDATA%\Deck\logs
+    _DEFAULT_ROOT = _OS.support("Deck", "voice") if _OS is not None else os.path.join(
+        os.environ.get("APPDATA") or os.path.join(HOME, "AppData", "Roaming"), "Deck", "voice")
+    LOGS = os.environ.get("DECK_VOICE_LOGS") or os.path.join(
+        os.environ.get("LOCALAPPDATA") or os.path.join(HOME, "AppData", "Local"), "Deck", "logs")
+else:
+    _DEFAULT_ROOT = os.path.join(HOME, "Library", "Application Support", "Deck", "voice")
+    LOGS = os.environ.get("DECK_VOICE_LOGS") or os.path.join(HOME, "Library", "Logs", "Deck")
+ROOT = os.environ.get("DECK_VOICE_ROOT", _DEFAULT_ROOT)
+MODELS = os.path.join(ROOT, "models")
 
 DEFAULTS = {
     "http_port": 8778,          # 页面：SSE + HTTP

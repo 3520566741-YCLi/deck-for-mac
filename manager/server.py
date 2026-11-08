@@ -22,7 +22,14 @@ import urllib.parse
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
+import deckos  # 跑在 Mac 还是 Windows（11-08 Windows 版）
+
 HERE = os.path.dirname(os.path.abspath(__file__))
+if deckos.WIN:  # 第二步：procs / cleaner / diskwatch … 换成 Windows 版的同名模块（winport/），下面照常 import
+    if HERE not in sys.path:
+        sys.path.insert(0, HERE)
+    import winport
+    WINPORT = winport.install()
 # 监控台用到的第三方前端库（固定版本，放在本地，断网也能用）
 STATIC_FILES = {"/static/gridstack-all.js": "application/javascript; charset=utf-8",
                 "/static/gridstack.min.css": "text/css; charset=utf-8",
@@ -33,12 +40,16 @@ STATIC_FILES = {"/static/gridstack-all.js": "application/javascript; charset=utf
                 "/static/reactbits-orb.js": "application/javascript; charset=utf-8",
                 "/static/reactbits-strands.js": "application/javascript; charset=utf-8",
                 # Deck 按键音效（11-07）：脚本 + 11 个短音（SND01 / Kenney CC0，见 static/sfx/LICENSE.md）
-                "/static/deck-sfx.js": "application/javascript; charset=utf-8"}
+                "/static/deck-sfx.js": "application/javascript; charset=utf-8",
+                # Deck 英文模式（11-08）：设置 → 外观 → 语言
+                "/static/deck-i18n.js": "application/javascript; charset=utf-8"}
 STATIC_FILES.update({"/static/sfx/%s.wav" % n: "audio/wav" for n in
                      ("tap", "primary", "tab", "on", "off", "open", "close", "page", "done", "notify", "warn")})  # 语音层客户端库（语音线程提供）
 HOME = os.path.expanduser("~")
 TOKEN = secrets.token_hex(16)
-HISTORY = os.path.join(HERE, "check-history.json")
+HISTORY = deckos.support("Deck", "check-history.json") if deckos.WIN else os.path.join(HERE, "check-history.json")
+if deckos.WIN:
+    os.makedirs(os.path.dirname(HISTORY), exist_ok=True)
 
 
 def load_json(name, default):
@@ -411,6 +422,13 @@ def _key_from(sources):
         t = src.get("type")
         if t == "env" and os.environ.get(src.get("name", "")):
             return os.environ[src["name"]].strip()
+        if t == "keychain" and deckos.WIN:
+            # Windows：钥匙串换成凭据管理器（cmdkey /generic:<service> 存的那条），同一个名字
+            from winport import common as _wc
+            v = _wc.cred_read(src.get("service"))
+            if v:
+                return v
+            continue
         if t == "keychain":
             args = ["security", "find-generic-password", "-s", src["service"], "-w"]
             if src.get("account"):
@@ -529,6 +547,11 @@ def do_action(app_id, action):
 
 # ---------- 监控台 ----------
 
+if deckos.WIN:  # 管家页：Windows 版的「我的应用」（计划任务、任务栏、错误报告）
+    from winport import butler as _wbutler  # noqa: E402
+    collect, do_action, crash_excerpt, SYSTEM_PROMPT = (_wbutler.collect, _wbutler.do_action,
+                                                        _wbutler.crash_excerpt, _wbutler.SYSTEM_PROMPT)
+
 from monitor import Hub  # noqa: E402
 
 HUB = Hub(DASH_CFG, butler_collect=collect, deepseek_key=deepseek_key)
@@ -604,8 +627,10 @@ ADVICE = {}  # kind -> (时间, 建议)，1 分钟内同一种不重复问 DeepS
 FRIDAY = Friday(HUB, deepseek_key, CONFIG.get("deepseek", {}))
 HANDS = hands.Hands(jev_key)
 FRIDAY.hands = HANDS
-diskwatch.start()  # 磁盘「谁在占空间」：每小时量一次目录大小、每 30 秒记一次各应用写了多少（只读、不联网）
-daily_clean.start(deepseek_key, CONFIG.get("deepseek", {}), FRIDAY, on_change=lambda: HUB.refresh("cleanup"))
+# Windows 上这两个是 winport 里的 Windows 版（只进回收站、能撤销）；万一没换成功就不跑，绝不拿 Mac 的规则在 Windows 上清
+if not deckos.WIN or (getattr(diskwatch, "__winport__", False) and getattr(daily_clean, "__winport__", False)):
+    diskwatch.start()  # 磁盘「谁在占空间」：每小时量一次目录大小、每 30 秒记一次各应用写了多少（只读、不联网）
+    daily_clean.start(deepseek_key, CONFIG.get("deepseek", {}), FRIDAY, on_change=lambda: HUB.refresh("cleanup"))
 
 # ---------- 资讯页（DeepSeek 半价时段每天编三期 + 长桥行情） ----------
 from newsroom import NewsRoom  # noqa: E402
@@ -615,6 +640,10 @@ NEWS.start()
 FRIDAY.vt.ext.update(news=NEWS, do_action=do_action,
                      apps=lambda: load_json("apps.json", load_json("apps.example.json", {"apps": []}))["apps"])
 CHAT_STOP = threading.Event()
+if deckos.WIN:  # Windows 的电脑操控：急停（Ctrl+Alt+Esc）也停掉这一轮对话；急停热键、操作线程在这里起
+    from winport import hands_win
+    hands_win.on_stop(CHAT_STOP.set)
+    hands_win.start()
 
 
 def lan_urls():
@@ -696,8 +725,10 @@ class Handler(BaseHTTPRequestHandler):
             boot = {"local": local, "token": TOKEN if local else "", "lan": LAN,
                     "pair_urls": lan_urls() if local and LAN else [],
                     "voice": os.path.exists(os.path.join(HERE, "static", "deck-voice.js")),
-                    "aname": _assistant_name()}
+                    "aname": _assistant_name(), "os": deckos.NAME}
             html = html.replace("/*__BOOT__*/{}", json.dumps(boot))
+            if deckos.WIN:  # Windows 版只有新拟态：第一帧就带上，不等脚本
+                html = html.replace('<html lang="zh-CN">', '<html lang="zh-CN" class="skin-soft os-win">', 1)
             return self._send(200, html.encode(), "text/html; charset=utf-8", cookie=not local)
         if path == "/api/dash":
             return self._send(200, HUB.snapshot())
@@ -772,6 +803,8 @@ class Handler(BaseHTTPRequestHandler):
         if path in ("/", "/index.html"):
             with open(os.path.join(HERE, "index.html"), encoding="utf-8") as f:
                 html = f.read().replace("__TOKEN__", TOKEN)
+            if deckos.WIN:  # Windows 只有新拟态；deck-i18n.js 看到 os-win 会把废纸篓 / 访达 / Dock 换成 Windows 的说法
+                html = html.replace('<html lang="zh-CN">', '<html lang="zh-CN" class="skin-soft os-win">', 1)
             return self._send(200, html.encode(), "text/html; charset=utf-8")
         if path == "/api/status":
             return self._send(200, collect(deep=False))
@@ -813,6 +846,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, {"accepted": HUB.refresh(src if isinstance(src, str) else None)})
         if not local:
             return self._send(403, {"error": "forbidden"})
+        if deckos.WIN and path.startswith(deckos.WIN_TODO_API):
+            return self._send(200, {"error": deckos.WIN_TODO_MSG})
         if path == "/api/sfx":
             # 扩展屏模式的按键音：交给 iPad 上的「Deck 音箱」放；没连上就回 ok:false，网页改在 Mac 上放
             return self._send(200, {"ok": ipad_sfx.send(payload.get("n"), payload.get("g", 0.75))})
@@ -853,6 +888,10 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, dict(res, events=[e for e in evs if e.get("t") != "acting"]))
         if path == "/api/hands/cancel":
             return self._send(200, HANDS.cancel(str(payload.get("id", ""))))
+        if path == "/api/hands/enable":  # Windows：「允许 Vesper 操作电脑」开关（Mac 上在菜单栏 DeckHands 里）
+            if not deckos.WIN:
+                return self._send(400, {"error": "Mac 上在菜单栏 DeckHands 里开关"})
+            return self._send(200, hands_win.set_enabled(bool(payload.get("on"))))
         if path == "/api/hands/status":
             return self._send(200, HANDS.status())
         if path == "/api/chat/new":
@@ -946,18 +985,29 @@ def main():
     # Deck.app 把输出接到 server.log，写文件时 Python 默认整块缓冲：[news] 之类的日志一直卡在内存里，被 kill 时还会丢。改成按行写
     for f in (sys.stdout, sys.stderr):
         try:
-            f.reconfigure(line_buffering=True)
+            if deckos.WIN:  # Windows 管道默认是本地代码页（英文系统 cp1252），打中文会抛异常把服务线程弄死：统一 UTF-8
+                f.reconfigure(line_buffering=True, encoding="utf-8", errors="replace")
+            else:
+                f.reconfigure(line_buffering=True)
         except (AttributeError, ValueError):
             pass
     threading.Thread(target=stop_orphan_speech, daemon=True).start()
+    if os.environ.get("DECK_STACK_DUMP"):  # 只在本地查卡死时临时开：每隔 N 秒把所有线程的调用栈写到 stderr（C 线程做，GIL 被占着也能写）。
+        # 注意：它读别的线程的栈时不加锁，偶尔会把进程弄崩（access violation），平时和 CI 都别开
+        import faulthandler
+        faulthandler.dump_traceback_later(int(os.environ["DECK_STACK_DUMP"]), repeat=True)
     ThreadingHTTPServer.allow_reuse_address = True
     srv = ThreadingHTTPServer(("0.0.0.0" if LAN else "127.0.0.1", PORT), Handler)
     url = "http://127.0.0.1:%d/" % PORT
     if "--dash" in sys.argv:
         url += "dash"
-    print("Mac 管家已启动：" + url + ("（监控台已对局域网开放）" if LAN else ""), flush=True)
+    print(("Deck 已启动：" if deckos.WIN else "Mac 管家已启动：") + url + ("（监控台已对局域网开放）" if LAN else ""), flush=True)
     if "--no-open" not in sys.argv:
-        threading.Timer(0.5, lambda: run(["open", url])).start()
+        if deckos.MAC:
+            threading.Timer(0.5, lambda: run(["open", url])).start()
+        else:
+            import webbrowser
+            threading.Timer(0.5, lambda: webbrowser.open(url)).start()
     try:
         srv.serve_forever()
     except KeyboardInterrupt:

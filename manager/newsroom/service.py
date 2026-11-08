@@ -19,7 +19,9 @@ from datetime import datetime, timedelta
 from . import editor, sources
 from .editor import BJ
 
-SUPPORT = os.path.expanduser("~/Library/Application Support/Deck/news")
+import deckos  # noqa: E402  manager/deckos.py
+
+SUPPORT = deckos.support("Deck", "news")  # Mac 上仍是 ~/Library/Application Support/Deck/news
 HERE = os.path.dirname(os.path.abspath(__file__))
 LB_VERSION = "5.3.0"  # 固定版本；升级前先在这台 Mac 上试
 WATCH_IDLE = 600       # 10 分钟没人看投资页，就停掉行情小助手

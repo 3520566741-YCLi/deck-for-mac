@@ -1,0 +1,12 @@
+# Deck for Windows 的依赖。固定版本（都已发布两周以上），Windows 10/11 x64 与 ARM64 都有轮子。
+psutil==7.2.2          # BSD-3：CPU / 内存 / 磁盘 / 电池 / 网速 / 进程
+pywebview==6.2.1       # BSD-3：窗口，Windows 上用系统自带的 Edge WebView2（会自动带上 pythonnet）
+pystray==0.19.5        # LGPL-3.0：右下角托盘图标（以独立模块形式随包分发，可替换）
+Pillow==12.3.0         # MIT-CMU：托盘图标、打包时生成 .ico
+comtypes==1.4.11       # MIT：Vesper 操作电脑用的 UI 自动化（UI Automation）接口，纯 Python
+# 语音（11-08 第三步，manager/voice/service + windows/voice_*.py）。mlx / mlx-audio 只有 Mac 有，不装
+sherpa-onnx==2.0.1     # Apache-2.0：唤醒、识别、声纹、朗读（10-26 发布，未满两周；和 Mac 版同一版本，接口一致；x64 / ARM64 都有轮子）
+numpy==2.3.5           # BSD-3：音频数组（2.3.x 起才有 Windows ARM64 轮子）
+sounddevice==0.5.2     # MIT：麦克风和扬声器（PortAudio，轮子里自带 DLL）
+pypinyin==0.55.0       # MIT：唤醒词 / 「停」转拼音
+opencc-python-reimplemented==0.1.7   # Apache-2.0：识别结果繁体 → 简体

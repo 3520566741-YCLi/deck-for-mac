@@ -1,0 +1,15 @@
+{
+ "_说明": "Windows 版管家的应用登记表示例。要登记你自己的应用，复制成 %APPDATA%\\Deck\\apps.json 再改。kind: app=一个 exe；folder=文件夹里的散装程序；agent=任务计划程序里的任务（label 写任务名）。match 是进程可执行文件路径里要包含的片段（不分大小写），proc 是 exe 文件名（看崩溃报告用）。",
+ "apps": [
+  {
+   "id": "deck",
+   "name": "Deck",
+   "kind": "app",
+   "proc": "Deck.exe",
+   "want_running": true,
+   "url": "http://127.0.0.1:8777/api/health",
+   "note": "Deck 自己：主页、管家、工具箱、Vesper 都在这个程序里",
+   "self": true
+  }
+ ]
+}
