@@ -135,6 +135,10 @@ Your settings (`config.json`, `apps.json`), chat history, memories and voiceprin
 
 ## What's new
 
+**v0.2.1** (2026-11-08)
+
+- 📈 **Stock prices in the brief are checked**: the editor gets live quotes from your broker, and any sentence whose price doesn't match is removed.
+
 **v0.2.0** (2026-11-08)
 
 - 🎙️ **The assistant can read the daily brief and operate all of Deck**: say "read today's brief" and it reads it in its own voice, highlighting each sentence. News sections, watchlist quotes, processes, disk, GitHub, apps, toolbox, settings, display mode and daily cleanup can all be asked about and changed by voice. Anything that changes your Mac asks first, and things only go to the Trash.
@@ -237,7 +241,8 @@ Issues and PRs are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) and t
 
 | Version | Date | What changed | Download |
 |---|---|---|---|
-| **v0.2.0** `latest` | 2026-11-08 | The assistant reads the daily brief and operates all of Deck; button feedback and sound; keyboard cleaning; name the assistant and record your voiceprint; display mode in Settings · [details](CHANGELOG.md#v020--2026-11-08) | [Download](https://github.com/3520566741-YCLi/deck-for-mac/releases/tag/v0.2.0) |
+| **v0.2.1** `latest` | 2026-11-08 | Stock prices in the daily brief are checked against live quotes; wrong sentences are removed · [details](CHANGELOG.md#v021--2026-11-08) | [Download](https://github.com/3520566741-YCLi/deck-for-mac/releases/tag/v0.2.1) |
+| v0.2.0 | 2026-11-08 | The assistant reads the daily brief and operates all of Deck; button feedback and sound; keyboard cleaning; name the assistant and record your voiceprint; display mode in Settings · [details](CHANGELOG.md#v020--2026-11-08) | [Download](https://github.com/3520566741-YCLi/deck-for-mac/releases/tag/v0.2.0) |
 | v0.1.1 | 2026-11-08 | Wakes up reliably; "let me check" searches right away; optional voice watchdog · [details](CHANGELOG.md#v011--2026-11-08) | [Download](https://github.com/3520566741-YCLi/deck-for-mac/releases/tag/v0.1.1) |
 | v0.1.0 | 2026-11-07 | First public release: dashboard, voice assistant, news page, toolbox, notch mode · [details](CHANGELOG.md#v010--2026-11-07) | [Download](https://github.com/3520566741-YCLi/deck-for-mac/releases/tag/v0.1.0) |
 
