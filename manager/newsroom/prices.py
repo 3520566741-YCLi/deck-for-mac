@@ -45,7 +45,7 @@ def snapshot(market, now=None):
         chg = ""
         if q.get("prev_close"):
             chg = "，较昨收 %+.2f%%" % ((q["last"] / q["prev_close"] - 1) * 100)
-        out[sym] = {"name": name, "names": sorted((n for n in names if n), key=len, reverse=True), "prices": prices,
+        out[sym] = {"name": name, "hk": sym.endswith(".HK"), "names": sorted((n for n in names if n), key=len, reverse=True), "prices": prices,
                     "line": "%s（%s）现价 %.2f %s%s" % (name, sym, q["last"], cur, chg)}
     return out
 
@@ -58,22 +58,53 @@ def prompt_block(snap, updated):
             "分析师目标价可以引用新闻，但要说明是目标价：\n%s" % (t, "\n".join("- " + v["line"] for v in snap.values())))
 
 
+CLAUSE = re.compile(r"[^，。；！？,;!?]+")
+
+
 def _bad(text, snap):
-    """这句话里有没有和快照对不上的股价。返回第一个对不上的说明，没有就返回空。"""
-    hit = [v for v in snap.values() if any(n in text for n in v["names"])]
-    if not hit:
-        return ""
+    """这句话里有没有和快照对不上的股价。返回第一个对不上的说明，没有就返回空。
+    按小句核，而且只拿数字前面最近提到的那只自选股比：「英伟达现价 186 美元，腾讯收在 520 港元」里，
+    腾讯不在自选的话 520 不算到英伟达头上（11-08 实测误删过整句）。"""
+    last = None  # 前面小句最后提到的自选股（「英伟达今天大涨，收在 202 美元」）
+    for c in CLAUSE.finditer(text):
+        why, last = _bad_clause(c.group(0), snap, last)
+        if why:
+            return why
+    return ""
+
+
+def _named(text, snap, end):
+    best, at = None, -1
+    for v in snap.values():
+        for n in v["names"]:
+            i = text.rfind(n, 0, end)
+            if i > at:
+                best, at = v, i
+    return best
+
+
+def _bad_clause(text, snap, last):
     for m in MONEY.finditer(text):
+        # 数字前面最近出现的自选股名字；这一小句没提到，就用前面小句提到的那只，但只核和现价差不多的数字
+        best = _named(text, snap, m.start())
+        near_only = False
+        if not best:
+            best, near_only = last, True
+        if not best:
+            continue
+        hit = [best]
         before = text[max(0, m.start() - 8):m.start()]
         after = text[m.end():m.end() + 2]
         if NOT_PRICE.search(before) or after[:1] in ("亿", "万"):
             continue
         x = float(m.group(1))
-        if not STOCK_WORD.search(text) and not any(0.5 < x / p < 1.5 for v in hit for p in v["prices"]):
+        if (m.group(2) in ("港元", "港币")) != best["hk"]:
+            continue  # 币种对不上，说的不是这只
+        if (near_only or not STOCK_WORD.search(text)) and not any(0.5 < x / p < 1.5 for v in hit for p in v["prices"]):
             continue
         if not any(abs(x / p - 1) <= TOL for v in hit for p in v["prices"]):
-            return "%s ≠ %s" % (m.group(0), "、".join(v["line"] for v in hit))
-    return ""
+            return "%s ≠ %s" % (m.group(0), "、".join(v["line"] for v in hit)), last
+    return "", _named(text, snap, len(text)) or last
 
 
 def check_lines(lines, snap):

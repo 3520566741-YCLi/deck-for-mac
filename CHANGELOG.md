@@ -9,6 +9,10 @@ Versioning: fixes bump the patch number (0.1.0 → 0.1.1), new features bump the
 
 - 日报里的股价不会再写错：编稿时把长桥自选的实时行情交给编辑，规定现价只能用行情里的数字；编完逐句核对口播和各栏标题摘要，和行情差 3% 以上的股价所在的句子自动删掉（目标价、市值、营收、产品售价不受影响）。拿不到行情时不写具体股价。
   Stock prices in the daily brief are now checked: the editor gets your Longbridge watchlist's live quotes and may only use those for current prices; afterwards every sentence in the script and headlines is checked, and any stock price more than 3% off the quotes is removed (target prices, market caps, revenue and product prices are left alone). Without quotes, no specific prices are written.
+- 重启 Deck 时，还在念的日报会停下来。以前语音服务会接着念，新页面不知道，再按播放就叠成两遍。
+  Restarting Deck now stops a brief that was still being read. Before, the voice service kept reading, the new page didn't know, and pressing play doubled it.
+- 服务端日志改成按行写入，不会再卡在缓冲里或在进程退出时丢失。
+  Server logs are now line-buffered, so they no longer sit in a buffer or get lost when the process exits.
 - 助手强制调用工具被模型接口拒绝时会记一行日志。
   The assistant now logs when the model API rejects a forced tool call.
 
