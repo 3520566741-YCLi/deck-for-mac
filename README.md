@@ -17,7 +17,11 @@
 
 <a href="#画廊"><img src="docs/images/banner.jpg" width="900" alt="Deck：控制台主页和刘海模式"></a>
 
-<p><a href="#它能做什么">功能</a> · <a href="#三种放法">三种放法</a> · <a href="#画廊">画廊</a> · <a href="#怎么装交给你的-ai">安装</a> · <a href="#常见问题">常见问题</a> · <a href="#参与贡献">参与贡献</a></p>
+<a href="https://github.com/3520566741-YCLi/deck-for-mac/releases/latest"><img src="https://img.shields.io/github/v/release/3520566741-YCLi/deck-for-mac?style=for-the-badge&label=%E4%B8%8B%E8%BD%BD%E6%9C%80%E6%96%B0%E7%89%88&logo=apple&logoColor=white&color=2f6fe0" alt="下载最新版" height="40"></a>
+&nbsp;
+<a href="CHANGELOG.md"><img src="https://img.shields.io/github/release-date/3520566741-YCLi/deck-for-mac?style=for-the-badge&label=%E6%9B%B4%E6%96%B0%E4%BA%8E&color=7259e0" alt="最近更新" height="40"></a>
+
+<p><a href="#它能做什么">功能</a> · <a href="#三种放法">三种放法</a> · <a href="#画廊">画廊</a> · <a href="#下载和安装">下载和安装</a> · <a href="#最近更新">最近更新</a> · <a href="#常见问题">常见问题</a> · <a href="#参与贡献">参与贡献</a></p>
 
 </div>
 
@@ -86,18 +90,35 @@
 
 > 截图里的应用名、仓库名和对话是示范内容，数字是真实运行时的数据。
 
-## 怎么装：交给你的 AI
+## 下载和安装
 
-Deck 由好几块组成（Python 服务、网页、Swift 小应用、本地语音模型），每台 Mac 情况不一样，所以我们不做一键安装包，而是写了一份**给 AI 看的手把手说明**，让你自己的 AI 编程助手照着装。
+**1. 下载**：打开 [最新版 Release](https://github.com/3520566741-YCLi/deck-for-mac/releases/latest)，在页面最下面的 **Assets** 里点 **Source code (zip)**，解压后把文件夹改名为 `deck-for-mac` 放到你的个人文件夹（`~/deck-for-mac`）。会用 git 的话更方便以后更新：
 
-1. 打开你的 AI 编程助手（Claude Code、Codex、Cursor……），让它能在你的 Mac 上干活。
-2. 把这句话发给它：
+```bash
+git clone https://github.com/3520566741-YCLi/deck-for-mac.git ~/deck-for-mac
+```
 
-   > 请读 https://github.com/3520566741-YCLi/deck-for-mac 的 `AI_SETUP.md`，按里面的步骤在我的 Mac 上装好 Deck。先检查我的电脑、问我想要哪些功能，再一步一步来。
+> Deck 是 Python 服务 + 网页 + Swift 小应用 + 本地语音模型，每台 Mac 要装的东西不一样，所以没有 `.dmg` 安装包，下载的就是完整源码。
 
-3. 回答它的问题（要哪些卡片、用哪个大模型、要不要语音、助手叫什么）。**API key 不要发给它**，它会给你一行命令，你自己在终端里把 key 存进钥匙串。
+**2. 交给你的 AI 装**：打开你的 AI 编程助手（Claude Code、Codex、Cursor……），让它能在你的 Mac 上干活，把这句话发给它：
+
+> 请读 ~/deck-for-mac/AI_SETUP.md（或 https://github.com/3520566741-YCLi/deck-for-mac 的 `AI_SETUP.md`），按里面的步骤在我的 Mac 上装好 Deck。先检查我的电脑、问我想要哪些功能，再一步一步来。
+
+**3. 回答它的问题**（要哪些卡片、用哪个大模型、要不要语音、助手叫什么）。**API key 不要发给它**，它会给你一行命令，你自己在终端里把 key 存进钥匙串。
 
 想自己装也可以，[AI_SETUP.md](AI_SETUP.md) 每一步都有命令。
+
+### 更新到新版
+
+点仓库右上角 **Watch → Custom → Releases**，出新版时 GitHub 会通知你。更新时对你的 AI 说：
+
+> 按 ~/deck-for-mac/AI_SETUP.md 第 10 节，把 Deck 更新到最新版。
+
+你的设置（`config.json`、`apps.json`）、聊天记录、记忆和声纹都不会被覆盖。
+
+## 最近更新
+
+**v0.1.1**（2026-11-08）：语音助手更容易叫醒（多了一条认名字的唤醒路，每 10 分钟自检）；说「我查一下」会当场联网查；新增可选的 DeckVoice 看门狗。全部版本见 [CHANGELOG.md](CHANGELOG.md) 和 [Releases](https://github.com/3520566741-YCLi/deck-for-mac/releases)，旧版本都保留着。
 
 ## 需要什么
 
