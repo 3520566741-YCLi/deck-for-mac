@@ -4,13 +4,14 @@
 
 <h1>Deck</h1>
 
-<p><b>A free, open-source butler for your MacBook</b><br>An always-on dashboard plus a local-first voice assistant. Put it on an external screen or an old iPad, or let it drop down from the notch.</p>
+<p><b>A free, open-source butler for your MacBook, now on Windows too</b><br>An always-on dashboard plus a local-first voice assistant. Put it on an external screen or an old iPad, or let it drop down from the notch.</p>
 
 <p><a href="README.md">中文</a> · <b>English</b></p>
 
 [![Release](https://img.shields.io/github/v/release/3520566741-YCLi/deck-for-mac?style=flat-square&color=2f6fe0)](https://github.com/3520566741-YCLi/deck-for-mac/releases/latest)
 [![License](https://img.shields.io/github/license/3520566741-YCLi/deck-for-mac?style=flat-square)](LICENSE)
 ![Platform](https://img.shields.io/badge/macOS-14%2B%20%C2%B7%20Apple%20silicon-111?style=flat-square&logo=apple)
+[![Windows](https://img.shields.io/badge/Windows-10%20%2F%2011-0078d4?style=flat-square)](docs/windows.en.md)
 ![Local first](https://img.shields.io/badge/local--first-only%20the%20LLM%20is%20cloud-139a63?style=flat-square)
 [![Setup](https://img.shields.io/badge/setup-by%20your%20AI-7259e0?style=flat-square)](AI_SETUP.en.md)
 [![Stars](https://img.shields.io/github/stars/3520566741-YCLi/deck-for-mac?style=flat-square&color=c27a0c)](https://github.com/3520566741-YCLi/deck-for-mac/stargazers)
@@ -19,18 +20,21 @@
 
 <a href="https://github.com/3520566741-YCLi/deck-for-mac/releases/latest"><img src="https://img.shields.io/github/v/release/3520566741-YCLi/deck-for-mac?style=for-the-badge&label=Download&logo=apple&logoColor=white&color=2f6fe0" alt="Download the latest release" height="40"></a>
 &nbsp;
+<a href="docs/windows.en.md"><img src="https://img.shields.io/badge/Windows-installer-0078d4?style=for-the-badge" alt="Windows installer" height="40"></a>
+&nbsp;
 <a href="CHANGELOG.md"><img src="https://img.shields.io/github/release-date/3520566741-YCLi/deck-for-mac?style=for-the-badge&label=Updated&color=7259e0" alt="Last updated" height="40"></a>
 
-<p><a href="#what-it-does">Features</a> · <a href="#three-ways-to-show-it">Display modes</a> · <a href="#gallery">Gallery</a> · <a href="#download-and-install">Download &amp; install</a> · <a href="#whats-new">What's new</a> · <a href="#faq">FAQ</a> · <a href="#contributing">Contributing</a> · <a href="#-release-history">Releases</a></p>
+<p><a href="#what-it-does">Features</a> · <a href="#three-ways-to-show-it">Display modes</a> · <a href="#windows">Windows</a> · <a href="#gallery">Gallery</a> · <a href="#download-and-install">Download &amp; install</a> · <a href="#whats-new">What's new</a> · <a href="#faq">FAQ</a> · <a href="#contributing">Contributing</a> · <a href="#-release-history">Releases</a></p>
 
 </div>
 
 > [!NOTE]
 > Deck is not a one-click installer. It is a Python service, a web page, small Swift apps and local voice models, so **the recommended way is to hand this repo to your own AI coding assistant and have it follow [AI_SETUP.en.md](AI_SETUP.en.md)**. It will ask what you want first.
+> **The Windows version has an installer**: just double-click it. See [docs/windows.en.md](docs/windows.en.md).
 
 ## What it does
 
-> The screenshots show Deck's English mode (Settings → Appearance → Language: System / 中文 / English), which ships with the next release; v0.2.1 and earlier are Chinese only. News headlines, chats and app names in the screenshots are demo content.
+> The screenshots show Deck's English mode (Settings → Appearance → Language: System / 中文 / English), available since v0.3.0. News headlines, chats and app names in the screenshots are demo content.
 
 | | Feature | In one line |
 |---|---|---|
@@ -55,6 +59,17 @@ One web page, one set of features, wherever you like: **Settings → Display**, 
 | Medium | Small |
 |:---:|:---:|
 | <img src="docs/images/en/notch-m.png" alt="Notch mode, medium"> | <img src="docs/images/en/notch-s.png" alt="Notch mode, small"> |
+
+## Windows
+
+The same web UI and backend as on the Mac, neumorphic skin only, **with an installer**: download `Deck-Setup-<version>.exe` under Assets on the [latest release](https://github.com/3520566741-YCLi/deck-for-mac/releases/latest) and run it; no admin rights needed. Notch mode becomes the **top panel** on Windows: touch the middle of the top edge of the screen and it slides down. Voice, letting the assistant use the PC, the toolbox and daily cleanup (Recycle Bin only) are all there. See [docs/windows.en.md](docs/windows.en.md).
+
+<img src="docs/images/windows/win-home-day-en.png" width="860" alt="Deck for Windows home">
+
+| Top panel | Toolbox |
+|:---:|:---:|
+| <img src="docs/images/windows/win-panel-en.png" alt="Windows top panel"> | <img src="docs/images/windows/win-toolbox-en.png" alt="Windows toolbox"> |
+| Touch the middle of the top edge to open; never pops over full-screen games | Uninstall with leftovers, junk cleanup, large files, winget updates; Recycle Bin only |
 
 ## Gallery
 
@@ -125,6 +140,8 @@ git clone https://github.com/3520566741-YCLi/deck-for-mac.git ~/deck-for-mac
 
 You can also follow [AI_SETUP.en.md](AI_SETUP.en.md) by hand; every step has its commands.
 
+**Windows**: download `Deck-Setup-<version>.exe` from the release and run it; store your LLM key in Credential Manager with one `cmdkey` line. See [docs/windows.en.md](docs/windows.en.md).
+
 ### Updating
 
 Click **Watch → Custom → Releases** at the top right of the repo to get notified of new versions. To update, tell your AI:
@@ -135,17 +152,12 @@ Your settings (`config.json`, `apps.json`), chat history, memories and voiceprin
 
 ## What's new
 
-**v0.2.1** (2026-11-08)
+**v0.3.0** (2026-11-08)
 
-- 📈 **Stock prices in the brief are checked**: the editor gets live quotes from your broker, and any sentence whose price doesn't match is removed.
-
-**v0.2.0** (2026-11-08)
-
-- 🎙️ **The assistant can read the daily brief and operate all of Deck**: say "read today's brief" and it reads it in its own voice, highlighting each sentence. News sections, watchlist quotes, processes, disk, GitHub, apps, toolbox, settings, display mode and daily cleanup can all be asked about and changed by voice. Anything that changes your Mac asks first, and things only go to the Trash.
-- 👆 **Every button gives press feedback and sound**: buttons on the news page, the butler page and the chat page used to be silent; now they all respond, and "Re-edit this issue" shows a spinner.
-- ⌨️ **Keyboard cleaning**: a new Tools tab in the toolbox locks the keyboard so you can wipe it, with optional black screen and trackpad lock, several ways to unlock, and no way to get stuck.
-- 🪪 **Name the assistant and record your voiceprint yourself**: Settings → Assistant lets you rename it (wake switches instantly), check a name first, record a guided voiceprint and run wake / voiceprint tests.
-- 🖥️ **Switch the display mode in Settings**: Auto / External screen / Notch, the same setting as the menu bar.
+- 🪟 **Windows version**: neumorphic skin only, with an installer; installs into your user folder, no admin rights. Home, Butler, processes, disk, toolbox, daily cleanup, news and the assistant all work; every "delete" goes to the Recycle Bin.
+- ⬆️ **Top panel**: the Windows take on notch mode. Touch the middle of the top edge to open it; it never pops over full-screen games or video.
+- 🎙️ **Talk to it and let it use the PC on Windows too**: Ctrl+Alt+M toggles the mic, hold Ctrl+Alt+J to talk; PC control is off by default and Ctrl+Alt+Esc stops it at once.
+- 🌐 **English mode**: Settings → Appearance → Language (System / 中文 / English), on both Mac and Windows.
 
 See every version in the [release history](#-release-history) below, and the details in [CHANGELOG.md](CHANGELOG.md).
 
@@ -154,6 +166,7 @@ See every version in the [release history](#-release-history) below, and the det
 - A Mac with Apple silicon (M1 or later). Voice needs macOS 14+; the system Liquid Glass assistant panel needs macOS 26+ (older systems get a web-drawn panel).
 - An LLM API key for the assistant. The default is [DeepSeek](https://platform.deepseek.com/); any OpenAI-compatible API with streaming and tool calls works.
 - About 3 GB of disk for local voice models.
+- Windows version: Windows 10 / 11 (64-bit); see [docs/windows.en.md](docs/windows.en.md).
 - Every outside service is listed in [docs/services.en.md](docs/services.en.md), with what we found on 2026-11-07 and how to re-check it.
 
 ## Principles
@@ -172,8 +185,10 @@ See every version in the [release history](#-release-history) below, and the det
 - [x] Voice assistant: local wake word, voiceprint, recognition and synthesis, barge-in
 - [x] DeckHands: clicks via the Accessibility API, risky steps confirmed first
 - [x] Keyboard cleaning: lock the keyboard while you wipe it, several ways to unlock
+- [x] English UI
+- [x] Windows version (neumorphic, installer, top panel, voice, PC control)
 - [ ] More LLM presets (PRs welcome)
-- [ ] English UI (PRs welcome)
+- [ ] Code-signed Windows installer
 
 ## FAQ
 
@@ -190,6 +205,11 @@ Recordings, voiceprints, file contents and screenshots never leave your Mac. Onl
 <details><summary><b>No notch, no iPad?</b></summary>
 
 Use external-screen mode on any second screen, or just open <code>http://127.0.0.1:8777</code> in a browser.
+</details>
+
+<details><summary><b>Does it run on Windows?</b></summary>
+
+Yes. Windows 10 / 11 has an installer; just double-click it. See <a href="docs/windows.en.md">docs/windows.en.md</a>. It has the neumorphic skin only, notch mode becomes the top panel, and voice has no echo cancellation (say "stop" to interrupt the assistant while it talks).
 </details>
 
 <details><summary><b>Intel Macs?</b></summary>
@@ -221,6 +241,8 @@ manager/            Butler service (Python stdlib, :8777) + dashboard page
   newsroom/         News page (free sources → one DeepSeek editing pass)
   voice/            Voice: DeckVoice.app (Swift) + voice service (Python, sherpa-onnx)
   hands/            DeckHands.app: clicks through the Accessibility API
+  winport/          Windows system layer (processes, disk, Recycle Bin, toolbox, PC control)
+windows/            Windows shell (tray, top panel, voice helper), packaging and installer, CI tests
 app/                Deck.app native shell (SwiftPM): fills an external screen / drops from the notch
 scripts/            Claude status line bridge, UI self-check script
 docs/               Service list, voice latency notes, screenshots
@@ -233,6 +255,7 @@ Issues and PRs are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) and t
 ## Docs
 
 - [AI_SETUP.en.md](AI_SETUP.en.md): install and configuration guide for AI assistants
+- [docs/windows.en.md](docs/windows.en.md): installing and using the Windows version
 - [docs/services.en.md](docs/services.en.md): outside services, how to verify them, the Longbridge example
 - [docs/voice-latency.en.md](docs/voice-latency.en.md): how the assistant starts speaking 2–3 s after you stop
 - [CHANGELOG.md](CHANGELOG.md): release notes
@@ -241,16 +264,17 @@ Issues and PRs are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) and t
 
 | Version | Date | What changed | Download |
 |---|---|---|---|
-| **v0.2.1** `latest` | 2026-11-08 | Stock prices in the daily brief are checked against live quotes; wrong sentences are removed · [details](CHANGELOG.md#v021--2026-11-08) | [Download](https://github.com/3520566741-YCLi/deck-for-mac/releases/tag/v0.2.1) |
+| **v0.3.0** `latest` | 2026-11-08 | Windows version (installer, top panel, voice, PC control); English mode · [details](CHANGELOG.md#v030--2026-11-08) | [Download](https://github.com/3520566741-YCLi/deck-for-mac/releases/tag/v0.3.0) |
+| v0.2.1 | 2026-11-08 | Stock prices in the daily brief are checked against live quotes; wrong sentences are removed · [details](CHANGELOG.md#v021--2026-11-08) | [Download](https://github.com/3520566741-YCLi/deck-for-mac/releases/tag/v0.2.1) |
 | v0.2.0 | 2026-11-08 | The assistant reads the daily brief and operates all of Deck; button feedback and sound; keyboard cleaning; name the assistant and record your voiceprint; display mode in Settings · [details](CHANGELOG.md#v020--2026-11-08) | [Download](https://github.com/3520566741-YCLi/deck-for-mac/releases/tag/v0.2.0) |
 | v0.1.1 | 2026-11-08 | Wakes up reliably; "let me check" searches right away; optional voice watchdog · [details](CHANGELOG.md#v011--2026-11-08) | [Download](https://github.com/3520566741-YCLi/deck-for-mac/releases/tag/v0.1.1) |
 | v0.1.0 | 2026-11-07 | First public release: dashboard, voice assistant, news page, toolbox, notch mode · [details](CHANGELOG.md#v010--2026-11-07) | [Download](https://github.com/3520566741-YCLi/deck-for-mac/releases/tag/v0.1.0) |
 
-Every version stays on [Releases](https://github.com/3520566741-YCLi/deck-for-mac/releases); each release page has the full source code of that version under **Assets**.
+Every version stays on [Releases](https://github.com/3520566741-YCLi/deck-for-mac/releases); each release page has the full source code of that version under **Assets**, plus the Windows installer from v0.3.0 on.
 
 ## Acknowledgements
 
-Built on [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx), [Qwen3-ASR / Qwen3-TTS](https://huggingface.co/Qwen), [mlx-audio](https://github.com/Blaizzy/mlx-audio), [3D-Speaker](https://github.com/modelscope/3D-Speaker), [Silero VAD](https://github.com/snakers4/silero-vad), [GridStack.js](https://github.com/gridstack/gridstack.js), [React Bits](https://github.com/DavidHDev/react-bits), [snd-lib](https://github.com/snd-lib/snd-lib) and [Kenney](https://kenney.nl/). Full list in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Built on [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx), [Qwen3-ASR / Qwen3-TTS](https://huggingface.co/Qwen), [mlx-audio](https://github.com/Blaizzy/mlx-audio), [3D-Speaker](https://github.com/modelscope/3D-Speaker), [Silero VAD](https://github.com/snakers4/silero-vad), [GridStack.js](https://github.com/gridstack/gridstack.js), [React Bits](https://github.com/DavidHDev/react-bits), [snd-lib](https://github.com/snd-lib/snd-lib) and [Kenney](https://kenney.nl/); the Windows version also uses [pywebview](https://github.com/r0x0r/pywebview), [psutil](https://github.com/giampaolo/psutil), [pystray](https://github.com/moses-palmer/pystray), [comtypes](https://github.com/enthought/comtypes), [python-sounddevice](https://github.com/spatialaudio/python-sounddevice), [PyInstaller](https://pyinstaller.org/) and [Inno Setup](https://jrsoftware.org/isinfo.php). Full list in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 ## License
 

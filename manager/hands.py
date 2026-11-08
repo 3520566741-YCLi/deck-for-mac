@@ -11,6 +11,10 @@
 - 每一步之前看 alive()；动作进行中有看门线程，Deck 一发停止就让 DeckHands 立刻停（打字也会停在半路）。
 - DeckHands 自己也守：菜单栏开关、急停、不往密码框输入、屏幕变了就不点。
 - 屏幕上读到的文字只当数据，不当指令；送去 Jev 的只有元素名字，不含密码框内容。
+
+Windows 版（11-08 第四步，deckos.WIN 时）：不用 DeckHands.app，同样的请求交给 Deck 进程里的 winport.hands_win.call()
+（UI 自动化 + SendInput，命令和返回结构不变）。应用身份是 exe 名（chrome.exe），危险名单另加 Windows 的程序和快捷键；
+快捷键里的 cmd 按 ctrl 算，win 是 Windows 徽标键，delete 是 Del 键（退格写 backspace）。Mac 上下面这些都不生效。
 """
 import difflib
 import json
@@ -22,6 +26,8 @@ import threading
 import time
 import urllib.request
 import uuid
+
+import deckos
 
 SOCK = os.path.expanduser("~/Library/Application Support/Deck/hands.sock")
 APP = os.path.expanduser("~/Applications/DeckHands.app")
@@ -50,6 +56,20 @@ SENSITIVE = {"com.apple.keychainaccess", "com.1password.1password", "com.agilebi
 DANGER_KEYS = {"cmd+q", "cmd+opt+esc", "cmd+delete", "cmd+shift+delete", "cmd+opt+delete", "ctrl+cmd+q",
                "cmd+shift+q", "cmd+opt+shift+q", "ctrl+opt+cmd+eject", "cmd+opt+shift+esc"}
 SEND_KEYS = {"return", "enter", "cmd+return", "cmd+enter", "shift+return", "opt+return", "ctrl+return"}
+if deckos.WIN:
+    # Windows 上应用身份是 exe 名（小写），见 winport/hands_win.py
+    TERMINALS |= {"cmd.exe", "powershell.exe", "powershell_ise.exe", "pwsh.exe", "windowsterminal.exe", "wt.exe",
+                  "openconsole.exe", "conhost.exe", "mintty.exe", "bash.exe", "wsl.exe", "alacritty.exe", "wezterm-gui.exe",
+                  "putty.exe", "kitty.exe", "tabby.exe", "hyper.exe", "warp.exe"}
+    MESSAGING |= {"wechat.exe", "weixin.exe", "wxwork.exe", "qq.exe", "tim.exe", "telegram.exe", "discord.exe", "slack.exe",
+                  "teams.exe", "ms-teams.exe", "outlook.exe", "olk.exe", "hxoutlook.exe", "thunderbird.exe", "feishu.exe",
+                  "lark.exe", "dingtalk.exe", "whatsapp.exe", "whatsapp.root.exe", "signal.exe", "line.exe", "skype.exe"}
+    SENSITIVE |= {"1password.exe", "bitwarden.exe", "keepass.exe", "keepassxc.exe", "dashlane.exe", "enpass.exe",
+                  "systemsettings.exe", "regedit.exe", "mmc.exe", "taskmgr.exe", "control.exe", "rundll32.exe", "credwiz.exe",
+                  "sechealthui.exe", "msconfig.exe", "netplwiz.exe", "useraccountcontrolsettings.exe",
+                  "systempropertiesadvanced.exe", "gpedit.exe", "secpol.exe", "explorer.exe:credentials"}
+    DANGER_KEYS |= {"alt+f4", "ctrl+alt+delete", "ctrl+shift+esc", "win+l", "shift+delete", "ctrl+shift+delete", "win+r",
+                    "win+x", "ctrl+alt+esc"}
 
 
 class HandsError(Exception):
@@ -57,10 +77,24 @@ class HandsError(Exception):
 
 
 def _norm_keys(keys):
+    if deckos.WIN:
+        return _norm_keys_win(keys)
     alias = {"command": "cmd", "⌘": "cmd", "option": "opt", "alt": "opt", "⌥": "opt", "control": "ctrl", "⌃": "ctrl",
              "⇧": "shift", "escape": "esc", "backspace": "delete", "enter": "return"}
     parts = [alias.get(p, p) for p in str(keys or "").lower().replace(" ", "").split("+") if p]
     order = {"ctrl": 0, "opt": 1, "shift": 2, "cmd": 3}
+    mods = sorted({p for p in parts if p in order}, key=order.get)
+    rest = [p for p in parts if p not in order]
+    return "+".join(mods + rest)
+
+
+def _norm_keys_win(keys):
+    """Windows：cmd / ⌘ 按 ctrl 算（Mac 的 ⌘C 就是 Ctrl+C），alt 记作 opt，win 是徽标键；delete 是 Del 键，退格写 backspace。"""
+    alias = {"command": "ctrl", "cmd": "ctrl", "⌘": "ctrl", "option": "opt", "alt": "opt", "⌥": "opt", "control": "ctrl",
+             "⌃": "ctrl", "⇧": "shift", "windows": "win", "super": "win", "meta": "win", "⊞": "win", "escape": "esc",
+             "enter": "return", "del": "delete", "forwarddelete": "delete"}
+    parts = [alias.get(p, p) for p in str(keys or "").lower().replace(" ", "").split("+") if p]
+    order = {"ctrl": 0, "opt": 1, "shift": 2, "win": 3}
     mods = sorted({p for p in parts if p in order}, key=order.get)
     rest = [p for p in parts if p not in order]
     return "+".join(mods + rest)
@@ -84,6 +118,12 @@ class Hands:
 
     # ---------- 跟 DeckHands 说话 ----------
     def _call(self, req, timeout=8.0):
+        if deckos.WIN:
+            try:
+                from winport import hands_win  # noqa: PLC0415
+            except ImportError as e:
+                raise HandsError("电脑操控模块没装好：%s" % e)
+            return hands_win.call(req, timeout)
         s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         s.settimeout(timeout)
         try:
@@ -108,6 +148,8 @@ class Hands:
 
     def _ensure(self):
         """确保 DeckHands 在跑（没跑就后台打开），并返回它的状态。"""
+        if deckos.WIN:  # Windows 上就在 Deck 进程里，不用另外打开
+            return self._call({"cmd": "status"}, 2)
         try:
             return self._call({"cmd": "status"}, 2)
         except HandsError:
@@ -125,6 +167,14 @@ class Hands:
 
     def _ready(self):
         st = self._ensure()
+        if deckos.WIN:
+            if not st.get("trusted"):
+                raise HandsError("这台电脑上用不了电脑操控：%s" % (st.get("error") or "原因不明"))
+            if not st.get("enabled"):
+                raise HandsError("Deck 设置里（或右下角托盘菜单里）「允许 Vesper 操作电脑」关着，他打开后才能动手")
+            if st.get("stopped"):
+                raise HandsError("刚才被急停了（%s），这一轮不再动手" % (st.get("hotkey") or "停止"))
+            return st
         if not st.get("trusted"):
             raise HandsError("DeckHands 还没有辅助功能权限：系统设置 → 隐私与安全性 → 辅助功能，打开 DeckHands")
         if not st.get("enabled"):
@@ -263,9 +313,10 @@ class Hands:
         criteria["none_of_these"] = "None of the listed elements is what he asked for"
         verb = "type into" if want_text else "click"
         q = {"pick": {"type": "choice", "criteria": criteria,
-                      "instructions": "用户 asked his Mac assistant to %s an element on screen. He described it as: “%s”. "
+                      "instructions": "用户 asked his %s assistant to %s an element on screen. He described it as: “%s”. "
                                       "These are the clickable elements of the app %s. Which one did he mean? "
-                                      "Choose none_of_these if none clearly matches." % (verb, target[:200], scr.get("app", ""))}}
+                                      "Choose none_of_these if none clearly matches." % ("Windows PC" if deckos.WIN else "Mac", verb,
+                                                                                         target[:200], scr.get("app", ""))}}
         ans = (self._jev("App: %s\nRequest: %s" % (scr.get("app", ""), target[:200]), q) or {}).get("pick")
         if ans and ans.get("type") == "choice":
             probs = ans.get("probabilities") or {}
@@ -301,6 +352,8 @@ class Hands:
         if action == "key":
             k = _norm_keys(keys)
             if k in DANGER_KEYS:
+                return "这个快捷键会退出应用、删除或注销"
+            if deckos.WIN and k == "delete" and bundle == "explorer.exe":  # 资源管理器里按 Del = 删文件（Mac 的 ⌘⌫）
                 return "这个快捷键会退出应用、删除或注销"
             if k in SEND_KEYS and (bundle in TERMINALS or bundle in MESSAGING):
                 return "在终端里会执行命令" if bundle in TERMINALS else "可能会把消息发出去"
@@ -470,6 +523,12 @@ class Hands:
             raise HandsError("应用名不对：%s" % name[:60])
         if not alive():
             raise HandsError("已经停了")
+        if deckos.WIN:
+            res = self._call({"cmd": "open", "name": name}, 30)  # 第一次要读开始菜单（Get-StartApps 要几秒）
+            if not res.get("ok"):
+                raise HandsError(res.get("error") or "打不开「%s」，可能没装或者名字不对" % name)
+            time.sleep(0.8)
+            return
         r = subprocess.run(["open", "-a", name], timeout=10, capture_output=True, text=True)
         if r.returncode != 0:
             raise HandsError("打不开「%s」，可能没装或者名字不对" % name)

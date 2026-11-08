@@ -9,6 +9,12 @@ import re
 import time
 
 LOG = os.path.expanduser("~/Library/Logs/weekly-cache-clean.log")
+try:  # Windows 版的清理日志在 %APPDATA%\Deck\logs 里（winport/cleaner.py）
+    import deckos
+    if deckos.WIN:
+        LOG = deckos.support("Deck", "logs", "weekly-cache-clean.log")
+except ImportError:
+    pass
 JSON_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "logs", "cache-clean")
 
 
@@ -129,4 +135,4 @@ class CleanupSource:
                 "last": last, "runs": runs[:12],
                 "month_mb": sum(r["total_mb"] for r in runs if r["at"] and r["at"] > time.time() - 30 * 86400),
                 "week_mb": sum(r["total_mb"] for r in runs if r["at"] and r["at"] > week),
-                "rule": "只移进废纸篓，不直接删除"}
+                "rule": "只移进回收站，不直接删除" if LOG.endswith(os.path.join("Deck", "logs", "weekly-cache-clean.log")) else "只移进废纸篓，不直接删除"}

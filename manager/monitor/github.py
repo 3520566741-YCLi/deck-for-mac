@@ -16,7 +16,9 @@ from datetime import datetime, timezone
 
 from .util import HOME, SourceError, expand, find_exe, run
 
-STORE_DIR = os.path.join(HOME, "Library", "Application Support", "Deck")
+import deckos  # noqa: E402  manager/deckos.py
+
+STORE_DIR = deckos.support("Deck")  # Mac 上是 ~/Library/Application Support/Deck
 TRAFFIC_FILE = os.path.join(STORE_DIR, "github-traffic.json")
 REPO_TTL = 600
 TRAFFIC_TTL = 6 * 3600

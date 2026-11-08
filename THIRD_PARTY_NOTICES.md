@@ -25,6 +25,25 @@ The terms forbid redistributing or selling the unprocessed audio on its own; the
 | [Lockpaw](https://github.com/sorkila/lockpaw) | MIT | 拦截被系统停用时立刻重开、各种兜底 / re-enabling a disabled event tap, failsafes |
 | [keylock](https://github.com/kfv/keylock) | MIT | HID 层 CGEventTap 吞按键 / swallowing keys with an HID-level CGEventTap |
 
+## Windows 安装包里带的 / Bundled in the Windows installer
+
+版本见 [`windows/requirements-win.txt`](windows/requirements-win.txt)。 / Versions are pinned in `windows/requirements-win.txt`.
+
+| 组件 / Component | 许可 / License | 用途 / Used for |
+|---|---|---|
+| [Python](https://www.python.org/) | PSF-2.0 | 运行时 / runtime |
+| [pywebview](https://github.com/r0x0r/pywebview) + [pythonnet](https://github.com/pythonnet/pythonnet) | BSD-3-Clause / MIT | 窗口（系统自带的 Edge WebView2） / window (built-in Edge WebView2) |
+| [psutil](https://github.com/giampaolo/psutil) | BSD-3-Clause | CPU、内存、磁盘、进程 / CPU, memory, disk, processes |
+| [pystray](https://github.com/moses-palmer/pystray) | LGPL-3.0（独立模块，可替换 / separate module, replaceable） | 托盘图标 / tray icon |
+| [Pillow](https://github.com/python-pillow/Pillow) | MIT-CMU | 托盘图标 / tray icon |
+| [comtypes](https://github.com/enthought/comtypes) | MIT | UI 自动化（让助手操作电脑） / UI Automation (PC control) |
+| [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) | Apache-2.0 | 唤醒、识别、声纹、朗读 / wake word, ASR, voiceprint, TTS |
+| [NumPy](https://numpy.org/) | BSD-3-Clause | 音频数组 / audio arrays |
+| [python-sounddevice](https://github.com/spatialaudio/python-sounddevice)（含 PortAudio / includes PortAudio） | MIT | 麦克风和扬声器 / microphone and speaker |
+| [pypinyin](https://github.com/mozillazg/python-pinyin)、[opencc-python-reimplemented](https://github.com/yichen0831/opencc-python) | MIT / Apache-2.0 | 中文唤醒词、繁转简 / Chinese wake words, Traditional → Simplified |
+
+打包工具（不随安装包分发）/ Build tools (not shipped): [PyInstaller](https://pyinstaller.org/)（GPL-2.0 + bootloader exception）、[Inno Setup](https://jrsoftware.org/isinfo.php)（Inno Setup License）。Windows 版的语音模型（SenseVoice、Kokoro、唤醒、声纹）第一次启动时从 [k2-fsa/sherpa-onnx Releases](https://github.com/k2-fsa/sherpa-onnx/releases) 下载，许可同上表。 / Voice models for Windows download from the k2-fsa/sherpa-onnx releases on first start; licenses as listed above.
+
 ## 安装时下载的 / Downloaded during setup (not in this repository)
 
 | 组件 / Component | 许可 / License | 用途 / Used for |

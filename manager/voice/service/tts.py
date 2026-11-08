@@ -31,8 +31,13 @@ except Exception:  # 单独跑 tts_demo.py 时没有 hub
     hub = None  # type: ignore
 
 SUPPORT = Path.home() / "Library/Application Support/Deck"
-MODELS = Path(os.environ.get("DECK_VOICE_MODELS", SUPPORT / "voice/models"))
-CONFIG = SUPPORT / "voice/tts.json"
+try:  # Windows 版（11-08）：路径跟 config.py 走（%APPDATA%\Deck\voice）；Mac 上不变
+    from .config import ROOT as _ROOT, WIN as _WIN  # type: ignore
+except Exception:  # 单独跑 tts_demo.py 时
+    _WIN, _ROOT = False, None
+_VOICE_DIR = Path(_ROOT) if _WIN else SUPPORT / "voice"
+MODELS = Path(os.environ.get("DECK_VOICE_MODELS", _VOICE_DIR / "models"))
+CONFIG = _VOICE_DIR / "tts.json"
 
 IDLE_UNLOAD_S = int(os.environ.get("DECK_TTS_IDLE_S", 1800))  # 半小时没说话才卸载（冷启动要 5 秒，常用时别卸）
 LEVEL_HZ = 15
@@ -64,6 +69,9 @@ VOICES: dict[str, dict] = {
 LEXICON = {"Claude Code": "克劳德 code", "Claude": "克劳德"}
 DEFAULTS = {"voice": "design:D1", "speed": 1.0, "instruct": ""}  # 试听后定回 D1（跑调靠音高检测重合成兜底）
 FALLBACK_VOICES = ["design:D1", "qwen:Vivian"]  # 选的音色没装时按顺序退
+if _WIN:  # Windows 没有 mlx（Apple GPU），千问音色用不了，只用 Kokoro（windows/voice_models.py 下载）
+    DEFAULTS["voice"] = "kokoro:zf_001"
+    FALLBACK_VOICES = ["kokoro:zf_001"]
 
 
 def _aname() -> str:
@@ -85,7 +93,7 @@ def load_config() -> dict:
     except Exception:
         pass
     if cfg.get("voice") not in VOICES or not _installed(VOICES[cfg["voice"]]):
-        cfg["voice"] = next((v for v in FALLBACK_VOICES if _installed(VOICES[v])), "design:D1")
+        cfg["voice"] = next((v for v in FALLBACK_VOICES if _installed(VOICES[v])), FALLBACK_VOICES[0])
     return cfg
 
 
@@ -292,6 +300,9 @@ class KokoroEngine:
     numbers_in_text = True  # 数字交给 clean() 先转中文
 
     def __init__(self):
+        if _WIN and not (MODELS / self.DIR / "voices.bin").exists():
+            # 没下载时给一句看得懂的话（tts.error 事件里页面能直接显示），别让 onnxruntime 报一长串
+            raise FileNotFoundError(f"语音合成模型还没下载（{MODELS / self.DIR}），在 Deck 设置 → 语音里点「下载语音模型」")
         import sherpa_onnx  # type: ignore
 
         d = MODELS / self.DIR
@@ -789,6 +800,8 @@ def _installed(v: dict) -> bool:
     eng = v["engine"]
     if eng == "kokoro":
         return (MODELS / KokoroEngine.DIR / "voices.bin").exists()
+    if _WIN:  # 千问音色要 mlx（只有 Mac 有）
+        return False
     hub_dir = MODELS / "hf" / "hub"
     repo = QwenCloneEngine.REPO if eng == "qwen_clone" else QwenEngine.REPO
     if not (hub_dir / ("models--" + repo.replace("/", "--"))).exists():

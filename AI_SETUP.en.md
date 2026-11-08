@@ -2,6 +2,8 @@
 
 [中文](AI_SETUP.md) · **English**
 
+> **Is your user on Windows?** This guide is for the Mac. The Windows version has an installer; follow [docs/windows.en.md](docs/windows.en.md): download `Deck-Setup-<version>.exe` and run it; have them store the key in Credential Manager themselves by running `cmdkey /generic:deepseek-api /user:deck /pass` in PowerShell (never in the chat). The model, news and stock settings from §3 on apply on Windows too; `config.json` lives in the install folder under `_internal\manager\`.
+
 > **To the AI reading this:** your user wants Deck on their Mac. This repository holds **complete, runnable code** (butler service, dashboard page, voice, hands, native shell). Your job: check their Mac, ask what they want, then install and configure it step by step, **verifying each step before the next**. Talk in their language, avoid jargon, and ask for one thing at a time.
 >
 > Three hard rules: **never let them paste an API key into the chat** (use only the Keychain command in §3); **every "delete" is a move to the Trash**; **before wiring up any outside service, re-check it still works using [docs/services.en.md](docs/services.en.md)**. If a check fails, tell them and offer another option or skip it for now.

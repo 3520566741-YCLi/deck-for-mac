@@ -7,6 +7,11 @@
 <script>if (/[?&]embed=1/.test(location.search)) { document.documentElement.className += " embed";
   try { if ((JSON.parse(localStorage.getItem("mbdash.layout") || "{}")).skin !== "glass") document.documentElement.classList.add("skin-soft"); } catch (e) { document.documentElement.classList.add("skin-soft"); } }</script>
 <style>
+/* Windows：细圆滚动条（系统默认是带箭头的白色宽条） */
+html.os-win ::-webkit-scrollbar{width:8px;height:8px;background:transparent}
+html.os-win ::-webkit-scrollbar-track,html.os-win ::-webkit-scrollbar-corner{background:transparent}
+html.os-win ::-webkit-scrollbar-button{display:none;width:0;height:0}
+html.os-win ::-webkit-scrollbar-thumb{background:var(--track,rgba(127,127,127,.3));border-radius:4px;border:2px solid transparent;background-clip:padding-box}
 :root{--bg:#f6f7f9;--card:#fff;--ink:#1d2330;--mute:#6b7280;--line:#e5e7eb;--ok:#15803d;--warn:#b45309;--err:#b91c1c;--accent:#4f46e5;--chip:#eef2ff}
 @media (prefers-color-scheme:dark){:root{--bg:#0f1115;--card:#181b22;--ink:#e6e8ee;--mute:#9aa3b2;--line:#2a2f3a;--ok:#4ade80;--warn:#fbbf24;--err:#f87171;--accent:#818cf8;--chip:#23263a}}
 *{box-sizing:border-box}
@@ -102,6 +107,7 @@ label.auto{cursor:pointer;transition:opacity .2s}label.auto.pressed{opacity:.6;t
 input[type=checkbox].pressed,label.auto.pressed input{transform:scale(.88);transition:transform .1s}
 </style>
 <!-- 按键音效 + 按压手感（嵌在 Deck 管家页里时声音交给监控台放） -->
+<script src="/static/deck-i18n.js"></script>
 <script src="/static/deck-sfx.js"></script>
 </head>
 <body>
@@ -162,6 +168,7 @@ function render(d){
     const mem = a.footprint_mb!=null ? a.footprint_mb+" MB" : (a.running? a.rss_mb+" MB":"—");
     const actions = a.kind==="agent"
       ? `<button data-act="restart" data-id="${a.id}">重启服务</button>`
+      : a.self ? `<button data-act="reveal" data-id="${a.id}">在访达中显示</button>`  /* Windows 版里的 Deck 自己：开着的就是它，退出走托盘 */
       : `<button data-act="open" data-id="${a.id}">打开</button>${a.running?`<button data-act="quit" data-id="${a.id}">退出</button>`:""}<button data-act="reveal" data-id="${a.id}">在访达中显示</button>`;
     return `<div class="app ${lvl}">
       <h3><span>${esc(a.name)}</span><span class="dot">${levelText[lvl]||""}</span></h3>

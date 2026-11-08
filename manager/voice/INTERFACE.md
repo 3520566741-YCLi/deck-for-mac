@@ -104,3 +104,17 @@ helper 侧：播放前确认引擎真在跑，`play()` / `installTap` 用 ObjC `
 她说完后 `followup_s`（60 秒）内直接开口就行。窗口里每句都核对声纹（门槛 max(0.45, 档案门槛 − 0.15)，不到 0.8 秒的短句算通过）：
 不是他、是她自己的回声、没听出字 → 发 `user.rejected`（source=followup）并在剩下的时间里接着听；窗口到时发 `followup.end`，
 提示音模块轻轻响一下关闭音（音量减半），之后要重新叫名字。日志 friday-barge.jsonl 记 `followup_voice`（分数、是否通过）。
+
+## Windows 版（11-08）
+- 没有 DeckVoice.app：小助手是 `windows/voice_helper.py`（sounddevice），和语音服务跑在同一个子进程 `Deck.exe --voice` 里
+  （`windows/voice_launch.py`：Deck 窗口进程守护它，崩了重启，Deck 退出它跟着退出；8778 已有一份就不起第二份）。
+- 帧格式不变。小助手连上先发 `{"t":"hello","platform":"win","aec":false,"captions":false,"hotkeys":{...}}`（服务推成 `helper.hello` 事件），
+  再发 `{"t":"aec","on":false}`；收到 `vp` 也回 `aec:false`。没有 Apple 实时字幕：不发 `partial` / `apple_final`，`user.partial` 不会出现，定稿照常。
+- 麦克风打不开时 `mic` 的 `reason` 多一种 `no_device`（没有麦克风 / 没有声卡）；`no_permission` = 系统设置里关了麦克风权限。
+- 快捷键：Ctrl+Alt+M 麦克风、Ctrl+Alt+J 直接说（按住 = 按住说话）。「停」的 Ctrl+Alt+. 归电脑操控急停（winport/hands_win.py）。
+- 路径：`%APPDATA%\Deck\voice`（`config.py` 的 `ROOT`，`DECK_VOICE_ROOT` 可改），日志 `%LOCALAPPDATA%\Deck\logs`（voice.log、friday-*.jsonl）。
+- 朗读只有 Kokoro（`kokoro:zf_001`）；千问音色要 mlx，Windows 上显示未安装。缺模型时 `tts.error` 的 `error` 是「语音合成模型还没下载…」。
+- 模型：`windows/voice_models.py` 从 k2-fsa/sherpa-onnx Releases 下载（续传 + 大小 + SHA-256），第一次启动自动下载 wake/asr/tts（约 375MB，
+  `config.json` 里 `"auto_models": false` 关掉）。接口：`GET /models/status`、`POST /models/download {"packs":[...]}`、`POST /models/cancel`；
+  事件 `models.progress`（item/label/phase/done/total/bytes_done/bytes_total）、`models.done`（ok/installed/error）、`models.missing`。
+  新装了唤醒模型会在待机时自动重启一次语音服务。

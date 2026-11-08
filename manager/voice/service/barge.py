@@ -34,6 +34,12 @@ SINGLE_KEEP = {"停", "等", "别", "不", "stop", "wait", "no", "nope", "pause"
                "等等", "不对", "不是", "算了", "闭嘴", "安静"}
 MAX_HOLD_S = 8.0
 LOG = os.path.join(os.path.expanduser("~"), "Library", "Logs", "Deck", "friday-barge.jsonl")
+try:  # Windows 版（11-08）：日志放 %LOCALAPPDATA%\Deck\logs
+    from .config import LOGS as _LOGS, WIN as _WIN
+    if _WIN:
+        LOG = os.path.join(_LOGS, "friday-barge.jsonl")
+except ImportError:
+    pass
 
 _lock = threading.Lock()
 _held = {"on": False, "prev": "", "at": 0.0, "gen": 0, "judging": False}

@@ -13,6 +13,8 @@ import re
 import time
 import uuid
 
+import deckos
+
 SECTIONS = {"front": "头版", "frontier": "前沿科技", "giants": "AI 巨头", "oss": "开源热榜", "art": "艺术 × 代码", "invest": "投资"}
 SETTINGS = {
     "skin": {"soft": "新拟态", "glass": "玻璃"},
@@ -23,9 +25,12 @@ SETTINGS = {
     "sfx": {"on": "开", "off": "关"},
     "sfxVol": {"s": "轻", "m": "中", "l": "响"},
     "reduce": {"on": "开", "off": "关"},
+    "lang": {"auto": "跟随系统", "zh": "中文", "en": "English"},
 }
 SETTING_NAMES = {"skin": "皮肤", "mode": "排版", "notchSize": "刘海面板大小", "notchLayout": "刘海里卡片怎么排",
-                 "glass": "Vesper 玻璃透明度", "sfx": "按键音效", "sfxVol": "按键音量", "reduce": "减少动画"}
+                 "glass": "Vesper 玻璃透明度", "sfx": "按键音效", "sfxVol": "按键音量", "reduce": "减少动画", "lang": "界面语言"}
+if deckos.WIN:  # Windows 没有刘海：同样的设置叫「顶部面板」
+    SETTING_NAMES.update(notchSize="顶部面板大小", notchLayout="顶部面板里卡片怎么排")
 OP_TTL = 10 * 60
 
 TOOLS = [
@@ -52,8 +57,8 @@ TOOLS = [
      "parameters": {"type": "object", "properties": {"plan_id": {"type": "string"}, "rules": {"type": "array", "items": {"type": "string"}}}, "required": ["plan_id"]}},
     {"name": "uninstall_app", "description": "卸载一个应用：把应用本体和找到的残留（默认勾选的）移到废纸篓。要先确认（confirm_action），能撤销。系统应用和 Deck 自己的应用不能卸。",
      "parameters": {"type": "object", "properties": {"app": {"type": "string"}}, "required": ["app"]}},
-    {"name": "deck_setting", "description": "改 Deck 设置（直接做）：skin 皮肤 soft/glass；mode 排版 fit/scroll；notchSize 刘海面板 s/m/l；notchLayout 刘海排法 scroll/pages；glass 玻璃透明度 70/60/50/40/30；sfx 按键音效 on/off；sfxVol 音量 s/m/l；reduce 减少动画 on/off；card 显示或隐藏某张卡片（card 填卡片 key，value 填 show/hide）。深浅色用 set_theme。",
-     "parameters": {"type": "object", "properties": {"name": {"type": "string", "enum": ["skin", "mode", "notchSize", "notchLayout", "glass", "sfx", "sfxVol", "reduce", "card"]},
+    {"name": "deck_setting", "description": "改 Deck 设置（直接做）：skin 皮肤 soft/glass；mode 排版 fit/scroll；notchSize 刘海面板 s/m/l；notchLayout 刘海排法 scroll/pages；glass 玻璃透明度 70/60/50/40/30；sfx 按键音效 on/off；sfxVol 音量 s/m/l；reduce 减少动画 on/off；lang 界面语言 auto 跟随系统/zh 中文/en English（切完页面会刷新一下）；card 显示或隐藏某张卡片（card 填卡片 key，value 填 show/hide）。深浅色用 set_theme。",
+     "parameters": {"type": "object", "properties": {"name": {"type": "string", "enum": ["skin", "mode", "notchSize", "notchLayout", "glass", "sfx", "sfxVol", "reduce", "lang", "card"]},
                                                      "value": {"type": "string"}, "card": {"type": "string"}}, "required": ["name", "value"]}},
     {"name": "display_mode", "description": "切换 Deck 的显示方式：auto=插着 iPad 用扩展屏、拔掉从刘海弹出；ext=一直在扩展屏；notch=从刘海弹出。",
      "parameters": {"type": "object", "properties": {"mode": {"type": "string", "enum": ["auto", "ext", "notch"]}}, "required": ["mode"]}},
@@ -73,7 +78,7 @@ PROMPT = """
 - GitHub：github_repo 看某个仓库的提交、PR、Actions、访客。
 - 应用：app_control 打开 / 退出 / 重启 / 在访达里显示；卸载用 uninstall_app。
 - 工具箱：toolbox_scan 看空间分布、垃圾、大文件、重复文件、更新、装了哪些应用；清垃圾用 junk_clean。
-- 设置：deck_setting 改皮肤、排版、刘海面板、玻璃透明度、按键音效、减少动画、显示或隐藏卡片；display_mode 切显示方式（自动 / 扩展屏 / 刘海）；set_theme 换深浅色。
+- 设置：deck_setting 改皮肤、排版、刘海面板、玻璃透明度、按键音效、减少动画、界面语言（中文 / English）、显示或隐藏卡片；display_mode 切显示方式（自动 / 扩展屏 / 刘海）；set_theme 换深浅色。
 - 每日清理：daily_cleanup 查结果、开关自动清理、把清掉的东西放回去。
 - 会改动东西的（结束进程、退出 / 重启应用、卸载、清垃圾）工具会先返回 needs_confirm：用一句话说清要做什么，问他行不行，他明确同意才调用 confirm_action(id)；犹豫或没回应就不做。
 - 做不了的：iPad 局域网访问的开关、声纹录入（要他本人在设置 → 助手里录）、长桥授权，这些让他在屏幕上自己点。"""
@@ -460,6 +465,9 @@ class Tools:
         return {"error": "未知动作"}
 
     def _app_generic(self, q, act, emit):
+        if deckos.WIN:  # Windows：开始菜单 / 应用路径里找，退出、重启先问
+            from winport import appctl
+            return appctl.vesper_action(q, act, emit, self._ask)
         import apptools
         app, maybe = find_launchable(q)
         if not app:
@@ -594,6 +602,10 @@ class Tools:
         opts = SETTINGS.get(name)
         if not opts:
             return {"error": "没有这个设置"}
+        if deckos.WIN and name in ("skin", "glass"):
+            return {"error": "Windows 版只有新拟态一种皮肤，没有玻璃效果，这个不用改"}
+        if name == "lang":
+            val = {"english": "en", "英文": "en", "英语": "en", "chinese": "zh", "中文": "zh", "system": "auto", "跟随系统": "auto"}.get(val, val)
         if name in ("sfx", "reduce"):
             val = "on" if val in ("on", "true", "1", "开", "打开") else "off" if val in ("off", "false", "0", "关", "关闭") else val
         if val not in opts:
@@ -605,7 +617,7 @@ class Tools:
         m = a.get("mode")
         if m not in ("auto", "ext", "notch"):
             return {"error": "只能是 auto / ext / notch"}
-        label = {"auto": "自动", "ext": "扩展屏", "notch": "刘海"}[m]
+        label = ({"auto": "自动", "ext": "窗口", "notch": "顶部面板"} if deckos.WIN else {"auto": "自动", "ext": "扩展屏", "notch": "刘海"})[m]
         emit({"t": "ui", "action": "display_mode", "args": {"mode": m}, "title": label})
         return {"ok": True, "note": "显示方式改成「%s」了（只在 Deck 应用里有效，网页里打开时没这个开关）" % label}
 

@@ -4,13 +4,14 @@
 
 <h1>Deck</h1>
 
-<p><b>免费开源的 MacBook 电脑管家</b><br>一块常亮的控制台 + 一个本地优先的语音助手。铺在外接屏、旧 iPad 上，或者从刘海里流下来。</p>
+<p><b>免费开源的 MacBook 电脑管家，现在也有 Windows 版</b><br>一块常亮的控制台 + 一个本地优先的语音助手。铺在外接屏、旧 iPad 上，或者从刘海里流下来。</p>
 
 <p><b>中文</b> · <a href="README.en.md">English</a></p>
 
 [![Release](https://img.shields.io/github/v/release/3520566741-YCLi/deck-for-mac?style=flat-square&label=%E7%89%88%E6%9C%AC&color=2f6fe0)](https://github.com/3520566741-YCLi/deck-for-mac/releases/latest)
 [![License](https://img.shields.io/github/license/3520566741-YCLi/deck-for-mac?style=flat-square&label=%E8%AE%B8%E5%8F%AF)](LICENSE)
 ![Platform](https://img.shields.io/badge/macOS-14%2B%20%C2%B7%20Apple%20%E8%8A%AF%E7%89%87-111?style=flat-square&logo=apple)
+[![Windows](https://img.shields.io/badge/Windows-10%20%2F%2011-0078d4?style=flat-square)](docs/windows.md)
 ![Local first](https://img.shields.io/badge/%E9%99%A4%E4%BA%86%E5%A4%A7%E6%A8%A1%E5%9E%8B-%E5%85%A8%E5%9C%A8%E6%9C%AC%E6%9C%BA-139a63?style=flat-square)
 [![Setup](https://img.shields.io/badge/%E5%AE%89%E8%A3%85-%E4%BA%A4%E7%BB%99%E4%BD%A0%E7%9A%84%20AI-7259e0?style=flat-square)](AI_SETUP.md)
 [![Stars](https://img.shields.io/github/stars/3520566741-YCLi/deck-for-mac?style=flat-square&label=Star&color=c27a0c)](https://github.com/3520566741-YCLi/deck-for-mac/stargazers)
@@ -19,14 +20,17 @@
 
 <a href="https://github.com/3520566741-YCLi/deck-for-mac/releases/latest"><img src="https://img.shields.io/github/v/release/3520566741-YCLi/deck-for-mac?style=for-the-badge&label=%E4%B8%8B%E8%BD%BD%E6%9C%80%E6%96%B0%E7%89%88&logo=apple&logoColor=white&color=2f6fe0" alt="下载最新版" height="40"></a>
 &nbsp;
+<a href="docs/windows.md"><img src="https://img.shields.io/badge/Windows-%E5%AE%89%E8%A3%85%E5%8C%85-0078d4?style=for-the-badge" alt="Windows 安装包" height="40"></a>
+&nbsp;
 <a href="CHANGELOG.md"><img src="https://img.shields.io/github/release-date/3520566741-YCLi/deck-for-mac?style=for-the-badge&label=%E6%9B%B4%E6%96%B0%E4%BA%8E&color=7259e0" alt="最近更新" height="40"></a>
 
-<p><a href="#它能做什么">功能</a> · <a href="#三种放法">三种放法</a> · <a href="#画廊">画廊</a> · <a href="#下载和安装">下载和安装</a> · <a href="#最近更新">最近更新</a> · <a href="#常见问题">常见问题</a> · <a href="#参与贡献">参与贡献</a> · <a href="#-版本历史--releases">版本历史</a></p>
+<p><a href="#它能做什么">功能</a> · <a href="#三种放法">三种放法</a> · <a href="#windows-版">Windows 版</a> · <a href="#画廊">画廊</a> · <a href="#下载和安装">下载和安装</a> · <a href="#最近更新">最近更新</a> · <a href="#常见问题">常见问题</a> · <a href="#参与贡献">参与贡献</a> · <a href="#-版本历史--releases">版本历史</a></p>
 
 </div>
 
 > [!NOTE]
 > Deck 不是一键安装包。它由 Python 服务、网页、Swift 小应用和本地语音模型组成，**推荐把仓库交给你自己的 AI 编程助手，照着 [AI_SETUP.md](AI_SETUP.md) 装**，它会先问你要哪些功能。
+> **Windows 版有安装包**，双击就能装，见 [docs/windows.md](docs/windows.md)。
 
 ## 它能做什么
 
@@ -53,6 +57,17 @@
 | 中号 | 小号 |
 |:---:|:---:|
 | <img src="docs/images/notch-m.png" alt="刘海模式中号"> | <img src="docs/images/notch-s.png" alt="刘海模式小号"> |
+
+## Windows 版
+
+和 Mac 版同一套网页、同一个后台，只有新拟态皮肤，**带安装包**：在 [最新版 Release](https://github.com/3520566741-YCLi/deck-for-mac/releases/latest) 的 Assets 里下载 `Deck-Setup-<版本>.exe`，双击安装，不要管理员权限。刘海模式在 Windows 上是**顶部面板**：鼠标碰屏幕顶边正中就弹出。语音、让助手操作电脑、工具箱、每日清理（只进回收站）都有。详见 [docs/windows.md](docs/windows.md)。
+
+<img src="docs/images/windows/win-home-day-zh.png" width="860" alt="Deck for Windows 主页">
+
+| 顶部面板 | 工具箱 |
+|:---:|:---:|
+| <img src="docs/images/windows/win-panel-zh.png" alt="Windows 顶部面板"> | <img src="docs/images/windows/win-toolbox-zh.png" alt="Windows 工具箱"> |
+| 碰一下屏幕顶边正中就弹出，全屏游戏时不弹 | 卸载连残留、垃圾清理、大文件、winget 更新，只进回收站 |
 
 ## 画廊
 
@@ -123,6 +138,8 @@ git clone https://github.com/3520566741-YCLi/deck-for-mac.git ~/deck-for-mac
 
 想自己装也可以，[AI_SETUP.md](AI_SETUP.md) 每一步都有命令。
 
+**Windows**：下载 Release 里的 `Deck-Setup-<版本>.exe` 双击安装，大模型的 key 用一行 `cmdkey` 存进凭据管理器，见 [docs/windows.md](docs/windows.md)。
+
 ### 更新到新版
 
 点仓库右上角 **Watch → Custom → Releases**，出新版时 GitHub 会通知你。更新时对你的 AI 说：
@@ -133,17 +150,12 @@ git clone https://github.com/3520566741-YCLi/deck-for-mac.git ~/deck-for-mac
 
 ## 最近更新
 
-**v0.2.1**（2026-11-08）
+**v0.3.0**（2026-11-08）
 
-- 📈 **日报里的股价不会再写错**：编稿时用券商的实时行情核对，和行情对不上的句子自动删掉。
-
-**v0.2.0**（2026-11-08）
-
-- 🎙️ **助手能读日报、能操作 Deck 的全部功能**：说「读一下今天的日报」就用它的声音念，逐句高亮；资讯各栏、自选股行情、进程、磁盘、GitHub、应用、工具箱、设置、显示方式、每日清理都能用嘴问、用嘴改。会改动东西的先确认，只进废纸篓。
-- 👆 **每个按钮都有按压反馈和音效**：资讯页、管家页、对话页的按钮之前按了没声音，现在全都补上；「重编这一期」点了会转圈。
-- ⌨️ **键盘清洁**：工具箱新增「小工具」页，锁住键盘方便擦，可选黑屏和连触控板一起锁，多种方式解锁，绝不锁死。
-- 🪪 **助手名字和声纹自己设**：设置 →「助手」里给它起名字（唤醒当场换）、名字体检、引导式声纹录入、唤醒和声纹测试。
-- 🖥️ **设置里切换显示方式**：自动 / 扩展屏 / 刘海，和菜单栏是同一个设置。
+- 🪟 **Windows 版**：只有新拟态皮肤，带安装包，装在用户文件夹、不要管理员权限。主页、管家页、进程、磁盘、工具箱、每日清理、资讯页、助手都能用；所有「删除」只进回收站。
+- ⬆️ **顶部面板**：刘海模式的 Windows 版，鼠标碰屏幕顶边正中弹出，全屏游戏和视频时不弹。
+- 🎙️ **Windows 上也能说话、能让助手操作电脑**：Ctrl+Alt+M 开麦、按住 Ctrl+Alt+J 说话；操作电脑默认关，Ctrl+Alt+Esc 立刻停。
+- 🌐 **英文模式**：设置 → 外观 → 语言（跟随系统 / 中文 / English），Mac 和 Windows 都有。
 
 全部版本见下方 [版本历史](#-版本历史--releases)，详细改动见 [CHANGELOG.md](CHANGELOG.md)。
 
@@ -152,6 +164,7 @@ git clone https://github.com/3520566741-YCLi/deck-for-mac.git ~/deck-for-mac
 - Apple 芯片的 Mac（M1 及以后）。语音要 macOS 14+；助手面板的系统液态玻璃要 macOS 26+（更早的系统自动换成网页面板）。
 - 用助手要一个大模型 API key，默认 [DeepSeek](https://platform.deepseek.com/)（任何兼容 OpenAI、支持流式和工具调用的接口都行）。
 - 语音要约 3 GB 磁盘放本地模型。
+- Windows 版：Windows 10 / 11（64 位），见 [docs/windows.md](docs/windows.md)。
 - 每个外部服务都列在 [docs/services.md](docs/services.md)，附 2026-11-07 的核查结果和核查方法。
 
 ## 原则
@@ -170,8 +183,10 @@ git clone https://github.com/3520566741-YCLi/deck-for-mac.git ~/deck-for-mac
 - [x] 语音助手：本机唤醒、声纹、识别、合成，可打断
 - [x] DeckHands：用辅助功能 API 帮你点屏幕，风险操作先确认
 - [x] 键盘清洁：锁键盘擦键盘，多重解锁
+- [x] 英文界面
+- [x] Windows 版（新拟态、安装包、顶部面板、语音、操作电脑）
 - [ ] 更多大模型预设（欢迎 PR）
-- [ ] 英文界面（欢迎 PR）
+- [ ] Windows 安装包代码签名
 
 ## 常见问题
 
@@ -188,6 +203,11 @@ Deck 本身免费。只有助手的「大脑」调用云端大模型会花钱（
 <details><summary><b>没有刘海 / 没有 iPad 能用吗？</b></summary>
 
 能。没有刘海就用扩展屏模式铺在任何副屏上，或者直接在浏览器里打开 <code>http://127.0.0.1:8777</code>。
+</details>
+
+<details><summary><b>Windows 能用吗？</b></summary>
+
+能。Windows 10 / 11 有安装包，双击就装，见 <a href="docs/windows.md">docs/windows.md</a>。只有新拟态皮肤；刘海模式换成顶部面板；语音没有回声消除（助手说话时想打断就说「停」）。
 </details>
 
 <details><summary><b>Intel Mac 能用吗？</b></summary>
@@ -219,6 +239,8 @@ manager/            管家服务（Python 标准库，:8777）+ 控制台网页
   newsroom/         资讯页（免费来源 → DeepSeek 一次编辑）
   voice/            语音：DeckVoice.app（Swift）+ 语音服务（Python, sherpa-onnx）
   hands/            DeckHands.app：辅助功能 API 点按
+  winport/          Windows 版的系统层（进程、磁盘、回收站、工具箱、操作电脑）
+windows/            Windows 外壳（托盘、顶部面板、语音小助手）、打包和安装包、CI 测试
 app/                Deck.app 原生壳（SwiftPM）：扩展屏铺满 / 刘海弹出
 scripts/            Claude 状态栏桥接、界面自查脚本
 docs/               服务清单、语音提速笔记、截图
@@ -231,6 +253,7 @@ docs/               服务清单、语音提速笔记、截图
 ## 文档
 
 - [AI_SETUP.md](AI_SETUP.md)：给 AI 的安装和配置说明
+- [docs/windows.md](docs/windows.md)：Windows 版安装和使用
 - [docs/services.md](docs/services.md)：外部服务清单、核查方法、长桥证券案例
 - [docs/voice-latency.md](docs/voice-latency.md)：语音助手怎么做到说完 2–3 秒出声
 - [CHANGELOG.md](CHANGELOG.md)：更新记录
@@ -239,16 +262,17 @@ docs/               服务清单、语音提速笔记、截图
 
 | 版本 | 日期 | 这一版改了什么 | 下载 |
 |---|---|---|---|
-| **v0.2.1** `最新` | 2026-11-08 | 日报里的股价按实时行情核对，写错的句子自动删掉 · [详细](CHANGELOG.md#v021--2026-11-08) | [下载](https://github.com/3520566741-YCLi/deck-for-mac/releases/tag/v0.2.1) |
+| **v0.3.0** `最新` | 2026-11-08 | Windows 版（安装包、顶部面板、语音、操作电脑）；英文模式 · [详细](CHANGELOG.md#v030--2026-11-08) | [下载](https://github.com/3520566741-YCLi/deck-for-mac/releases/tag/v0.3.0) |
+| v0.2.1 | 2026-11-08 | 日报里的股价按实时行情核对，写错的句子自动删掉 · [详细](CHANGELOG.md#v021--2026-11-08) | [下载](https://github.com/3520566741-YCLi/deck-for-mac/releases/tag/v0.2.1) |
 | v0.2.0 | 2026-11-08 | 助手能读日报、能操作 Deck 全部功能；按钮反馈和音效；键盘清洁；助手名字和声纹自己设；设置里切换显示方式 · [详细](CHANGELOG.md#v020--2026-11-08) | [下载](https://github.com/3520566741-YCLi/deck-for-mac/releases/tag/v0.2.0) |
 | v0.1.1 | 2026-11-08 | 修好叫不醒；说「查一下」会当场联网查；可选的语音看门狗 · [详细](CHANGELOG.md#v011--2026-11-08) | [下载](https://github.com/3520566741-YCLi/deck-for-mac/releases/tag/v0.1.1) |
 | v0.1.0 | 2026-11-07 | 第一版公开发布：控制台、语音助手、资讯页、工具箱、刘海模式 · [详细](CHANGELOG.md#v010--2026-11-07) | [下载](https://github.com/3520566741-YCLi/deck-for-mac/releases/tag/v0.1.0) |
 
-所有版本都一直保留在 [Releases](https://github.com/3520566741-YCLi/deck-for-mac/releases)，每个版本页的 **Assets** 里有当时的完整源码。
+所有版本都一直保留在 [Releases](https://github.com/3520566741-YCLi/deck-for-mac/releases)，每个版本页的 **Assets** 里有当时的完整源码；v0.3.0 起还有 Windows 安装包。
 
 ## 致谢
 
-站在这些开源项目的肩膀上：[sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx)、[Qwen3-ASR / Qwen3-TTS](https://huggingface.co/Qwen)、[mlx-audio](https://github.com/Blaizzy/mlx-audio)、[3D-Speaker](https://github.com/modelscope/3D-Speaker)、[Silero VAD](https://github.com/snakers4/silero-vad)、[GridStack.js](https://github.com/gridstack/gridstack.js)、[React Bits](https://github.com/DavidHDev/react-bits)、[snd-lib](https://github.com/snd-lib/snd-lib)、[Kenney](https://kenney.nl/)、[Lockpaw](https://github.com/sorkila/lockpaw) 和 [keylock](https://github.com/kfv/keylock)（键盘清洁的写法参考）。完整清单见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+站在这些开源项目的肩膀上：[sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx)、[Qwen3-ASR / Qwen3-TTS](https://huggingface.co/Qwen)、[mlx-audio](https://github.com/Blaizzy/mlx-audio)、[3D-Speaker](https://github.com/modelscope/3D-Speaker)、[Silero VAD](https://github.com/snakers4/silero-vad)、[GridStack.js](https://github.com/gridstack/gridstack.js)、[React Bits](https://github.com/DavidHDev/react-bits)、[snd-lib](https://github.com/snd-lib/snd-lib)、[Kenney](https://kenney.nl/)、[Lockpaw](https://github.com/sorkila/lockpaw) 和 [keylock](https://github.com/kfv/keylock)（键盘清洁的写法参考）；Windows 版还用了 [pywebview](https://github.com/r0x0r/pywebview)、[psutil](https://github.com/giampaolo/psutil)、[pystray](https://github.com/moses-palmer/pystray)、[comtypes](https://github.com/enthought/comtypes)、[python-sounddevice](https://github.com/spatialaudio/python-sounddevice)、[PyInstaller](https://pyinstaller.org/) 和 [Inno Setup](https://jrsoftware.org/isinfo.php)。完整清单见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
 
 ## 许可
 

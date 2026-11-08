@@ -16,6 +16,7 @@ import urllib.error
 import urllib.request
 
 import cleaner
+import deckos
 import files
 import vesper_tools
 
@@ -30,7 +31,7 @@ PROMISE = re.compile(r"(查|搜|看看|核实|确认)[^。！？\n]{0,8}(再|之
 def assistant_name():
     """助手现在叫什么：语音服务的 wake_name.txt 第一行（Deck 设置 → 助手 里改），没有就是 Vesper。"""
     home = os.environ.get("DECK_VOICE_HOME") or os.environ.get("DECK_VOICE_ROOT") or \
-        os.path.join(os.path.expanduser("~"), "Library", "Application Support", "Deck", "voice")
+        deckos.support("Deck", "voice")
     try:
         with open(os.path.join(home, "wake_name.txt"), encoding="utf-8") as f:
             n = f.readline().strip()
@@ -186,6 +187,15 @@ PLAN_TTL = 30 * 60
 def _is_http(u):
     return isinstance(u, str) and re.match(r"^https?://[^/\s@]+", u) is not None
 TOOLS += vesper_tools.TOOLS
+if deckos.WIN:  # Windows 版：还没换成 Windows 写法的工具先不给 Vesper（见 deckos.WIN_TODO_TOOLS）
+    # 描述和参数说明里的 Mac 说法一起换（整个工具定义过一遍 words）
+    TOOLS = [json.loads(deckos.words(json.dumps(t, ensure_ascii=False))) for t in TOOLS if t["name"] not in deckos.WIN_TODO_TOOLS]
+    PERSONA = deckos.words(PERSONA) + (
+        "\n你现在跑在用户的 Windows 电脑上（Deck Windows 版）：删东西只进回收站、能撤销；在文件里显示用资源管理器。"
+        "操作屏幕：快捷键写成 ctrl+c、ctrl+shift+t、alt+f4、win+d 这种（没有 cmd）；要他在 Deck 设置或右下角托盘里打开「允许 Vesper 操作电脑」才能动手；"
+        "他随时按 Ctrl+Alt+Esc（备用 Ctrl+Alt+.）急停，操作时连按 3 次 Esc 也能停；以管理员身份运行的窗口 Windows 不让你碰。"
+        "语音：Ctrl+Alt+M 开关麦克风，按住 Ctrl+Alt+J 直接说；Windows 上只有一个女声（Kokoro），他要换男声就照实说做不到，语速可以调；"
+        "这台电脑没有回声消除，你说话时他要打断得说「停」。Windows 版没有 iPad 音效和局域网开关，他问起就照实说。")
 UI_TOOLS = {"open_card", "close_card", "switch_page", "set_theme"}
 
 
@@ -200,7 +210,7 @@ def _voice_api(method, path, body=None):
 
 
 def _db_path():
-    base = os.path.join(os.path.expanduser("~"), "Library", "Application Support", "Deck")
+    base = deckos.support("Deck")  # Mac：~/Library/Application Support/Deck；Windows：%APPDATA%\Deck
     os.makedirs(base, exist_ok=True)
     return os.path.join(base, "friday.db")
 
@@ -579,6 +589,8 @@ class Friday:
 
     # ---------- 工具 ----------
     def _tool(self, name, args, cards, emit):
+        if deckos.WIN and name in deckos.WIN_TODO_TOOLS:
+            return {"error": deckos.WIN_TODO_MSG}
         if name == "get_card":
             k = args.get("key", "")
             st = self.hub.snapshot()["sources"].get(k)

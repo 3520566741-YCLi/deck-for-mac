@@ -6,9 +6,17 @@ import os
 import shutil
 from pathlib import Path
 
+try:  # Windows 版（11-08）：路径跟 config.py 走（%APPDATA%\Deck\voice）；Mac 上下面的写法和原来完全一样
+    from .config import LOGS as _LOGS, ROOT as _ROOT, WIN as _WIN
+except ImportError:
+    try:
+        from config import LOGS as _LOGS, ROOT as _ROOT, WIN as _WIN  # 单独跑 wake_cli.py 时
+    except ImportError:
+        _WIN, _ROOT, _LOGS = False, None, None
+
 HOME = Path(os.environ.get(
     "DECK_VOICE_HOME", os.environ.get("DECK_VOICE_ROOT") or
-    Path.home() / "Library" / "Application Support" / "Deck" / "voice"))
+    (Path(_ROOT) if _WIN else Path.home() / "Library" / "Application Support" / "Deck" / "voice")))
 MODELS = Path(os.environ.get("DECK_VOICE_MODELS", HOME / "models"))
 
 KWS_DIR = MODELS / "sherpa-onnx-kws-zipformer-zh-en-3M-2025-12-20"
@@ -18,6 +26,8 @@ SILERO_VAD = MODELS / "silero_vad" / "silero_vad.onnx"  # 和识别线程共用�
 # 声纹档案：embeddings、录入原声（16k wav，方便以后换模型重算）、调参日志
 VOICEPRINT = HOME / "voiceprint"
 WAKE_LOG = Path.home() / "Library" / "Logs" / "Deck" / "friday-wake.jsonl"  # 文件名沿用，别的工具在读
+if _WIN:
+    WAKE_LOG = Path(_LOGS) / "friday-wake.jsonl"
 
 # 助手的名字（：只用英文名；Kira → Vesper）。11-08 起在 Deck 设置 →「助手」里直接改（写 HOME/wake_name.txt，
 # 唤醒模型当场重建，不用重启），改完按新名字重录声纹。读法见 names.py（词典 + 规则 + 用户填的读法提示）。
@@ -85,8 +95,39 @@ def trash(path):
     path = Path(path)
     if not path.exists():
         return None
+    if _WIN:
+        return _recycle(path)
     bin_ = Path.home() / ".Trash"
     bin_.mkdir(exist_ok=True)
+    dest = bin_ / path.name
+    i = 1
+    while dest.exists():
+        dest = bin_ / f"{path.stem} {i}{path.suffix}"
+        i += 1
+    shutil.move(str(path), str(dest))
+    return dest
+
+
+def _recycle(path):
+    """Windows：移进回收站（winport.common.recycle，和资源管理器里按 Delete 一样能还原）。
+    回收站用不了（不是真 Windows、U 盘、回收站关了）时挪到 voice/_trash 里，仍然绝不直接删除。"""
+    try:
+        try:
+            from winport import common as _wc  # noqa: PLC0415  manager/ 在 sys.path 上（voice_launch 会放进去）
+        except ImportError:
+            import importlib.util  # noqa: PLC0415
+            import sys  # noqa: PLC0415
+            p = Path(__file__).resolve().parents[2] / "winport" / "common.py"
+            spec = importlib.util.spec_from_file_location("deck_winport_common", p)
+            _wc = importlib.util.module_from_spec(spec)
+            sys.modules.setdefault("deck_winport_common", _wc)
+            spec.loader.exec_module(_wc)
+        if _wc.IS_WIN:
+            return _wc.recycle(str(path)) or path
+    except Exception as e:  # noqa: BLE001
+        print(f"[voice] 移进回收站失败，改放到 voice/_trash：{e}", flush=True)
+    bin_ = HOME / "_trash"
+    bin_.mkdir(parents=True, exist_ok=True)
     dest = bin_ / path.name
     i = 1
     while dest.exists():

@@ -17,6 +17,7 @@ try { var _l = JSON.parse(localStorage.getItem("mbdash.layout") || "{}"); if (_l
 <script src="/static/gridstack-all.js"></script>
 <script src="/static/reactbits-strands.js"></script>
 <script src="/static/reactbits-orb.js"></script>
+<script src="/static/deck-i18n.js"></script>
 <script src="/static/deck-sfx.js"></script>
 <style>
 /* 兼容 老 iPad（iOS 15 / Safari 15）：不用容器查询、color-mix、CSS 嵌套、dvh。 */
@@ -150,6 +151,16 @@ body.scroll main { grid-auto-rows: minmax(300px, auto); }
 .cmd code { -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fe-t), #000 calc(100% - var(--fe-b)), transparent 100%); mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fe-t), #000 calc(100% - var(--fe-b)), transparent 100%); transition: --fe-t .28s var(--ease-out), --fe-b .28s var(--ease-out); }
 .cmd code.fe-t { --fe-t: 14px; } .cmd code.fe-b { --fe-b: 22px; }
 .card-b::-webkit-scrollbar { width: 6px; } .card-b::-webkit-scrollbar-thumb { background: var(--track); border-radius: 3px; }
+.vm-bar { height: 8px; border-radius: 4px; background: var(--track); overflow: hidden; box-shadow: var(--nm-in-s, none); }
+.vm-bar > i { display: block; height: 100%; background: var(--accent); border-radius: 4px; transition: width .4s var(--ease-out, ease); }
+/* Windows：系统滚动条是带上下箭头的宽条（白底，深色模式下很扎眼）。换成和 Mac 一样的细圆条，不占地方、跟深浅色走 */
+html.os-win .card-b { scrollbar-width: auto; }
+html.os-win ::-webkit-scrollbar { width: 8px; height: 8px; background: transparent; }
+html.os-win ::-webkit-scrollbar-track, html.os-win ::-webkit-scrollbar-corner { background: transparent; }
+html.os-win ::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+html.os-win ::-webkit-scrollbar-thumb { background: var(--track); border-radius: 4px; border: 2px solid transparent; background-clip: padding-box; }
+html.os-win ::-webkit-scrollbar-thumb:hover { background-color: var(--text3); }
+html.os-win .card-b::-webkit-scrollbar { width: 6px; } html.os-win .card-b::-webkit-scrollbar-thumb { border: 0; border-radius: 3px; }
 .fade { -webkit-mask-image: linear-gradient(#000 calc(100% - 22px), transparent); mask-image: linear-gradient(#000 calc(100% - 22px), transparent); }
 .busy-bar { position: absolute; left: 0; right: 0; top: 0; height: 2px; overflow: hidden; opacity: 0; transition: opacity .2s; }
 .busy-bar::after { content: ""; position: absolute; top: 0; bottom: 0; width: 30%; background: var(--accent); animation: slide 1.1s var(--ease-out) infinite; }
@@ -822,6 +833,10 @@ html.skin-soft body { background: var(--nm-bg); }
 /* 新拟态字体（从四套苹果自带字体里选了 A）：英文、数字用 SF Pro Rounded（苹果健身/天气那种圆头），中文仍是苹方。
    圆头和凸起按钮的圆角、柔光呼应；系统自带，不用带字体文件。ui-rounded 只有 Safari/WKWebView 认，别的浏览器自动退回普通 SF。
    对比页：https://claude.ai/artifact/Uk5RMXUkj1bs3JSQoxJYRW */
+/* Windows 版没有 SF Pro Rounded / 苹方：英文数字用 Segoe UI Variable，中文用微软雅黑 UI */
+html.os-win body, html.os-win.skin-soft { --ff-ui: "Segoe UI Variable Text", "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif; }
+html.os-win body { font-family: "Segoe UI Variable Text", "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif; }
+html.os-win .ring text { font-family: "Segoe UI Variable Display", "Segoe UI", sans-serif; }
 html.skin-soft { --ff-ui: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Helvetica Neue", sans-serif; }
 html.skin-soft body, html.skin-soft .ring text, html.skin-soft .ask-pill kbd, html.skin-soft .chat-in textarea { font-family: var(--ff-ui); }
 /* 圆头比方头显得粗，大数字从 650/680 降到 600，近看不发笨 */
@@ -1284,6 +1299,15 @@ summary.pressed { opacity: .65; transition: opacity .1s; }
 (function () {
 "use strict";
 var BOOT = /*__BOOT__*/{};
+// Windows 版（11-08）：只有新拟态皮肤；液态玻璃、刘海、iPad 有线音效这些 Mac 专属的设置不出现，文案里的「Mac」换成「电脑」
+var WIN = BOOT.os === "win";
+if (WIN) {
+  document.documentElement.classList.add("skin-soft", "os-win");
+  var _bh = document.getElementById("bannerHint"), _bp = _bh && _bh.parentNode;
+  if (_bp && _bp.firstChild) _bp.firstChild.nodeValue = "连不上 Deck";
+  if (_bh) _bh.textContent = "确认电脑没睡眠、Deck 在运行（右下角托盘里有 Deck 图标），平板和电脑在同一个 Wi-Fi。";
+  var _bf = document.getElementById("butlerFrame"); if (_bf) _bf.title = "管家";
+}
 // ---------- 助手的名字（11-08：设置 → 助手 里可以改）----------
 // 页面里写死的都是「Vesper」。名字改过时，把显示出来的文字、aria-label、title、placeholder 里的 Vesper 换成新名字；
 // 以后各处新加的「Vesper」文案也自动跟着换，不用每处改。另一个网页窗口（刘海 / 对话玻璃）改了名字，这里也跟着变。
@@ -1342,6 +1366,16 @@ var IN_APP = /[?&]app=1/.test(location.search); // 在 Fusion Workbench 应用�
 // Deck 原生壳（macOS 26+）用系统液态玻璃（NSGlassEffectView）放 Vesper：
 //   主页面 GLASS：面板位置报给原生，自己的 #chat 只占位不显示；
 //   对话页 PANE（?pane=chat）：只显示对话，铺满玻璃，打开卡片/换主题/光效都转给主页面。
+// Windows 外壳（pywebview，11-08）：没有 webkit.messageHandlers，就垫一个同样的接口，消息转给 pywebview.api.post（windows/deck_win.py 的 _Bridge）。
+// 只有 Deck.exe 打开的页面带 shell=win；浏览器里打开不垫，免得以为有原生壳。
+if (WIN && /[?&]shell=win/.test(location.search) && !(window.webkit && window.webkit.messageHandlers)) (function () {
+  var q = [], H = {};
+  function api() { return window.pywebview && window.pywebview.api && window.pywebview.api.post; }
+  function post(n, m) { if (api()) window.pywebview.api.post(n, m); else if (q.length < 50) q.push([n, m]); }
+  ["deckMode", "deckNotch"].forEach(function (n) { H[n] = { postMessage: function (m) { post(n, m); } }; });
+  window.webkit = { messageHandlers: H };
+  window.addEventListener("pywebviewready", function () { q.splice(0).forEach(function (x) { post(x[0], x[1]); }); });
+})();
 var WKH = (window.webkit && webkit.messageHandlers) || {};
 // 显示方式（自动 / 扩展屏 / 刘海）：存在 Deck 原生壳里，和菜单栏「显示方式」是同一个设置。页面打开时问一次，原生改了（菜单栏切的）会推过来
 var DM = { mode: "", active: "" };
@@ -1457,6 +1491,7 @@ var P = {
 };
 // 官方图标：LobeHub Icons（MIT）与 Simple Icons（CC0）；商标归各公司所有
 var BRAND = {"system": "<svg class=\"__C__\" aria-hidden=\"true\" fill=\"currentColor\" fill-rule=\"evenodd\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M11.932 6.908c.95 0 2.727-1.291 4.595-1.1.782.032 2.976.316 4.388 2.38-.113.069-2.622 1.528-2.593 4.565.034 3.617 3.166 4.828 3.221 4.85-.029.086-.506 1.723-1.658 3.416-1.002 1.463-2.039 2.919-3.675 2.95-1.606.03-2.125-.955-3.96-.955s-2.409.923-3.931.984c-1.581.06-2.78-1.58-3.79-3.037-2.065-2.98-3.64-8.422-1.527-12.087 1.051-1.824 2.93-2.98 4.969-3.009 1.549-.032 3.011 1.043 3.96 1.043zM16.552 0c.153 1.407-.411 2.817-1.251 3.833-.837 1.013-2.214 1.804-3.555 1.7-.185-1.378.495-2.814 1.27-3.712C13.883.805 15.346.05 16.553 0z\"></path></svg>", "claude": "<svg class=\"__C__\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path clip-rule=\"evenodd\" d=\"M20.998 10.949H24v3.102h-3v3.028h-1.487V20H18v-2.921h-1.487V20H15v-2.921H9V20H7.488v-2.921H6V20H4.487v-2.921H3V14.05H0V10.95h3V5h17.998v5.949zM6 10.949h1.488V8.102H6v2.847zm10.51 0H18V8.102h-1.49v2.847z\" fill=\"#D97757\" fill-rule=\"evenodd\"></path></svg>", "codex": "<svg class=\"__C__\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M19.503 0H4.496A4.496 4.496 0 000 4.496v15.007A4.496 4.496 0 004.496 24h15.007A4.496 4.496 0 0024 19.503V4.496A4.496 4.496 0 0019.503 0z\" fill=\"#fff\"></path><path d=\"M9.064 3.344a4.578 4.578 0 012.285-.312c1 .115 1.891.54 2.673 1.275.01.01.024.017.037.021a.09.09 0 00.043 0 4.55 4.55 0 013.046.275l.047.022.116.057a4.581 4.581 0 012.188 2.399c.209.51.313 1.041.315 1.595a4.24 4.24 0 01-.134 1.223.123.123 0 00.03.115c.594.607.988 1.33 1.183 2.17.289 1.425-.007 2.71-.887 3.854l-.136.166a4.548 4.548 0 01-2.201 1.388.123.123 0 00-.081.076c-.191.551-.383 1.023-.74 1.494-.9 1.187-2.222 1.846-3.711 1.838-1.187-.006-2.239-.44-3.157-1.302a.107.107 0 00-.105-.024c-.388.125-.78.143-1.204.138a4.441 4.441 0 01-1.945-.466 4.544 4.544 0 01-1.61-1.335c-.152-.202-.303-.392-.414-.617a5.81 5.81 0 01-.37-.961 4.582 4.582 0 01-.014-2.298.124.124 0 00.006-.056.085.085 0 00-.027-.048 4.467 4.467 0 01-1.034-1.651 3.896 3.896 0 01-.251-1.192 5.189 5.189 0 01.141-1.6c.337-1.112.982-1.985 1.933-2.618.212-.141.413-.251.601-.33.215-.089.43-.164.646-.227a.098.098 0 00.065-.066 4.51 4.51 0 01.829-1.615 4.535 4.535 0 011.837-1.388zm3.482 10.565a.637.637 0 000 1.272h3.636a.637.637 0 100-1.272h-3.636zM8.462 9.23a.637.637 0 00-1.106.631l1.272 2.224-1.266 2.136a.636.636 0 101.095.649l1.454-2.455a.636.636 0 00.005-.64L8.462 9.23z\" fill=\"url(#lobe-icons-codex-_R_0_)\"></path><defs><linearGradient gradientUnits=\"userSpaceOnUse\" id=\"lobe-icons-codex-_R_0_\" x1=\"12\" x2=\"12\" y1=\"3\" y2=\"21\"><stop stop-color=\"#B1A7FF\"></stop><stop offset=\".5\" stop-color=\"#7A9DFF\"></stop><stop offset=\"1\" stop-color=\"#3941FF\"></stop></linearGradient></defs></svg>", "github": "<svg class=\"__C__\" aria-hidden=\"true\" fill=\"currentColor\" fill-rule=\"evenodd\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M12 0c6.63 0 12 5.276 12 11.79-.001 5.067-3.29 9.567-8.175 11.187-.6.118-.825-.25-.825-.56 0-.398.015-1.665.015-3.242 0-1.105-.375-1.813-.81-2.181 2.67-.295 5.475-1.297 5.475-5.822 0-1.297-.465-2.344-1.23-3.169.12-.295.54-1.503-.12-3.125 0 0-1.005-.324-3.3 1.209a11.32 11.32 0 00-3-.398c-1.02 0-2.04.133-3 .398-2.295-1.518-3.3-1.209-3.3-1.209-.66 1.622-.24 2.83-.12 3.125-.765.825-1.23 1.887-1.23 3.169 0 4.51 2.79 5.527 5.46 5.822-.345.294-.66.81-.765 1.577-.69.31-2.415.81-3.495-.973-.225-.354-.9-1.223-1.845-1.209-1.005.015-.405.56.015.781.51.28 1.095 1.327 1.23 1.666.24.663 1.02 1.93 4.035 1.385 0 .988.015 1.916.015 2.196 0 .31-.225.664-.825.56C3.303 21.374-.003 16.867 0 11.791 0 5.276 5.37 0 12 0z\"></path></svg>", "deepseek": "<svg class=\"__C__\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M23.748 4.482c-.254-.124-.364.113-.512.234-.051.039-.094.09-.137.136-.372.397-.806.657-1.373.626-.829-.046-1.537.214-2.163.848-.133-.782-.575-1.248-1.247-1.548-.352-.156-.708-.311-.955-.65-.172-.241-.219-.51-.305-.774-.055-.16-.11-.323-.293-.35-.2-.031-.278.136-.356.276-.313.572-.434 1.202-.422 1.84.027 1.436.633 2.58 1.838 3.393.137.093.172.187.129.323-.082.28-.18.552-.266.833-.055.179-.137.217-.329.14a5.526 5.526 0 01-1.736-1.18c-.857-.828-1.631-1.742-2.597-2.458a11.365 11.365 0 00-.689-.471c-.985-.957.13-1.743.388-1.836.27-.098.093-.432-.779-.428-.872.004-1.67.295-2.687.684a3.055 3.055 0 01-.465.137 9.597 9.597 0 00-2.883-.102c-1.885.21-3.39 1.102-4.497 2.623C.082 8.606-.231 10.684.152 12.85c.403 2.284 1.569 4.175 3.36 5.653 1.858 1.533 3.997 2.284 6.438 2.14 1.482-.085 3.133-.284 4.994-1.86.47.234.962.327 1.78.397.63.059 1.236-.03 1.705-.128.735-.156.684-.837.419-.961-2.155-1.004-1.682-.595-2.113-.926 1.096-1.296 2.746-2.642 3.392-7.003.05-.347.007-.565 0-.845-.004-.17.035-.237.23-.256a4.173 4.173 0 001.545-.475c1.396-.763 1.96-2.015 2.093-3.517.02-.23-.004-.467-.247-.588zM11.581 18c-2.089-1.642-3.102-2.183-3.52-2.16-.392.024-.321.471-.235.763.09.288.207.486.371.739.114.167.192.416-.113.603-.673.416-1.842-.14-1.897-.167-1.361-.802-2.5-1.86-3.301-3.307-.774-1.393-1.224-2.887-1.298-4.482-.02-.386.093-.522.477-.592a4.696 4.696 0 011.529-.039c2.132.312 3.946 1.265 5.468 2.774.868.86 1.525 1.887 2.202 2.891.72 1.066 1.494 2.082 2.48 2.914.348.292.625.514.891.677-.802.09-2.14.11-3.054-.614zm1-6.44a.306.306 0 01.415-.287.302.302 0 01.2.288.306.306 0 01-.31.307.303.303 0 01-.304-.308zm3.11 1.596c-.2.081-.399.151-.59.16a1.245 1.245 0 01-.798-.254c-.274-.23-.47-.358-.552-.758a1.73 1.73 0 01.016-.588c.07-.327-.008-.537-.239-.727-.187-.156-.426-.199-.688-.199a.559.559 0 01-.254-.078c-.11-.054-.2-.19-.114-.358.028-.054.16-.186.192-.21.356-.202.767-.136 1.146.016.352.144.618.408 1.001.782.391.451.462.576.685.914.176.265.336.537.445.848.067.195-.019.354-.25.452z\" fill=\"#4D6BFE\"></path></svg>", "makerworld": "<svg fill=\"currentColor\" class=\"__C__\" aria-hidden=\"true\" role=\"img\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M12.662 24V8.959l8.535 3.369V24zm-9.859-.003v-7.521l8.534-3.371-.001 10.892zM2.803 0h8.533l.001 11.672-8.534 3.369zm9.859 0h8.535v10.892l-8.535-3.371z\"/></svg>"};
+if (WIN) delete BRAND.system; // Windows 版：系统卡不用苹果标志，换成显示器线条图标
 function icon(name, cls) {
   if (BRAND[name]) return BRAND[name].replace("__C__", (cls || "") + " brand");
   return '<svg class="' + (cls || "") + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (P[name] || "") + "</svg>";
@@ -1486,7 +1521,7 @@ function gb(v) { return v == null ? "–" : (v >= 100 ? Math.round(v) : Number(v
 function sysRings(d) {
   var mem = d.memory || {}, gpu = d.gpu || {}, disk = d.disk || {}, m = d.model || {};
   return '<div class="rings">' +
-    ring("CPU", d.cpu, 70, 90, [d.cpu == null ? "–" : d.cpu.toFixed(1) + "%", (m.p && m.e) ? m.p + "P+" + m.e + "E 核" : ""]) +
+    ring("CPU", d.cpu, 70, 90, [d.cpu == null ? "–" : d.cpu.toFixed(1) + "%", (m.p && m.e) ? m.p + "P+" + m.e + "E 核" : m.cores ? m.cores + " 核" : ""]) +
     ring("内存", mem.pct, 80, 92, [gb(mem.used_gb) + "/" + gb(mem.total_gb), "GB"]) +
     ring("GPU", gpu.pct, 70, 90, [gpu.pct == null ? "–" : gpu.pct + "%", gpu.mem_gb != null ? gpu.mem_gb + " GB" : ""]) +
     ring("磁盘", disk.pct, 85, 95, [gb(disk.total_gb - disk.free_gb) + "/" + gb(disk.total_gb), "剩 " + gb(disk.free_gb) + " GB"]) + "</div>";
@@ -1542,7 +1577,7 @@ var R = {};
 R.system = function (d) {
   var mem = d.memory || {}, gpu = d.gpu || {}, disk = d.disk || {}, bat = d.battery, net = d.net || {};
   var up = d.boot ? Math.floor((nowS() - d.boot) / 86400) : null;
-  // 主页重排（11-06）：卡片只答「Mac 有没有事」——四个圆环 + 磁盘还剩多少 / 系统数据正不正常；曲线、网速、进程挪进详情
+  // 主页重排（11-06）：卡片只答「Mac 有没有事」（Windows 版同一张卡，标题是「电脑实时状态」）——四个圆环 + 磁盘还剩多少 / 系统数据正不正常；曲线、网速、进程挪进详情
   var S = d.sysdata || {}, free = S.free != null ? S.free : disk.free_gb != null ? disk.free_gb * 1e9 : null;
   var surged = S.surge && S.surge.length, rate = S.drop_per_hour;
   var trend = rate == null ? "刚开始记录" : rate > 1073741824 ? "每小时少 " + fmtSize(rate) : rate < -1073741824 ? "这 1 小时多了 " + fmtSize(-rate) : "这 1 小时没怎么变";
@@ -1550,7 +1585,7 @@ R.system = function (d) {
     S.codex_warn ? li1("Codex 暂存在涨", "先问你", "warn") : S.at ? li1("系统数据正常", "5 分钟看一次", "ok") : "";
   // 平时一行：磁盘还剩多少 + 系统数据正常；暴涨 / Codex 暂存在涨时多一行黄的
   var fast = rate != null && rate > 1073741824, bad = surged || S.codex_warn;
-  var diskRows = free == null ? [] : [li1("磁盘还剩 " + fmtSize(free), fast ? trend : S.at && !bad ? "系统数据正常" : "", fast ? "warn" : S.at && !bad ? "ok" : "")];
+  var diskRows = free == null ? [] : [li1("磁盘还剩 " + fmtSize(free), fast ? trend : S.at && !bad ? "系统数据正常" : "", fast ? "warn" : (S.at || WIN) && !bad ? "ok" : "")];
   if (bad) diskRows.push(sysRow);
   // 外置硬盘（选方案 A）：插上就在磁盘这栏多一行，名字 + 还剩多少 + 一根小条；拔掉就没了
   (disk.ext || []).slice(0, 3).forEach(function (x) {
@@ -1567,7 +1602,9 @@ R.system = function (d) {
     diskBox + (hot ? list([hot], "") : "");
   var m = d.model || {};
   var detail = sysRings(d) +
-    '<div class="kv"><span>芯片 <b>' + esc(m.chip || "–") + "</b></span><span>" + esc(m.p || "?") + " 性能核 + " + esc(m.e || "?") + " 能效核</span>" +
+    (m.cores && !(m.p && m.e) ? '<div class="kv"><span>处理器 <b>' + esc(m.chip || "–") + "</b></span><span>" + esc(m.cores) + " 核 " + esc(m.threads || m.cores) + " 线程</span>" +
+      (m.name ? "<span>" + esc(m.name) + "</span>" : "") :
+    '<div class="kv"><span>芯片 <b>' + esc(m.chip || "–") + "</b></span><span>" + esc(m.p || "?") + " 性能核 + " + esc(m.e || "?") + " 能效核</span>") +
     (gpu.cores ? "<span>GPU <b>" + gpu.cores + " 核</b></span>" : "") + "</div>" +
     '<div class="kv"><span>内存 <b class="num">' + (mem.used_gb || "–") + " / " + (mem.total_gb || "–") + " GB</b></span>" +
     (mem.swap_gb != null ? "<span>交换 <b class=\"num\">" + mem.swap_gb + " GB</b></span>" : "") +
@@ -1579,7 +1616,7 @@ R.system = function (d) {
       list([li("磁盘可用", fmtSize(S.free))].concat(surged ? S.surge.map(function (w) { return li("暴涨原因：" + w, "", "warn"); }) : [])
         .concat(S.leaks.map(function (k) { return li(k.label, fmtSize(k.bytes)); }))
         .concat(S.last_surge ? [li(ago(S.last_surge.at) + "因暴涨自动清了 " + S.last_surge.count + " 项", fmtSize(S.last_surge.bytes))] : []), "") +
-      '</div><p class="note muted">1 小时内少了 10GB 以上、可用不到 15GB，或 Chrome 残留副本超过 10GB，就不等 23:30 马上清一次（DeepSeek 核对，只进废纸篓）。Codex 暂存只提醒不自动清。移进废纸篓不会腾出空间，要清空废纸篓才行。</p>' : "") +
+      '</div><p class="note muted">1 小时内少了 10GB 以上、可用不到 15GB，或' + (WIN ? ' 临时文件夹' : ' Chrome 残留副本') + '超过 10GB，就不等 23:30 马上清一次（DeepSeek 核对，只进废纸篓）。Codex 暂存只提醒不自动清。移进废纸篓不会腾出空间，要清空废纸篓才行。</p>' : "") +
     '<div class="sec">内存 最近 3 分钟</div>' + spark(d.history && d.history.mem, 100) +
     '<div class="sec">占用 CPU 最多</div>' + list((d.procs || []).map(function (p) { return li(p.name, Math.round(p.cpu) + "% · " + p.mem_mb + " MB"); }), "无");
   return { body: body, detail: detail };
@@ -1925,7 +1962,7 @@ function loadLayout() {
   if ((l.v || 1) < 3) { l.pos = {}; l.want = {}; l.order = null; l.v = 3; try { store("layout", l); } catch (e) {} }
   return { v: 3, order: l.order || null, hidden: l.hidden || [], theme: l.theme || "auto", mode: l.mode || "fit", reduce: !!l.reduce,
            pos: l.pos || {}, want: l.want || {}, web: l.web || [], glass: String(l.glass || "60"),
-           skin: l.skin === "glass" ? "glass" : "soft",  // 11-06 起默认新拟态，可切回原来的玻璃
+           skin: !WIN && l.skin === "glass" ? "glass" : "soft",  // 11-06 起默认新拟态，可切回原来的玻璃
            notchSize: /^[sml]$/.test(l.notchSize) ? l.notchSize : "l", notchLayout: l.notchLayout === "pages" ? "pages" : "scroll",
            sfx: l.sfx !== false, sfxVol: /^[sml]$/.test(l.sfxVol) ? l.sfxVol : "m" };   // 按键音效（11-07）：默认开、中音量
 }
@@ -1935,7 +1972,7 @@ function applyTheme() {
   if (NOTCH) r.setAttribute("data-theme", "dark"); // 刘海模式固定深色，和刘海、菜单栏的黑色融在一起
   else if (layout.theme === "auto") r.removeAttribute("data-theme"); else r.setAttribute("data-theme", layout.theme);
   r.classList.toggle("reduce", layout.reduce);
-  var soft = NOTCH || layout.skin !== "glass";
+  var soft = NOTCH || WIN || layout.skin !== "glass";
   if (soft !== r.classList.contains("skin-soft")) {
     // 换皮肤时卡片的底色和阴影柔和过渡半秒；首次加载不过渡
     if (applyTheme.ran) { r.classList.add("skin-xfade"); clearTimeout(applyTheme.xt); applyTheme.xt = setTimeout(function () { r.classList.remove("skin-xfade"); }, 600); }
@@ -2232,36 +2269,42 @@ function renderSettings() {
   }
   var lan = "";
   if (BOOT.local && !IN_APP) {
-    lan = '<div class="gtitle">iPad 访问</div><div class="group" style="padding:12px 14px;display:flex;flex-direction:column;gap:10px">';
+    lan = '<div class="gtitle">' + (WIN ? "平板访问" : "iPad 访问") + '</div><div class="group" style="padding:12px 14px;display:flex;flex-direction:column;gap:10px">';
     if (BOOT.lan) {
       lan += '<p class="note">在 iPad 的 Safari 里打开下面任一链接（或用相机扫码），再点分享 → <b>添加到主屏幕</b>，以后从主屏幕图标全屏打开。</p>' +
         '<div id="qr" style="width:180px;height:180px;background:#fff;border-radius:12px;padding:8px"></div>' +
         (BOOT.pair_urls || []).map(function (u) { return '<div class="mono">' + esc(u) + "</div>"; }).join("") +
-        '<p class="note muted">链接里带配对密钥，只发给你自己的设备。iPad 只能看、能点刷新，不能操作 Mac。</p>' +
-        '<button class="btn" data-press data-act="lan" data-v="0" style="align-self:flex-start">关闭 iPad 访问</button>';
+        '<p class="note muted">链接里带配对密钥，只发给你自己的设备。' + (WIN ? "平板只能看、能点刷新，不能操作电脑。" : "iPad 只能看、能点刷新，不能操作 Mac。") + '</p>' +
+        '<button class="btn" data-press data-act="lan" data-v="0" style="align-self:flex-start">' + (WIN ? "关闭平板访问" : "关闭 iPad 访问") + '</button>';
     } else {
-      lan += '<p class="note">打开后，同一个 Wi-Fi 下的 iPad 可以直接用 Safari 看这个监控台，不再需要把 iPad 当 Mac 的副屏。第一次 macOS 可能会问“是否允许 python3 接受传入连接”，点允许。</p>' +
-        '<button class="btn primary" data-press data-act="lan" data-v="1" style="align-self:flex-start">开启 iPad 访问</button>';
+      lan += (WIN ? '<p class="note">打开后，同一个 Wi-Fi 下的平板或手机可以直接用浏览器看这个监控台。第一次 Windows 防火墙可能会问要不要允许 Deck 访问网络，只勾「专用网络」。</p>' :
+        '<p class="note">打开后，同一个 Wi-Fi 下的 iPad 可以直接用 Safari 看这个监控台，不再需要把 iPad 当 Mac 的副屏。第一次 macOS 可能会问“是否允许 python3 接受传入连接”，点允许。</p>') +
+        '<button class="btn primary" data-press data-act="lan" data-v="1" style="align-self:flex-start">' + (WIN ? "开启平板访问" : "开启 iPad 访问") + '</button>';
     }
     lan += "</div>";
   }
-  $("sheetBody").innerHTML = '<div class="gtitle">' + (NOTCH ? "卡片（拖动、调大小、添加网页在扩展屏模式里做）" : "卡片（也可以点顶栏的 ▦ 直接拖动、调大小、添加网页）") + '</div><div class="group">' + rows + "</div>" +
+  $("sheetBody").innerHTML = '<div class="gtitle">' + (NOTCH ? (WIN ? "卡片（拖动、调大小、添加网页在窗口模式里做）" : "卡片（拖动、调大小、添加网页在扩展屏模式里做）") : "卡片（也可以点顶栏的 ▦ 直接拖动、调大小、添加网页）") + '</div><div class="group">' + rows + "</div>" +
     (WKH.deckMode && DM.mode ? '<div class="gtitle">显示方式</div><div class="group" style="padding:10px;display:flex;flex-direction:column;gap:10px">' +
-      '<div class="seg">' + [["auto", "自动"], ["ext", "扩展屏"], ["notch", "刘海"]].map(function (o) {
+      '<div class="seg">' + [["auto", "自动"], ["ext", WIN ? "窗口" : "扩展屏"], ["notch", WIN ? "顶部面板" : "刘海"]].map(function (o) {
         return '<button data-act="dmode" data-v="' + o[0] + '" aria-pressed="' + (DM.mode === o[0]) + '">' + o[1] + "</button>"; }).join("") + "</div>" +
-      '<p class="note muted" style="padding:0 4px">' + (DM.mode === "auto" ? "插着 iPad 用扩展屏，拔掉就从刘海弹出。" : DM.mode === "ext" ? "一直铺在 iPad（或你选的那块屏）上，刘海不弹出。" : "鼠标碰到刘海就从顶上弹出，⌥空格也能呼出。") +
-      "现在用的是<b>" + (DM.active === "notch" ? "刘海" : "扩展屏") + "</b>。菜单栏的 Deck 图标里也能切。</p></div>" : "") +
+      '<p class="note muted" style="padding:0 4px">' + (WIN ? (DM.mode === "auto" ? "接着第二块屏时铺在那块屏上，没接就从屏幕顶上弹出。" : DM.mode === "ext" ? "普通窗口，Ctrl+Alt+空格呼出或收起。" : "鼠标在屏幕顶边正中停一下就弹出，Ctrl+Alt+空格也能呼出，点别处收起。") +
+        "现在用的是<b>" + (DM.active === "notch" ? "顶部面板" : "窗口") + "</b>。右下角托盘的 Deck 图标里也能切。</p></div>" :
+        (DM.mode === "auto" ? "插着 iPad 用扩展屏，拔掉就从刘海弹出。" : DM.mode === "ext" ? "一直铺在 iPad（或你选的那块屏）上，刘海不弹出。" : "鼠标碰到刘海就从顶上弹出，⌥空格也能呼出。") +
+        "现在用的是<b>" + (DM.active === "notch" ? "刘海" : "扩展屏") + "</b>。菜单栏的 Deck 图标里也能切。</p></div>") : "") +
     '<div class="gtitle">外观</div><div class="group" style="padding:10px;display:flex;flex-direction:column;gap:10px">' +
-    '<div class="row-btn" style="padding:0 4px"><span style="flex:1">皮肤</span></div>' +
-    seg("skin", [["soft", "新拟态"], ["glass", "玻璃"]]) +
+    (WIN ? "" : '<div class="row-btn" style="padding:0 4px"><span style="flex:1">皮肤</span></div>' +
+    seg("skin", [["soft", "新拟态"], ["glass", "玻璃"]])) +
     '<div class="row-btn" style="padding:0 4px"><span style="flex:1">深浅色</span></div>' +
     seg("theme", [["auto", "跟随系统"], ["dark", "深色"], ["light", "浅色"]]) +
     seg("mode", [["fit", "一屏看完"], ["scroll", "可滚动"]]) +
-    (BOOT.local ? '<div class="row-btn" style="padding:0 4px"><span style="flex:1">刘海模式面板大小</span></div>' +
+    (window.DeckLang ? '<div class="row-btn" style="padding:0 4px"><span style="flex:1">语言</span></div><div class="seg">' +
+      [["auto", "跟随系统"], ["zh", "中文"], ["en", "English"]].map(function (o) {
+        return '<button data-act="lang" data-v="' + o[0] + '" aria-pressed="' + (DeckLang.pref() === o[0]) + '"' + (o[0] === "auto" ? "" : ' data-no-i18n lang="' + (o[0] === "zh" ? "zh-CN" : "en") + '"') + ">" + o[1] + "</button>"; }).join("") + "</div>" : "") +
+    (BOOT.local && (!WIN || WKH.deckNotch || NOTCH || DM.mode) ? '<div class="row-btn" style="padding:0 4px"><span style="flex:1">' + (WIN ? "顶部面板大小" : "刘海模式面板大小") + '</span></div>' +
       seg("notchSize", [["s", "小"], ["m", "中"], ["l", "大"]]) +
-      '<div class="row-btn" style="padding:0 4px"><span style="flex:1">刘海里卡片怎么排</span></div>' +
+      '<div class="row-btn" style="padding:0 4px"><span style="flex:1">' + (WIN ? "顶部面板里卡片怎么排" : "刘海里卡片怎么排") + '</span></div>' +
       seg("notchLayout", [["scroll", "上下滑"], ["pages", "左右翻页"]]) : "") +
-    (BOOT.local ? '<div class="row-btn" style="padding:0 4px"><span style="flex:1">Vesper 玻璃透明度</span></div>' +
+    (BOOT.local && !WIN ? '<div class="row-btn" style="padding:0 4px"><span style="flex:1">Vesper 玻璃透明度</span></div>' +
       seg("glass", [["70", "70%"], ["60", "60%"], ["50", "50%"], ["40", "40%"], ["30", "30%"]]) : "") +
     (BOOT.local ? '<div id="voiceBox"></div>' : "") +
     (BOOT.local ? '<div class="row-btn" style="padding:0 4px"><span style="flex:1">Vesper 的记忆</span><button class="btn sm" data-press data-act="memory">查看</button></div>' : "") +
@@ -2269,16 +2312,29 @@ function renderSettings() {
     '<div class="row-btn" style="padding:0 4px"><span style="flex:1">按键音效</span><button class="switch" role="switch" data-act="sfx" aria-checked="' + layout.sfx + '" aria-label="按键音效"></button></div>' +
     (layout.sfx ? seg("sfxVol", [["s", "轻"], ["m", "中"], ["l", "响"]]) + '<p class="note muted" style="padding:0 4px">夜里 23:00–7:00 自动减半；Vesper 在听、在说时不响。</p>' : "") +
     '<div class="row-btn" style="padding:0 4px"><span style="flex:1">减少动画</span><button class="switch" role="switch" data-act="reduce" aria-checked="' + layout.reduce + '" aria-label="减少动画"></button></div></div>' +
+    (BOOT.local && WIN ? '<div id="handsBox"></div>' : "") +
     (BOOT.local ? '<div id="assistBox"></div>' : "") +
     (BOOT.local ? '<div id="fridayUsage"></div>' : "") +
     lan +
-    '<div class="gtitle">小贴士</div><div class="group" style="padding:12px 14px"><p class="note">' + (IN_APP ? "换显示屏、铺满屏幕、开机自启：点菜单栏里的监控台图标。" : "iPad 一直亮屏：设置 → 显示与亮度 → 自动锁定 → 永不，并接上电源。") +
-    '<br>数据都在你的 Mac 上采集；页面每 2 秒拿一次缓存好的结果，没人看时 Mac 会自动停采。</p></div>';
+    '<div class="gtitle">小贴士</div><div class="group" style="padding:12px 14px"><p class="note">' + (IN_APP ? (WIN ? "显示方式、全屏、开机自启：点右下角托盘里的 Deck 图标。" : "换显示屏、铺满屏幕、开机自启：点菜单栏里的监控台图标。") : "iPad 一直亮屏：设置 → 显示与亮度 → 自动锁定 → 永不，并接上电源。") +
+    '<br>' + (WIN ? "数据都在你的电脑上采集；页面每 2 秒拿一次缓存好的结果，没人看时会自动停采。" : "数据都在你的 Mac 上采集；页面每 2 秒拿一次缓存好的结果，没人看时 Mac 会自动停采。") + '</p></div>';
   $("sheetBody").__html = null;
   if (BOOT.local && BOOT.lan && BOOT.pair_urls && BOOT.pair_urls.length) drawQR(BOOT.pair_urls[0]);
   if (typeof loadVoices === "function") loadVoices();
   if (BOOT.local && window.DeckAssist) DeckAssist.box();
   if (BOOT.local) loadFridayUsage();
+  if (BOOT.local && WIN) loadHands();
+}
+// Windows：「允许 Vesper 操作电脑」开关（Mac 上在菜单栏 DeckHands 里）。默认关；急停快捷键从后台读
+function loadHands() {
+  post("/api/hands/status", {}, function (code, r) {
+    var box = $("handsBox"); if (!box) return;
+    if (code !== 200 || !r) { box.innerHTML = ""; return; }
+    var on = !!r.enabled, hk = esc(r.hotkey || "Ctrl+Alt+Esc");
+    box.innerHTML = '<div class="gtitle">电脑操控</div><div class="group" style="padding:10px;display:flex;flex-direction:column;gap:10px">' +
+      '<div class="row-btn" style="padding:0 4px"><span style="flex:1">允许 Vesper 操作电脑</span><button class="switch" role="switch" data-act="hands" aria-checked="' + on + '" aria-label="允许 Vesper 操作电脑"></button></div>' +
+      '<p class="note muted" style="padding:0 4px">打开后 Vesper 才能替你点按钮、打字、按快捷键、开关应用；删除、发送、付款、关机这类会先问你。急停：<b>' + hk + "</b>，操作时连按 3 次 Esc 也能停。右下角托盘里也能开关。</p></div>";
+  });
 }
 
 function drawQR(text) {
@@ -2358,6 +2414,9 @@ document.addEventListener("click", function (e) {
       o.splice(i, 1); o.splice(j, 0, k); layout.order = o; saveLayout(); render(); renderSettings();
       var btn = $("sheetBody").querySelector('[data-act="move"][data-src="' + k + '"][data-dir="' + t.getAttribute("data-dir") + '"]');
       if (btn && !btn.disabled) btn.focus();
+    } else if (act === "lang") {
+      var lv = t.getAttribute("data-v"); if (!/^(auto|zh|en)$/.test(lv) || lv === DeckLang.pref()) return;
+      DeckLang.set(lv);
     } else if (act === "dmode") {
       var v = t.getAttribute("data-v"); if (!/^(auto|ext|notch)$/.test(v) || v === DM.mode) return;
       DM.mode = v; renderSettings(); dmSend({ t: "set", v: v });
@@ -2365,6 +2424,9 @@ document.addEventListener("click", function (e) {
       layout[t.getAttribute("data-k")] = t.getAttribute("data-v"); saveLayout(); applyTheme(); sizeGrid(); renderSettings(); sfxApply();
     } else if (act === "sfx") {
       layout.sfx = !layout.sfx; saveLayout(); sfxApply(); renderSettings();
+    } else if (act === "hands") {
+      var hOn = t.getAttribute("aria-checked") !== "true"; t.setAttribute("aria-checked", String(hOn));
+      post("/api/hands/enable", { on: hOn }, function () { loadHands(); });
     } else if (act === "copy") {
       var el = $(t.getAttribute("data-target")), txt = el ? el.textContent : "";
       var done = function () { t.textContent = "已复制"; setTimeout(function () { t.textContent = "复制"; }, 1600); };
@@ -2456,6 +2518,8 @@ function initGrid(keys) {
   GS.on("change", function () { savePositions(); });
   GS.on("dragstart", function () { sfx("tap"); });   // 拿起卡片响一声，落下不响（两声太多）
   GS.on("dragstop", function () { dragJustEnded = true; setTimeout(function () { dragJustEnded = false; }, 80); setTimeout(pack, 0); });
+  // 第一次打开就关了几张卡（还没存过位置）：默认位置会留下空洞，先排一次（11-08 Windows 产品图发现）
+  if (layout.hidden.length && !keys.some(function (k) { return layout.pos[k]; })) pack();
   sizeGrid(); enterCards();
 }
 function addWidget(k) {
@@ -3132,7 +3196,8 @@ function deckSetting(g) {
     if (!g.card) return;
     layout.hidden = v === "show" ? layout.hidden.filter(function (x) { return x !== g.card; }) : layout.hidden.indexOf(g.card) < 0 ? layout.hidden.concat([g.card]) : layout.hidden;
     saveLayout(); render();
-  } else if (k === "sfx" || k === "reduce") { layout[k] = v === "on"; saveLayout(); applyTheme(); sfxApply(); }
+  } else if (k === "lang") { if (window.DeckLang && /^(auto|zh|en)$/.test(v) && v !== DeckLang.pref()) setTimeout(function () { DeckLang.set(v); }, 1500); return; }
+  else if (k === "sfx" || k === "reduce") { layout[k] = v === "on"; saveLayout(); applyTheme(); sfxApply(); }
   else if (SET_OK[k] && SET_OK[k].test(v)) { layout[k] = v; saveLayout(); applyTheme(); sizeGrid(); sfxApply(); }
   else return;
   if (openKey === "__settings") renderSettings();
@@ -3356,7 +3421,7 @@ function renderProc() {
     (a.loading ? "" : '<button class="btn sm" data-press data-act="padvise">重新看看</button>') + "</div>" +
     (a.loading ? '<p class="shimmer">正在看哪些没必要、哪些不正常…</p>' : a.error ? '<p class="note warn-t">' + esc(a.error) + "</p>" :
       '<p class="note">' + esc(a.summary || "看起来都正常。") + "</p>") + "</div>";
-  var rows = !d ? '<div class="empty">正在读取…（约 1 秒）</div>' : !d.rows.length ? '<div class="empty">' + (k === "gpu" && !d.gpu_ok ? "这台 Mac 读不到每个进程的 GPU 占用" : "没有数据") + "</div>" :
+  var rows = !d ? '<div class="empty">正在读取…（约 1 秒）</div>' : !d.rows.length ? '<div class="empty">' + (k === "gpu" && !d.gpu_ok ? (WIN ? "这台电脑读不到每个进程的 GPU 占用" : "这台 Mac 读不到每个进程的 GPU 占用") : "没有数据") + "</div>" :
     '<div class="plist">' + d.rows.map(function (r) {
       var v = k === "mem" ? fmtB(r.mem) : (r[k] == null ? "–" : r[k].toFixed(1) + "%");
       var sub = (k !== "cpu" && r.cpu != null ? "CPU " + r.cpu.toFixed(1) + "% · " : "") + (k !== "mem" ? fmtB(r.mem) + " · " : "") + "PID " + r.pid + (r.user ? "" : " · 系统");
@@ -3466,11 +3531,11 @@ function renderDisk() {
           path: r.path, sub: r.desc, big: fmtSize(r.size), small: "+" + fmtSize(r.delta), smallCls: "up", pct: Math.round(r.delta / mx * 100), full: r.full });
       }).join("");
     }
-    note = ext ? "量的是外置盘第一、二层文件夹。点一行在访达里显示。" : "包括缓存、资源库和隐藏文件夹（比如 .codex）。" + (ov.fda === false ? "微信这类应用的沙盒没算进来：要给 python3 完全磁盘访问权限才能量，没给是为了不弹隐私窗口。" : "") + "能清的缓存交给每晚 23:30 的清理（只进废纸篓）。点一行在访达里显示。";
+    note = ext ? "量的是外置盘第一、二层文件夹。点一行在访达里显示。" : (WIN ? "包括缓存、AppData 和隐藏文件夹（比如 .codex）。" : "包括缓存、资源库和隐藏文件夹（比如 .codex）。") + (!WIN && ov.fda === false ? "微信这类应用的沙盒没算进来：要给 python3 完全磁盘访问权限才能量，没给是为了不弹隐私窗口。" : "") + "能清的缓存交给每晚 23:30 的清理（只进废纸篓）。点一行在访达里显示。";
   } else if (dk.tab === "new") {
     d = dk.data[diskKey("recent")];
     tools = '<div class="dk-tools">' + chips("dksort", dk.sort, [["time", "按时间"], ["size", "按大小"]]) + '<span class="dk-hint">' + (d && d.loading && d.rows.length ? "正在更新…" : "最近 7 天 · 点一行在访达里显示") + '</span></div>';
-    if (!d || (d.loading && !d.rows.length)) rows = '<div class="empty">正在问 Spotlight 最近 7 天新放进来的文件…（第一次要十几秒）</div>';
+    if (!d || (d.loading && !d.rows.length)) rows = '<div class="empty">' + (WIN ? "正在找最近 7 天新放进来的文件…（第一次要十几秒）" : "正在问 Spotlight 最近 7 天新放进来的文件…（第一次要十几秒）") + '</div>';
     else if (d.error) rows = '<div class="empty">' + esc(d.error) + "</div>";
     else if (!d.rows.length) rows = '<div class="empty">' + esc(d.note || "最近 7 天没有新放进来的文件。") + "</div>";
     else {
@@ -3480,7 +3545,7 @@ function renderDisk() {
           big: fmtSize(r.size), small: dkWhen(r.added), full: r.full });
       }).join("");
     }
-    note = "来源按这个顺序判断：截图标记 → 下载记录（哪个应用、哪个网站）→ git 仓库 → 生成它的应用 → 所在文件夹，实在看不出写「不确定」。缓存和隐藏文件夹不在这页，看「谁在变大」。";
+    note = (WIN ? "来源按这个顺序判断：截图文件夹 → 下载标记（从哪个网站下的）→ git 仓库 → 所在文件夹，实在看不出写「不确定」。" : "来源按这个顺序判断：截图标记 → 下载记录（哪个应用、哪个网站）→ git 仓库 → 生成它的应用 → 所在文件夹，实在看不出写「不确定」。") + "缓存和隐藏文件夹不在这页，看「谁在变大」。";
   } else {
     d = dk.data[diskKey("writers")];
     tools = '<div class="dk-tools">' + chips("dkwwin", dk.wwin, [["10m", "最近 10 分钟"], ["boot", "开着以来"]]) + '<span class="dk-hint">每 5 秒刷新</span></div>';
@@ -3494,7 +3559,7 @@ function renderDisk() {
           big: fmtSize(r.bytes), small: dk.wwin === "boot" ? "" : "开着以来 " + fmtSize(r.total), pct: Math.round(r.bytes / m2 * 100) });
       }).join("");
     }
-    note = (ext ? "macOS 不按硬盘分开统计写入量，这页是 Mac 上所有应用的。" : "") + "这是应用往硬盘里写了多少，不等于多占了多少：反复改同一个文件、写日志再删掉都会算进去。一直很高、又对得上「谁在变大」的，基本就是它。只看得到你自己用户的应用。";
+    note = (WIN ? "Windows 记的是应用的全部写入（含网络和设备），会比真正写硬盘的多一些。" : ext ? "macOS 不按硬盘分开统计写入量，这页是 Mac 上所有应用的。" : "") + "这是应用往硬盘里写了多少，不等于多占了多少：反复改同一个文件、写日志再删掉都会算进去。一直很高、又对得上「谁在变大」的，基本就是它。只看得到你自己用户的应用。";
   }
   html += tools + '<div class="dk-rows">' + rows + '</div><p class="note muted">' + esc(note).replace(/(23:30|「[^」]{1,8}」|\.codex)/g, '<span class="nobr">$1</span>') + "</p>";
   var body = $("sheetBody");
@@ -3525,9 +3590,10 @@ function loadVoices() {
   fetch(VOICE_API + "/voices").then(function (r) { return r.json(); }).then(function (d) {
     var box = $("voiceBox"); if (!box) return;
     var vs = (d.voices || []).filter(function (v) { return v.installed; }), cfg = d.config || {};
-    if (!vs.length) { box.innerHTML = ""; return; }
+    if (WIN) voiceModels();   // Windows：语音模型要先下载（约 375MB），缺了就在这里给下载按钮和进度
+    if (!vs.length) { box.innerHTML = WIN ? '<div id="vmBox"></div>' : ""; return; }
     var sp = Number(cfg.speed || 1), spd = sp < 0.95 ? "0.9" : sp > 1.05 ? "1.15" : "1";
-    box.innerHTML = '<div class="gtitle">Vesper 的声音</div><div class="group">' + vs.map(function (v) {
+    box.innerHTML = (WIN ? '<div id="vmBox"></div>' : "") + '<div class="gtitle">Vesper 的声音</div><div class="group">' + vs.map(function (v) {
       return '<div class="row-btn"><button class="voice-pick" data-press data-voice="' + esc(v.id) + '" aria-pressed="' + !!v.current + '">' +
         '<span class="radio" aria-hidden="true"></span><span>' + esc(v.label) + "</span></button>" +
         '<button class="btn sm" data-press data-preview="' + esc(v.id) + '">试听</button></div>';
@@ -3537,6 +3603,45 @@ function loadVoices() {
       }).join("") + "</div></div></div>";
   }).catch(function () { var box = $("voiceBox"); if (box) box.innerHTML = ""; });
 }
+// ---------- Windows：语音模型（唤醒、识别、朗读；从 k2-fsa 官方下载，语音服务 /models/*）----------
+var VM = { st: null, prog: null, done: null, hooked: false };
+function vmPct(p) { return p && p.bytes_total ? Math.min(100, Math.round(p.bytes_done * 100 / p.bytes_total)) : 0; }
+function vmRender() {
+  var box = $("vmBox"); if (!box) return;
+  var st = VM.st, p = VM.prog, miss = st ? st.missing_default || [] : [];
+  if (!st || (!miss.length && !st.busy && !(VM.done && VM.done.ok === false))) { box.innerHTML = VM.done && VM.done.ok ? '<p class="note muted" style="padding:0 4px">语音模型下好了</p>' : ""; return; }
+  var mb = 0; miss.forEach(function (k) { mb += (st.packs[k] && st.packs[k].download_bytes) || 0; }); mb = Math.max(1, Math.round(mb / 1048576));
+  var body;
+  if (st.busy) {
+    var pct = vmPct(p), lab = p ? (p.phase === "extract" ? "正在解压 " : p.phase === "verify" ? "正在校验 " : "正在下载语音模型 ") + esc(p.label || "") : "正在准备下载…";
+    body = '<p class="note" style="padding:0 4px">' + lab + (p && p.phase === "download" ? " " + pct + "%" : "") + '</p>' +
+      '<div class="vm-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '"><i style="width:' + pct + '%"></i></div>' +
+      '<div style="display:flex;justify-content:flex-end"><button class="btn sm" data-press data-vm="cancel">先不下了</button></div>';
+  } else {
+    body = '<p class="note" style="padding:0 4px">' + (VM.done && VM.done.ok === false ? "下载没完成：" + esc(VM.done.error || "") + "（下次接着下）。" : "") +
+      "唤醒、听你说话、朗读要用到的语音模型还没装好，下载一次就行（约 " + mb + "MB，从 k2-fsa 官方下载，只存在这台电脑上）。</p>" +
+      '<button class="btn primary" data-press data-vm="download" style="align-self:flex-start">下载语音模型（约 ' + mb + "MB）</button>";
+  }
+  box.innerHTML = '<div class="gtitle">语音模型</div><div class="group" style="padding:10px;display:flex;flex-direction:column;gap:10px">' + body + "</div>";
+}
+function voiceModels() {
+  if (!window.fetch) return;
+  if (!VM.hooked && window.DeckVoice && DeckVoice.on) {
+    VM.hooked = true;
+    DeckVoice.on("models.progress", function (ev) { VM.prog = ev; if (VM.st) VM.st.busy = true; vmRender(); });
+    DeckVoice.on("models.done", function (ev) { VM.done = ev; VM.prog = null; if (ev.ok) toast("语音模型下好了"); if (openKey === "__settings") loadVoices(); else voiceModels(); });
+  }
+  fetch(VOICE_API + "/models/status").then(function (r) { return r.json(); }).then(function (d) { VM.st = d; if (d.progress) VM.prog = d.progress; vmRender(); })
+    .catch(function () { VM.st = null; vmRender(); });
+}
+$("sheetBody").addEventListener("click", function (e) {
+  var t = e.target.closest && e.target.closest("[data-vm]"); if (!t) return;
+  e.stopPropagation();
+  var op = t.getAttribute("data-vm"); t.disabled = true;
+  fetch(VOICE_API + "/models/" + (op === "cancel" ? "cancel" : "download"), { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" })
+    .then(function () { if (op === "download") { VM.done = null; if (VM.st) VM.st.busy = true; VM.prog = null; } vmRender(); setTimeout(voiceModels, 800); })
+    .catch(function () { t.disabled = false; toast("语音服务好像没在运行，过一会儿再试"); });
+});
 function voiceConfig(body) {
   return fetch(VOICE_API + "/tts/config", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
     .then(function (r) { if (!r.ok) throw 0; loadVoices(); }).catch(function () { toast("没换成功，语音服务好像没在运行"); });
@@ -3708,6 +3813,9 @@ if (PANE) { // 对话页里的边缘光转给主页面画（铺满整块屏）
 // 工具箱面板（static/deck-tools.js）：只在本机打开时加载，iPad 上只看卡片摘要
 window.DeckHost = { post: post, esc: esc, icon: icon, toast: toast, openSheet: openSheet, closeSheet: closeSheet, ago: ago, fmtB: fmtSize,
   openKey: function () { return openKey; }, $: $ };
+// 界面自查（windows/ci/shots.js）用：直接打开进程 / 磁盘面板的某一页
+window.__deckTest = { openProc: openProc, openDisk: openDisk, itemOf: itemOf,
+  diskTab: function (t, op) { dk.tab = t; diskFetch(op); renderDisk(); } };
 (function () {
   if (!BOOT.local || PANE) return;
   var s = document.createElement("script"); s.src = "/static/deck-tools.js"; document.head.appendChild(s);
@@ -3952,7 +4060,7 @@ window.DeckHost = { post: post, esc: esc, icon: icon, toast: toast, openSheet: o
   }
   function kState() {
     var V = window.DeckVoice, s = V && V.connected ? V.state : "idle";
-    var t = s === "listening" ? "在听…" : s === "speaking" ? "在说…" : (s === "thinking" || chat.busy) ? "想一想…" : (V && V.connected ? "按住 ← 说话" : "点下面和我聊");
+    var t = s === "listening" ? "在听…" : s === "speaking" ? "在说…" : (s === "thinking" || chat.busy) ? "想一想…" : (V && V.connected ? (WIN ? "按住 Ctrl+Alt+J 说话" : "按住 ← 说话") : "点下面和我聊");
     var st = $("nkState"); if (st.textContent !== t) st.textContent = t;
     nk.classList.toggle("awake", s !== "idle" || chat.open);
     var bt = chat.open ? "回到卡片" : "开始对话"; if ($("nkTalk").textContent !== bt) $("nkTalk").textContent = bt;
@@ -3982,6 +4090,13 @@ window.DeckHost = { post: post, esc: esc, icon: icon, toast: toast, openSheet: o
       if (opened) { if (inPanel || inNotch) { clearTimeout(leaveT); leaveT = 0; } else if (!leaveT) leaveT = setTimeout(function () { leaveT = 0; if (!holdNow()) setOpen(false); }, 320); }
     });
   }
+  // Windows：主窗口和顶部面板是两个窗口、同一份本地存储。在主窗口设置里改了面板大小 / 排法，面板这边跟着变
+  if (WIN) window.addEventListener("storage", function (e) {
+    if (e.key === "deck.lang") { location.reload(); return; }   // 主窗口换了语言：面板也换（外壳会接着开着）
+    if (!e.key || !/layout$/.test(e.key)) return;
+    var l = loadLayout(); layout.notchSize = l.notchSize; layout.notchLayout = l.notchLayout; layout.sfx = l.sfx; layout.sfxVol = l.sfxVol; layout.reduce = l.reduce;
+    apply();
+  });
   apply();
   native({ t: "ready", w: PW, h: PH });
 })();
