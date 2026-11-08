@@ -35,18 +35,39 @@ def user_sid():
     return _sid[0]
 
 
+_api = {}
+_api_lock = threading.Lock()
+
+
+def _dlls():
+    """自己的一份 kernel32 / advapi32，签名只在第一次设好。
+    不改全局 ctypes.windll 的函数签名：那是全进程共用的，别的线程正拿它调用时改 argtypes 会传坏参数。"""
+    if not _api:
+        with _api_lock:  # 不用 _lock：回收站拿着 _lock 时会查 user_sid()
+            if not _api:
+                k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+                adv = ctypes.WinDLL("advapi32", use_last_error=True)
+                # 64 位下句柄是指针宽度：不写 argtypes / restype，ctypes 会按 32 位 int 传，GetCurrentProcess 的 -1 就传坏了
+                k32.GetCurrentProcess.restype = wintypes.HANDLE
+                k32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+                k32.OpenProcess.restype = wintypes.HANDLE
+                k32.LocalFree.argtypes = [ctypes.c_void_p]
+                k32.CloseHandle.argtypes = [wintypes.HANDLE]
+                adv.OpenProcessToken.argtypes = [wintypes.HANDLE, wintypes.DWORD, ctypes.POINTER(wintypes.HANDLE)]
+                adv.GetTokenInformation.argtypes = [wintypes.HANDLE, ctypes.c_int, ctypes.c_void_p, wintypes.DWORD,
+                                                    ctypes.POINTER(wintypes.DWORD)]
+                adv.ConvertSidToStringSidW.argtypes = [ctypes.c_void_p, ctypes.POINTER(wintypes.LPWSTR)]
+                adv.CredReadW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD, ctypes.POINTER(ctypes.c_void_p)]
+                adv.CredReadW.restype = wintypes.BOOL
+                adv.CredFree.argtypes = [ctypes.c_void_p]
+                adv.CredFree.restype = None
+                _api.update(k32=k32, adv=adv)
+    return _api["k32"], _api["adv"]
+
+
 def _sid_ctypes(pid=None):
     """进程（不给 pid 就是自己）的用户 SID 字符串。只读令牌，不查用户名（LookupAccountSid 可能很慢）。"""
-    adv, k32 = ctypes.windll.advapi32, ctypes.windll.kernel32
-    # 64 位下句柄是指针宽度：不写 argtypes / restype，ctypes 会按 32 位 int 传，GetCurrentProcess 的 -1 就传坏了
-    k32.GetCurrentProcess.restype = wintypes.HANDLE
-    k32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
-    k32.OpenProcess.restype = wintypes.HANDLE
-    adv.OpenProcessToken.argtypes = [wintypes.HANDLE, wintypes.DWORD, ctypes.POINTER(wintypes.HANDLE)]
-    adv.GetTokenInformation.argtypes = [wintypes.HANDLE, ctypes.c_int, ctypes.c_void_p, wintypes.DWORD, ctypes.POINTER(wintypes.DWORD)]
-    adv.ConvertSidToStringSidW.argtypes = [ctypes.c_void_p, ctypes.POINTER(wintypes.LPWSTR)]
-    k32.LocalFree.argtypes = [ctypes.c_void_p]
-    k32.CloseHandle.argtypes = [wintypes.HANDLE]
+    k32, adv = _dlls()
     tok = wintypes.HANDLE()
     if pid is None:
         ph = k32.GetCurrentProcess()
@@ -360,16 +381,12 @@ def cred_read(target):
                     ("Persist", wintypes.DWORD), ("AttributeCount", wintypes.DWORD), ("Attributes", ctypes.c_void_p),
                     ("TargetAlias", wintypes.LPWSTR), ("UserName", wintypes.LPWSTR)]
 
-    adv = ctypes.windll.advapi32
-    adv.CredReadW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD, ctypes.POINTER(ctypes.POINTER(_CRED))]
-    adv.CredReadW.restype = wintypes.BOOL
-    adv.CredFree.argtypes = [ctypes.c_void_p]
-    adv.CredFree.restype = None
-    p = ctypes.POINTER(_CRED)()
-    if not adv.CredReadW(str(target), 1, 0, ctypes.byref(p)):  # 1 = CRED_TYPE_GENERIC
+    _k32, adv = _dlls()
+    p = ctypes.c_void_p()
+    if not adv.CredReadW(str(target), 1, 0, ctypes.byref(p)) or not p.value:  # 1 = CRED_TYPE_GENERIC
         return None
     try:
-        c = p.contents
+        c = ctypes.cast(p, ctypes.POINTER(_CRED)).contents
         raw = ctypes.string_at(c.CredentialBlob, c.CredentialBlobSize) if c.CredentialBlobSize else b""
     finally:
         adv.CredFree(p)

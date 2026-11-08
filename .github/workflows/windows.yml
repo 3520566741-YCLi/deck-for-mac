@@ -74,7 +74,7 @@ jobs:
           npm init -y | Out-Null
           npm install --no-save playwright@1.48.2
           npx playwright install chromium
-          $env:DECK_STACK_DUMP = "45"
+          # 不开 DECK_STACK_DUMP：定时转储会在别的线程正跑的时候读它的调用栈，偶尔把后台自己弄崩（0xC0000005）。真崩溃 -X faulthandler 照样会写栈
           $p = Start-Process python -ArgumentList "-u","-X","faulthandler","manager/server.py","--no-open" -PassThru -RedirectStandardOutput "$env:RUNNER_TEMP\deck.log" -RedirectStandardError "$env:RUNNER_TEMP\deck.err"
           $ok = $false
           for ($i = 0; $i -lt 40; $i++) { try { Invoke-WebRequest http://127.0.0.1:8777/api/health -UseBasicParsing | Out-Null; $ok = $true; break } catch { Start-Sleep 1 } }

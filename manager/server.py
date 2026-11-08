@@ -992,7 +992,8 @@ def main():
         except (AttributeError, ValueError):
             pass
     threading.Thread(target=stop_orphan_speech, daemon=True).start()
-    if os.environ.get("DECK_STACK_DUMP"):  # 查卡死用（CI）：每隔 N 秒把所有线程的调用栈写到 stderr；C 线程做，GIL 被占着也能写
+    if os.environ.get("DECK_STACK_DUMP"):  # 只在本地查卡死时临时开：每隔 N 秒把所有线程的调用栈写到 stderr（C 线程做，GIL 被占着也能写）。
+        # 注意：它读别的线程的栈时不加锁，偶尔会把进程弄崩（access violation），平时和 CI 都别开
         import faulthandler
         faulthandler.dump_traceback_later(int(os.environ["DECK_STACK_DUMP"]), repeat=True)
     ThreadingHTTPServer.allow_reuse_address = True
