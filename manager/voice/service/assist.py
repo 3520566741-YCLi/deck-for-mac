@@ -219,7 +219,7 @@ class NameCheck:
                     if 1 <= len(t) <= 8:
                         heard[t] = heard.get(t, 0) + 1
                 rows.append({"w": w, "kws": k, "asr": a})
-            fa_k, fa_a = [], []
+            fa_k, fa_a, fa_heard, neg_text = [], [], [], []
             for i, (w, v) in enumerate(neg):
                 x = _synth(w, v, os.path.join(tmp, f"n{i}.wav"))
                 self.done += 1
@@ -227,8 +227,12 @@ class NameCheck:
                     continue
                 if spot(x):
                     fa_k.append(w)
-                if asr is not None and m.find(asr.transcribe(x)[0].upper()):
-                    fa_a.append(w)
+                if asr is not None:
+                    nt = (asr.transcribe(x)[0] or "").upper()
+                    neg_text.append(nt)
+                    if m.find(nt):
+                        fa_a.append(w)
+                        fa_heard.append(nt[:40])   # 认成了什么，方便查为什么误叫醒
             if not rows:
                 raise RuntimeError("合成声音没生成出来")
             nk = sum(r["kws"] for r in rows)
@@ -236,12 +240,16 @@ class NameCheck:
             either = sum(1 for r in rows if r["kws"] or r["asr"])
             lex = names.lexicon()
             aliases = [t for t, c in sorted(heard.items(), key=lambda kv: -kv[1])
-                       if not (t.isascii() and t in lex and t != self.name.upper())][:8]
+                       if not (t.isascii() and t in lex and t != self.name.upper())]
+            aliases = names.clean_aliases(self.name, self.hint, aliases)
+            # 收下别名后会不会让反例误叫醒：会的那个别名不要
+            aliases = [a for a in aliases
+                       if not any(names.Matcher(self.name, self.hint, (a,), min_sim=9).find(t) for t in neg_text)][:8]
             missed = sorted({r["w"] for r in rows if not (r["kws"] or r["asr"])})
             rate = either / len(rows)
             self.result = {
                 "n": len(rows), "kws": round(nk / len(rows), 3), "asr": round(na / len(rows), 3) if asr else None,
-                "either": round(rate, 3), "false_kws": fa_k, "false_asr": fa_a, "neg_n": len(neg),
+                "either": round(rate, 3), "false_kws": fa_k, "false_asr": fa_a, "false_heard": fa_heard, "neg_n": len(neg),
                 "missed": missed[:8], "aliases": aliases, "heard": [t for t, _ in sorted(heard.items(), key=lambda kv: -kv[1])][:6],
                 "voices": zh_v + en_v,
                 "verdict": "good" if rate >= 0.7 and not (fa_k or fa_a) else "ok" if rate >= 0.45 and len(fa_k) + len(fa_a) <= 1 else "poor",

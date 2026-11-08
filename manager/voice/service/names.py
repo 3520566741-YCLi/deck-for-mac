@@ -413,10 +413,42 @@ def aliases_file():
     return P.HOME / "name_aliases.json"
 
 
+# 识别器常把招呼词也粘进名字（「黑太阳」「HEYKAYA」），先剥掉
+_ALIAS_HEAD = re.compile(r"^(?:你好呀|你好|哈喽|哈罗|黑|嘿|嗨|海|喂|HEYTHERE|HELLO|HEY|HI|OKAY|OK|YO)+")
+ALIAS_MIN_SIM = 0.6
+
+
+def _alias_key_sim(alias, keys):
+    cands = [""]
+    for u, _, _ in _units(alias):
+        ks = [key_of_cjk(u)] if CJK.match(u) else keys_of_word(u)
+        cands = [c + k for c in cands for k in ks][:9]
+    return max((similarity(c, k) for c in cands for k in keys if c), default=0.0)
+
+
+def clean_aliases(name, hint, items, min_sim=ALIAS_MIN_SIM):
+    """只留读音和名字够像的写法。11-08 真机体检 Kaia：合成声音被认成「太阳」「太原」，
+    要是当别名收下，以后聊天说「太阳出来了」就会叫醒她；这类读音差太远的一律不收。"""
+    keys = name_keys(name, hint)
+    out = []
+    for a in items:
+        a = Matcher._norm(a)[:16] if isinstance(a, str) else ""
+        a = _ALIAS_HEAD.sub("", a) if a != name.upper() else a
+        if len(a) < 2 or a in out:
+            continue
+        if a == name.upper() or (keys and _alias_key_sim(a, keys) >= min_sim):
+            out.append(a)
+    return out
+
+
 def load_aliases(name):
     try:
         d = json.loads(aliases_file().read_text(encoding="utf-8"))
-        return [a for a in d.get(name, []) if isinstance(a, str)][:40]
+        raw = [a for a in d.get(name, []) if isinstance(a, str)][:40]
+    except Exception:  # noqa: BLE001
+        return []
+    try:
+        return clean_aliases(name, P.NAME_HINT if P.NAME == name else "", raw)
     except Exception:  # noqa: BLE001
         return []
 
@@ -430,9 +462,9 @@ def save_aliases(name, new):
     except Exception:  # noqa: BLE001
         d = {}
     cur = [a for a in d.get(name, []) if isinstance(a, str)]
-    for a in new:
-        a = Matcher._norm(a)[:16]
-        if a and a not in cur:
+    hint = P.NAME_HINT if P.NAME == name else ""
+    for a in clean_aliases(name, hint, new):
+        if a not in cur:
             cur.append(a)
     d = {name: cur[-40:]}          # 只留当前名字的，改名后旧的没用
     try:

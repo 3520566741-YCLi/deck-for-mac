@@ -25,6 +25,8 @@ New: name the assistant yourself; voiceprint recording and wake tests inside Dec
   Pronunciation: the wake model's CMU lexicon first; unknown names get a few guesses from simplified letter-to-sound rules (after the public-domain NRL rules); the hint goes first.
 - 第二条唤醒路认名字：名字和识别结果都换成「粗音标」再比相似度，常用英文词要几乎一样才算；录声纹时识别器把名字写成什么会记下来。
   The second wake path compares a coarse phonetic key of the name and the transcript; common English words must match almost exactly; spellings the recognizer produced during enrollment are remembered.
+- 记下的写法只收读音和名字像的（相似度 ≥ 0.6），会让普通聊天误醒的不收，免得名字被认成「太阳」之类常用词后一说就醒。
+  Remembered spellings are kept only if they sound like the name (similarity ≥ 0.6) and don't trigger on ordinary sentences, so a name misheard as a common word won't cause false wakes.
 
 **安全和稳定 / Safety and stability**
 
