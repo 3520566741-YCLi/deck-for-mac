@@ -27,43 +27,59 @@ const SPECS = [
   const browser = await chromium.launch();
   for (const lang of ["zh", "en"]) {
     for (const s of SPECS) {
-      const ctx = await browser.newContext({ viewport: { width: s.w || 1280, height: s.h || 800 }, deviceScaleFactor: 2, colorScheme: s.dark ? "dark" : "light" });
-      await ctx.addInitScript(([hide, lang, panel]) => {
-        try {
-          const l = JSON.parse(localStorage.getItem("mbdash.layout") || "{}");
-          Object.assign(l, { v: 3, hidden: hide });
-          localStorage.setItem("mbdash.layout", JSON.stringify(l));
-          localStorage.setItem("deck.lang", lang);
-        } catch (e) {}
-        if (panel) window.pywebview = { api: { post: () => {} } };
-      }, [HIDE, lang, !!s.panel]);
-      const page = await ctx.newPage();
-      page.on("pageerror", (e) => problems.push(`[${s.name}-${lang}] 页面报错：${e.message}`));
-      await page.goto(`${BASE}${s.url || "/dash?app=1"}${(s.url || "").includes("?") || !s.url ? "&" : "?"}lang=${lang}`);
-      if (s.panel) {
-        await page.evaluate(() => window.dispatchEvent(new Event("pywebviewready")));
-        await page.waitForTimeout(1200);
-        await page.evaluate(() => { __deckMode({ mode: "notch", active: "notch" }); __notch.set(true); });
+      // 云电脑偶尔整页卡住（主分支上也出现过 goto / screenshot 30 秒超时）：同一张图最多重拍 3 次，别让偶发卡顿判失败
+      for (let tries = 1; ; tries++) {
+        try { await shoot(browser, s, lang); break; }
+        catch (e) {
+          if (tries >= 3) throw e;
+          console.log(`[${s.name}-${lang}] 第 ${tries} 次卡住（${e.name}），重拍`);
+        }
       }
-      await page.waitForTimeout(7000); // 系统卡第二次采样、我的应用读完
-      for (const a of s.acts || []) {
-        if (typeof a === "number") await page.waitForTimeout(a);
-        else await page.evaluate(a).catch((e) => problems.push(`[${s.name}-${lang}] ${e.message}`));
-      }
-      // 列表要等真读完（云电脑第一次列应用要十几秒），别拍到「正在列出…」
-      if (s.until) await page.waitForFunction(s.until, null, { timeout: 60000, polling: 500 }).then(() => page.waitForTimeout(800)).catch(() => problems.push(`[${s.name}-${lang}] 等了 60 秒还没读完`));
-      const file = path.join(out, `${s.name}-${lang}.png`);
-      // 弹层里的列表每几秒刷新一次，locator.screenshot 等「元素稳定」会一直等不到：直接按弹层的位置裁
-      const clip = s.el ? await page.locator(s.el).boundingBox() : null;
-      await page.screenshot({ path: file, animations: "disabled", ...(clip ? { clip } : {}) });
-      if (lang === "en") {
-        const miss = await page.evaluate(() => (window.DeckLang && DeckLang.missing ? DeckLang.missing() : []));
-        if (miss.length) problems.push(`[${s.name}-en] 还有中文：${miss.slice(0, 8).join(" | ")}`);
-      }
-      await ctx.close();
     }
   }
   await browser.close();
   if (problems.length) { console.error(problems.join("\n")); process.exit(1); }
   console.log("产品图拍完：" + out);
 })();
+
+async function shoot(browser, s, lang) {
+  const mine = []; // 这一次拍的问题；重拍时丢掉上一次的
+  const ctx = await browser.newContext({ viewport: { width: s.w || 1280, height: s.h || 800 }, deviceScaleFactor: 2, colorScheme: s.dark ? "dark" : "light" });
+  try {
+    await ctx.addInitScript(([hide, lang, panel]) => {
+      try {
+        const l = JSON.parse(localStorage.getItem("mbdash.layout") || "{}");
+        Object.assign(l, { v: 3, hidden: hide });
+        localStorage.setItem("mbdash.layout", JSON.stringify(l));
+        localStorage.setItem("deck.lang", lang);
+      } catch (e) {}
+      if (panel) window.pywebview = { api: { post: () => {} } };
+    }, [HIDE, lang, !!s.panel]);
+    const page = await ctx.newPage();
+    page.on("pageerror", (e) => mine.push(`[${s.name}-${lang}] 页面报错：${e.message}`));
+    await page.goto(`${BASE}${s.url || "/dash?app=1"}${(s.url || "").includes("?") || !s.url ? "&" : "?"}lang=${lang}`);
+    if (s.panel) {
+      await page.evaluate(() => window.dispatchEvent(new Event("pywebviewready")));
+      await page.waitForTimeout(1200);
+      await page.evaluate(() => { __deckMode({ mode: "notch", active: "notch" }); __notch.set(true); });
+    }
+    await page.waitForTimeout(7000); // 系统卡第二次采样、我的应用读完
+    for (const a of s.acts || []) {
+      if (typeof a === "number") await page.waitForTimeout(a);
+      else await page.evaluate(a).catch((e) => mine.push(`[${s.name}-${lang}] ${e.message}`));
+    }
+    // 列表要等真读完（云电脑第一次列应用要十几秒，机器忙时会超过一分钟），别拍到「正在列出…」
+    if (s.until) await page.waitForFunction(s.until, null, { timeout: 120000, polling: 500 }).then(() => page.waitForTimeout(800)).catch(() => mine.push(`[${s.name}-${lang}] 等了 120 秒还没读完`));
+    const file = path.join(out, `${s.name}-${lang}.png`);
+    // 弹层里的列表每几秒刷新一次，locator.screenshot 等「元素稳定」会一直等不到：直接按弹层的位置裁
+    const clip = s.el ? await page.locator(s.el).boundingBox() : null;
+    await page.screenshot({ path: file, animations: "disabled", ...(clip ? { clip } : {}) });
+    if (lang === "en") {
+      const miss = await page.evaluate(() => (window.DeckLang && DeckLang.missing ? DeckLang.missing() : []));
+      if (miss.length) mine.push(`[${s.name}-en] 还有中文：${miss.slice(0, 8).join(" | ")}`);
+    }
+    problems.push(...mine);
+  } finally {
+    await ctx.close().catch(() => {});
+  }
+}

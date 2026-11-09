@@ -24,7 +24,7 @@
    - 唯一拥有麦克风的进程。AVAudioEngine，开 voice processing（回声消除），这样 TTS 在说话时也能听到「停」。
    - Apple SFSpeechRecognizer zh-CN 本机识别 → 实时字幕（只在 listening 状态跑）。
    - TTS 音频也由它播放（同一个 engine 的输出，AEC 才最干净）；收到 stop 立即清空播放队列。
-   - 全局快捷键（Carbon RegisterEventHotKey，无需辅助功能权限）：⌥⌘M 麦克风开/关，⌥⌘J 不用唤醒词直接说，⌥⌘. 停。
+   - 全局快捷键（Carbon RegisterEventHotKey，无需辅助功能权限）：⌃⌥⌘M 麦克风开/关，⌃⌥⌘J 不用唤醒词直接说，⌃⌥⌘. 停。
    - 通过 TCP 127.0.0.1:8779 连 Python 语音服务，断线自动重连。
 2. **deck-voice 服务**（Python 3.11 venv，`voice/service/`，sherpa-onnx）
    - 127.0.0.1:8779 收 helper 的音频和事件；127.0.0.1:8778 给 Deck 页面 SSE + HTTP。

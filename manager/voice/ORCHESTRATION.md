@@ -21,7 +21,7 @@
 状态只在 hub（`service/hub.py`）里，页面和各模块都看它：
 
 ```
-idle ──wake / ⌥⌘J / 点麦克风──▶ listening ──user.final──▶ thinking ──第一段回答──▶ speaking ──念完──▶ idle
+idle ──wake / ⌃⌥⌘J / 点麦克风──▶ listening ──user.final──▶ thinking ──第一段回答──▶ speaking ──念完──▶ idle
                                                      │                                   ▲
                                                      └──Vesper 调 Jev──▶ acting ──做完───┘
 ```
@@ -39,7 +39,7 @@ idle ──wake / ⌥⌘J / 点麦克风──▶ listening ──user.final─�
 
 ## 4. 打断只有一条路
 
-「停」（语音）/ ⌥⌘. / 页面上的停止按钮 → `hub.stop()` → 发 `stop` 事件，所有人照做：
+「停」（语音）/ ⌃⌥⌘. / 页面上的停止按钮 → `hub.stop()` → 发 `stop` 事件，所有人照做：
 - 页面：中止 `/api/chat`（AbortController），清掉还没发出去的回答文字（`deck-voice.js`）。
 - TTS：作废当前这一轮（epoch +1），清合成队列；DeckVoice 清播放队列。
 - Jev：取消当前操作，停在安全的位置，汇报做到了哪一步。

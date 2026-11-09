@@ -5,7 +5,7 @@
 
 用 sherpa-onnx 关键词检测（和唤醒共用同一个 KWS 模型，不多占硬盘），只在 thinking / speaking 时跑。
 麦克风音频已经过 DeckVoice 的回声消除，所以助手自己的声音不会把自己叫停。
-在 listening 状态说「停」由 asr.py 定稿时判断。快捷键 ⌥⌘. 也会停。
+在 listening 状态说「停」由 asr.py 定稿时判断。快捷键 ⌃⌥⌘. 也会停。
 """
 import glob
 import os
@@ -355,7 +355,7 @@ def _on_helper(ev):
 
 
 def _on_hotkey(ev):
-    # → 键（⌥⌘.）：停下，并关掉 Vesper 窗口
+    # → 键（⌃⌥⌘.）：停下，并关掉 Vesper 窗口
     if ev.get("name") == "stop":
         hub.stop("hotkey")
         hub.emit({"type": "dismiss", "source": "hotkey"})
@@ -375,7 +375,7 @@ def start():
         ok = False
         print(f"[stop] KWS 加载失败:\n{traceback.format_exc()}", flush=True)
     if not ok:
-        print(f"[stop] 语音「停」暂不可用：{_disabled_reason}；快捷键 ⌥⌘. 和页面按钮照常可用", flush=True)
+        print(f"[stop] 语音「停」暂不可用：{_disabled_reason}；快捷键 ⌃⌥⌘. 和页面按钮照常可用", flush=True)
     hub.subscribe_audio(_on_audio, name="stopword")
     # 模型可能稍后才下载好：每分钟重试一次
     def retry():

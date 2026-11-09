@@ -40,7 +40,8 @@ async function clipped(page, tag, where, root) {
 }
 
 async function shot(page, name) {
-  await page.screenshot({ path: path.join(out, name + ".png") });
+  // 云电脑忙的时候渲染一帧会超过默认的 30 秒；动画一律停住（无限循环的动画会让截图一直等新帧）
+  await page.screenshot({ path: path.join(out, name + ".png"), animations: "disabled", timeout: 90000 });
 }
 
 async function sheet(page, js, wait) {

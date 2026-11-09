@@ -64,6 +64,8 @@ TOOLS = [
      "parameters": {"type": "object", "properties": {"mode": {"type": "string", "enum": ["auto", "ext", "notch"]}}, "required": ["mode"]}},
     {"name": "daily_cleanup", "description": "每日清理：status=最近几次清了什么、下次什么时候；auto_on=每晚 23:30 核对完直接移进废纸篓；auto_off=每晚先问他；undo=把某次清理的东西放回原处（run_id 从 status 里拿）。",
      "parameters": {"type": "object", "properties": {"action": {"type": "string", "enum": ["status", "auto_on", "auto_off", "undo"]}, "run_id": {"type": "string"}}, "required": ["action"]}},
+    {"name": "agent_progress", "description": "Agent 进度（Claude Code / Codex / DeepSeek Harness 自己报的完成百分比，也包括从会话日志看到的正在跑的任务——这类可能没有百分比）：status=现在各个 Agent 在做什么、做到百分之几、哪些刚完成、哪些超过 15 分钟没动静（可能在等他回复），以及各自的上报开没开；on/off=打开或关掉某个 Agent 的进度上报（agent 填 claude/codex/deepseek，会改那个 Agent 的配置，要先确认）。他问「Claude 做到哪了 / 那几个 Agent 进度怎么样 / 还要多久」时用 status。",
+     "parameters": {"type": "object", "properties": {"action": {"type": "string", "enum": ["status", "on", "off"]}, "agent": {"type": "string", "enum": ["claude", "codex", "deepseek"]}}, "required": ["action"]}},
     {"name": "confirm_action", "description": "他明确同意后，执行一个等确认的操作（process_quit / app_control 的退出重启 / junk_clean / uninstall_app 返回的 id）。只有他最新一句话是同意时才能调用。",
      "parameters": {"type": "object", "properties": {"id": {"type": "string"}}, "required": ["id"]}},
 ]
@@ -80,6 +82,7 @@ PROMPT = """
 - 工具箱：toolbox_scan 看空间分布、垃圾、大文件、重复文件、更新、装了哪些应用；清垃圾用 junk_clean。
 - 设置：deck_setting 改皮肤、排版、刘海面板、玻璃透明度、按键音效、减少动画、界面语言（中文 / English）、显示或隐藏卡片；display_mode 切显示方式（自动 / 扩展屏 / 刘海）；set_theme 换深浅色。
 - 每日清理：daily_cleanup 查结果、开关自动清理、把清掉的东西放回去。
+- Agent 进度：agent_progress(status) 看 Claude Code / Codex / DeepSeek Harness 各自在做什么、做到百分之几（百分比是 Agent 自己估的，说的时候带一句「它自己估的」）；打开 / 关掉上报用 on / off，先确认。
 - 会改动东西的（结束进程、退出 / 重启应用、卸载、清垃圾）工具会先返回 needs_confirm：用一句话说清要做什么，问他行不行，他明确同意才调用 confirm_action(id)；犹豫或没回应就不做。
 - 做不了的：iPad 局域网访问的开关、声纹录入（要他本人在设置 → 助手里录）、长桥授权，这些让他在屏幕上自己点。"""
 
@@ -583,6 +586,38 @@ class Tools:
         size = sum(r["bytes"] for r in pick)
         return self._ask("把 %s 垃圾移到废纸篓（%s）" % (apptools.human(size), "、".join(r.get("label", r["id"]) for r in pick[:4])),
                          lambda: apptools.junk_execute(pid, [r["id"] for r in pick]), emit)
+
+    # ---------- Agent 进度（11-09） ----------
+    def t_agent_progress(self, a, emit):
+        import agentpace
+        act, ag = a.get("action"), a.get("agent")
+        if act in ("on", "off"):
+            if ag not in agentpace.AGENTS:
+                return {"error": "agent 填 claude / codex / deepseek"}
+            name = agentpace.AGENTS[ag]
+
+            def go():
+                r = agentpace.setup(ag, act == "on")
+                try:
+                    self.f.hub.refresh("agents")
+                except Exception:  # noqa: BLE001
+                    pass
+                if r.get("ok"):
+                    r["note"] = (name + " 装好了，新开的会话才会报进度" if act == "on" else "已关掉 " + name + " 的进度上报") + \
+                        ("；" + r["note"] if r.get("note") else "")
+                return r
+            return self._ask(("打开 %s 的进度上报（给它装一个本机小工具）" if act == "on" else "关掉 %s 的进度上报") % name, go, emit)
+        d = agentpace.snapshot()
+        now = time.time()
+        st = {"running": "进行中", "quiet": "超过 15 分钟没报（可能在等他回复）", "done": "完成", "stopped": "会话已关"}
+        tasks = [{"agent": t["agent_name"], "task": t["task"] or t["project"], "project": t["project"], "percent": t["percent"],
+                  "where_from": "从会话日志看到的（Agent 没自报百分比%s）" % ("，百分比按它列的计划清单算" if t.get("pct_from") == "plan" else "") if t.get("source") == "log" else "Agent 自己报的",
+                  "state": st[t["state"]], "step": t["step"], "minutes_ago": round((now - t["at"]) / 60, 1),
+                  "running_minutes": round((now - t["since"]) / 60) if t.get("since") else None,
+                  "recent_steps": [{"minutes_ago": round((now - x["t"]) / 60, 1), "percent": x["p"], "step": x["s"]} for x in (t.get("log") or [])[-5:]],
+                  "deepseek_summary": (d.get("summaries") or {}).get(t["id"], {}).get("text")} for t in d["tasks"]]
+        return {"tasks": tasks, "reporting_on": {v["name"]: v["on"] for v in d["setup"].values()},
+                "note": "百分比是 Agent 自己估的。" if tasks else ("没有任务。" if d["any_on"] else "还没打开任何 Agent 的进度上报，可以用 on 打开。")}
 
     # ---------- 设置 / 显示方式 ----------
     def t_deck_setting(self, a, emit):

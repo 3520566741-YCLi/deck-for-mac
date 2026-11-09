@@ -2,7 +2,7 @@ import Carbon
 import Foundation
 
 /// 全局快捷键（Carbon RegisterEventHotKey：不需要辅助功能权限）
-///   ⌥⌘M 麦克风开/关   ⌥⌘J 或 F5 直接说（轻按：说完自动结束；按住：松手就结束）   ⌥⌘. 或 F6 停
+///   ⌃⌥⌘M 麦克风开/关   ⌃⌥⌘J 或 F5 直接说（轻按：说完自动结束；按住：松手就结束）   ⌃⌥⌘. 或 F6 停
 final class HotKeys {
     static let shared = HotKeys()
     var handler: ((String) -> Void)?
@@ -27,7 +27,7 @@ final class HotKeys {
             HotKeys.shared.pressHandler?(name, pressed)
             return noErr
         }, 2, &specs, nil, nil)
-        let cmdOpt = UInt32(cmdKey | optionKey)
+        let cmdOpt = UInt32(controlKey | cmdKey | optionKey)  // 11-09 加 ⌃：⌥⌘J 会抢 Chrome 控制台、⌥⌘M 会抢系统「全部最小化」
         let useF = UserDefaults.standard.object(forKey: "fKeys") as? Bool ?? false
         var keys: [(Int, UInt32)] = [(kVK_ANSI_M, cmdOpt), (kVK_ANSI_J, cmdOpt), (kVK_ANSI_Period, cmdOpt)]
         if useF {

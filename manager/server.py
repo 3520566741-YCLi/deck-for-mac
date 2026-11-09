@@ -622,9 +622,12 @@ import procs  # noqa: E402
 import diskwatch  # noqa: E402
 import hands  # noqa: E402
 import ipad_sfx  # noqa: E402  按键音效经数据线送到 iPad（11-07）
+import agentpace  # noqa: E402  Agent 进度（11-09，借鉴 Codex Pacer）
+threading.Thread(target=agentpace.refresh_script, daemon=True).start()  # Deck 更新后已装的上报小工具换成新版
 ADVICE = {}  # kind -> (时间, 建议)，1 分钟内同一种不重复问 DeepSeek
 
 FRIDAY = Friday(HUB, deepseek_key, CONFIG.get("deepseek", {}))
+agentpace.configure(deepseek_key, CONFIG.get("deepseek", {}), FRIDAY._usage_add)  # Agent 进度：管家自动整理（只在有人看 Deck 时）
 HANDS = hands.Hands(jev_key)
 FRIDAY.hands = HANDS
 # Windows 上这两个是 winport 里的 Windows 版（只进回收站、能撤销）；万一没换成功就不跑，绝不拿 Mac 的规则在 Windows 上清
@@ -932,6 +935,11 @@ class Handler(BaseHTTPRequestHandler):
             if not out.get("error"):
                 ADVICE[kind] = (time.time(), out)
             return self._send(200, out)
+        if path == "/api/agents/setup":
+            # Agent 进度：一键把上报小工具登记到 Claude Code / Codex / DeepSeek Harness，或撤掉（只本机 + 令牌）
+            r = agentpace.setup(str(payload.get("agent") or ""), bool(payload.get("on")))
+            HUB.refresh("agents")
+            return self._send(200, r)
         if path == "/api/friday/usage":
             return self._send(200, FRIDAY.usage_stats())
         if path == "/api/cleanup/scan":
