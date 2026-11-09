@@ -1229,6 +1229,85 @@ html.skin-soft .dk-mini, html.skin-soft .dk-g { background: var(--nm-bg); box-sh
 html.skin-soft .dk-mini i { box-shadow: 0 0 5px -1px currentColor; }
 html.skin-soft .dk-av { box-shadow: var(--nm-up-xs); }
 
+/* ---------- Agent 进度（11-09，借鉴 Codex Pacer）：每个任务一个小进度环，颜色跟 Agent 走 ---------- */
+.one { display: block; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pace-list { display: flex; flex-direction: column; gap: 4px; flex: none; }
+.pace-list.big { gap: 6px; margin-bottom: 6px; }
+.pace-row { display: flex; align-items: center; gap: 10px; min-height: 38px; }
+.pace-list.big .pace-row { min-height: 54px; padding: 4px 2px; border-bottom: 1px solid var(--line); }
+.pace-list.big .pace-row:last-child { border-bottom: 0; }
+.pace-tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.pace-tx b { font-size: 13.5px; font-weight: 620; color: var(--text); }
+.pace-tx small { font-size: 11.5px; color: var(--text3); }
+.pace-row .r { flex: none; font-size: 12.5px; color: var(--text2); text-align: right; line-height: 1.35; }
+.pace-row .r i { font-style: normal; font-size: 11px; color: var(--text3); }
+.pace-row.stopped .pace-tx b, .pace-row.quiet .pace-tx b { color: var(--text2); }
+.pace-ring { flex: none; display: inline-flex; border-radius: 50%; }
+.pace-ring svg { display: block; overflow: visible; }
+.pace-ring .trk { stroke: var(--track); }
+.pace-ring .val { transition: stroke-dashoffset .7s var(--ease-out), stroke .3s; }
+.pace-ring text { font: 680 9.5px -apple-system, "SF Pro Rounded", "SF Pro Text", sans-serif; fill: var(--text); font-variant-numeric: tabular-nums; letter-spacing: -.3px; }
+.pace-ring.big text { font-size: 12px; }
+/* 进行中：数值环轻轻呼吸发光（像 Pacer 的光沿弧流动，但更省电）；完成：对勾画出来；减少动画时都不动 */
+.pace-ring.running .val { animation: paceGlow 2.6s ease-in-out infinite; }
+@keyframes paceGlow { 0%, 100% { opacity: 1; filter: drop-shadow(0 0 0 transparent); } 50% { opacity: .78; filter: drop-shadow(0 0 2.5px var(--pc)); } }
+.pace-ok { stroke-dasharray: 30; stroke-dashoffset: 0; animation: paceTick .5s var(--ease-out) both; }
+@keyframes paceTick { from { stroke-dashoffset: 30; } }
+.pace-ring.quiet .val { stroke-dasharray: 2 3.2 !important; stroke-dashoffset: 0 !important; opacity: .7; }
+.pace-list.big .pace-item { border-bottom: 1px solid var(--line); padding-bottom: 10px; }
+.pace-list.big .pace-item:last-child { border-bottom: 0; }
+.pace-list.big .pace-item .pace-row { border-bottom: 0; }
+.pace-log { list-style: none; margin: 0 0 8px 54px; padding: 0 0 0 12px; border-left: 2px solid var(--line); display: flex; flex-direction: column; gap: 3px; }
+.pace-log li { display: flex; align-items: baseline; gap: 8px; font-size: 12.5px; color: var(--text2); min-width: 0; }
+.pace-log li:first-child { color: var(--text); }
+.pace-log li > .num:first-child { flex: none; width: 34px; color: var(--text3); }
+.pace-log li .one { flex: 1; }
+.pace-log time { flex: none; font-size: 11px; color: var(--text3); }
+.pace-sum { margin-left: 54px; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.pace-sum p { margin: 0; font-size: 13px; line-height: 1.55; color: var(--text); }
+.pace-sum small { font-size: 11px; }
+html.skin-soft .pace-sum:has(p) { padding: 10px 12px; border-radius: 14px; background: var(--nm-bg); box-shadow: var(--nm-in-s); margin-right: 4px; }
+html:not(.skin-soft) .pace-sum:has(p) { padding: 10px 12px; border-radius: 14px; background: var(--track); box-shadow: inset 0 0 0 1px var(--line); }
+.pace-strip { display: flex; align-items: center; gap: 10px; min-width: 0; margin: 6px 0 2px; padding: 4px 10px 4px 4px; border-radius: 22px; cursor: pointer; flex: none;
+  background: rgba(127,127,127,.08); transition: transform .4s var(--spring), box-shadow .2s, background-color .2s; }
+.pace-strip .pace-chip { display: flex; align-items: center; gap: 6px; min-width: 0; flex: 0 1 auto; font-size: 12.5px; color: var(--text2); }
+.pace-strip .pace-chip + .pace-chip { padding-left: 10px; border-left: 1px solid var(--line); }
+.pace-strip .pace-more { flex: none; font-size: 12px; color: var(--text3); }
+.pace-strip.pressed { transform: scale(.97); background: rgba(127,127,127,.16); transition: transform .12s var(--ease-out), background-color .1s; }
+.pace-strip:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--accent); }
+html:not(.skin-soft) .pace-strip { background: var(--track); box-shadow: inset 0 0 0 1px var(--line); }
+html.skin-soft .pace-strip { background: var(--nm-bg); box-shadow: var(--nm-in-s); }
+html.skin-soft .pace-strip.pressed { box-shadow: var(--nm-in); }
+html.skin-soft .pace-ring { box-shadow: var(--nm-in-s); }
+html.skin-soft .pace-ring .trk { stroke: var(--nm-trk); }
+.pace-sub { display: flex; align-items: baseline; gap: 4px; min-width: 0; white-space: nowrap; }
+.pace-sub .pace-who { flex: none; max-width: 45%; overflow: hidden; text-overflow: ellipsis; }
+.pace-sub .pace-dot { flex: none; }
+.pace-sub > .one { flex: 1; min-width: 0; }
+.pace-tx b { display: flex; min-width: 0; }
+.pace-tx b > .mq { flex: 1; }
+/* 放不下的字来回慢慢滚（两头各停一会），悬停停下并整段显示 */
+.mq { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; min-width: 0; }
+.mq > span { display: inline; }
+.mq.go { text-overflow: clip; -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 14px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 14px), transparent); }
+.mq.go > span { display: inline-block; animation: mqRun var(--mq-t, 8s) ease-in-out infinite alternate; will-change: transform; }
+@keyframes mqRun { 0%, 18% { transform: translateX(0); } 82%, 100% { transform: translateX(var(--mq-d, 0)); } }
+.mq:hover > span { animation-play-state: paused; }
+.pace-list.big .mq:hover, .pace-log .mq:hover { white-space: normal; text-overflow: clip; -webkit-mask-image: none; mask-image: none; }
+.pace-list.big .mq:hover > span, .pace-log .mq:hover > span { display: inline; animation: none; transform: none; }
+.pace-sub { white-space: nowrap; }
+:root.reduce .mq.go > span { animation: none !important; display: inline; transform: none; }
+:root.reduce .mq.go { text-overflow: ellipsis; -webkit-mask-image: none; mask-image: none; }
+@media (prefers-reduced-motion: reduce) { .mq.go > span { animation: none !important; display: inline; transform: none; } .mq.go { text-overflow: ellipsis; -webkit-mask-image: none; mask-image: none; } }
+:root.reduce .pace-ring .val, :root.reduce .pace-ok { animation: none !important; }
+.pace-ring.unk svg { animation: paceSpin 2.4s linear infinite; }
+.pace-ring.unk.quiet svg, .pace-ring.unk.done svg { animation: none; }
+@keyframes paceSpin { to { transform: rotate(360deg); } }
+:root.reduce .pace-ring.unk svg { animation: none; }
+@media (prefers-reduced-motion: reduce) { .pace-ring.unk svg { animation: none; } }
+.pace-src { display: block; margin: -2px 0 4px 54px; font-size: 11px; }
+@media (prefers-reduced-motion: reduce) { .pace-ring .val, .pace-ok { animation: none !important; } }
+
 /* ---------- 按压手感补全（：所有按钮都要有反馈）----------
    .pressed 由 static/deck-sfx.js 在按下时加（鼠标立刻，手指 0.1 秒或快点闪一下）；scripts/deck-press-check.js 会挨个检查。
    新拟态：凹下去 + 轻缩；液态玻璃：轻缩 + 略暗。没写到的元素由 deck-sfx.js 的兜底规则（缩到 96%）接住。 */
@@ -1484,6 +1563,7 @@ var P = {
   web: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9S14.5 18.4 12 21M12 3C9.5 5.6 8.2 8.6 8.2 12s1.3 6.4 3.8 9"/>',
   grid: '<rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/>',
   minus: '<path d="M6 12h12"/>',
+  agents: '<path d="M12 3a9 9 0 1 1-8.5 6"/><path d="M12 7.5a4.5 4.5 0 1 1-4.2 2.9"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/>',
   check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
   search: '<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/>',
   hand: '<path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V11M11 10.5V4a1.5 1.5 0 0 1 3 0v6.5M14 10.5V5.5a1.5 1.5 0 0 1 3 0V13M17 9.5a1.5 1.5 0 0 1 3 0V14a7 7 0 0 1-7 7h-1a7 7 0 0 1-5.6-2.8L4 15.2a1.6 1.6 0 0 1 2.5-2L8 15"/>',
@@ -1637,9 +1717,10 @@ R.claude = function (d) {
   });
   // 有用量上限时，卡片只答「还剩多少」（和 Codex 一个样子），token 柱状图和会话列表挪进详情（11-06 主页重排）
   var hasL = !!(L.five_hour || L.seven_day), nAct = (d.active || []).length;
-  // 额度来自 Claude Code 状态栏时，超过 10 分钟没更新就写一下是多久前的
-  var stale = d.limits_from_cc && nowS() - d.limits_from_cc > 600 ? '<br><span class="nobr">额度是 ' + esc(ago(d.limits_from_cc)) + "的</span>" : "";
-  var body = hasL ? hero + '<div class="foot num">' + (nAct ? nAct + " 个会话在跑" : "现在没有在跑的会话") + ' · <span class="nobr">今天 ' + fmtTok(t.total) + " token</span>" + stale + "</div>" :
+  // 额度超过 10 分钟没更新就写一下是多久前的（11-09：不管来自 /usage、状态栏还是接口都标，之前接口失败时会把两天前的数当新的显示）
+  var lAt = d.limits_at || d.limits_from_cc;
+  var stale = lAt && nowS() - lAt > 600 ? '<br><span class="nobr">额度是 ' + esc(ago(lAt)) + "的</span>" : "";
+  var body = hasL ? hero + paceStrip("claude") + '<div class="foot num">' + (nAct ? nAct + " 个会话在跑" : "现在没有在跑的会话") + ' · <span class="nobr">今天 ' + fmtTok(t.total) + " token</span>" + stale + "</div>" :
     hero + (d.limits_enabled && d.limits_error ? list([li1(/登录过期/.test(d.limits_error) ? "额度读不到：Claude Code 登录过期" : /429/.test(d.limits_error) ? "额度接口限流中，稍后自动再查" : "额度暂时读不到", "点开看", "warn")], "") : "") +
     '<div class="sec">最近 24 小时（每小时）</div>' + bars(d.hours) +
     '<div class="sec">进行中的会话' + (d.processes ? " · " + d.processes + " 个 claude 进程" : "") + "</div>" + list(act, "现在没有进行中的会话");
@@ -1654,7 +1735,8 @@ R.claude = function (d) {
     '</b></span><span>调用 <b class="num">' + (t.calls || 0) + " 次</b></span></div>" +
     '<div class="sec">今日各模型</div>' + list(models.map(function (m) { return li(m, fmtTok(t.models[m])); }), "今天还没用") +
     '<div class="sec">最近的会话</div>' + list((d.recent || []).map(function (s) { return li(s.project + (s.branch ? " · " + s.branch : ""), ago(s.last), "", s.model || ""); }), "无") +
-    (d.limits_from_cc ? '<p class="note muted">额度来自 Claude Code 自己给状态栏的数据，' + esc(ago(d.limits_from_cc)) + "更新；你用 Claude Code 时会自动刷新，不用查会限流的接口。</p>" : "") +
+    (lAt ? '<p class="note muted">' + (d.limits_via === "usage" ? "额度来自 Claude Code 自己的 /usage（和你在 Claude Code 里看到的一样，不花 token），每 3 分钟查一次，" :
+      d.limits_via === "statusline" ? "额度来自 Claude Code 自己给状态栏的数据，" : "额度来自用量接口，") + esc(ago(lAt)) + "更新。</p>" : "") +
     (d.limits_enabled ? (d.limits_error ? '<p class="note warn-t">' + esc(d.limits_error) + "</p>" : "") :
       '<p class="note">想看订阅的 5 小时 / 每周用量上限：在 config.json 的 dashboard.sources.claude 里加 "usage_limits": true。它读 Claude Code 存在钥匙串里的登录信息（只在你的 Mac 上用），第一次会弹窗问你是否允许。</p>') +
     '<p class="note muted">数据来自本机 ~/.claude/projects 的会话日志，只取用量字段，不读对话内容。</p>';
@@ -1666,7 +1748,7 @@ R.codex = function (d) {
   var tasks = (d.tasks || []).map(function (t) { return li(t.title, ago(t.updated_at), t.needs_you ? "warn" : "ok", t.needs_you ? "等你确认" : ""); });
   var hero = d.limits_missing ? '<div class="sub">Codex 没返回用量（可能没登录 ChatGPT）</div>' :
     (five ? meter("5 小时", five.used_pct, until(five.resets_at), true) : "") + (week ? meter("本周", week.used_pct, until(week.resets_at), true) : "");
-  var body = hero + '<div class="sec">运行中的任务</div>' + list(tasks, "没有运行中的任务");
+  var body = hero + paceStrip("codex") + '<div class="sec">运行中的任务</div>' + list(tasks, "没有运行中的任务");
   var detail = hero + (d.plan ? '<div class="kv"><span>套餐 <b>' + esc(d.plan) + "</b></span></div>" : "") +
     '<div class="sec">运行中的任务</div>' + list(tasks, "没有运行中的任务") +
     '<p class="note muted">每分钟临时启动一次本机 codex app-server 询问，问完就退出。</p>';
@@ -1863,7 +1945,7 @@ R.deepseek = function (d) {
   // 余额没问题但有一份 key 失效时，卡片正面也说一句，免得只看到「注意」不知道为什么
   var keyNote = badKey.length && !d.balance_error ? '<div class="sub warn-t">' + esc(badKey.join("和")) + " Harness 的 key 失效（点卡片看怎么修）</div>" : "";
   // 卡片只答「还有多少钱」：Harness 用量图、运行状态、会话挪进详情（11-06 主页重排）
-  var body = '<div class="ds-top">' + hero + keyNote + btn + "</div>" +
+  var body = '<div class="ds-top">' + hero + keyNote + btn + "</div>" + paceStrip("deepseek") +
     (hu && (hu.week || hu.today) ? '<div class="foot num">本周用了 ' + fmtTok(hu.week) + " token" + (hu.today ? " · 今天 " + fmtTok(hu.today) : "") + "</div>" : "");
   // 详情里下面有完整的错误说明，标题下那行简短的就不重复了
   var heroD = d.balance_error ? hero.replace(/<div class="sub[^"]*">[\s\S]*?<\/div>/, "") : hero;
@@ -1952,6 +2034,125 @@ R.makerworld = function (d) {
   return { body: body, detail: body + list((d.recent || []).map(function (m) { return li(m.title); }), "") };
 };
 
+// ---------- Agent 进度（11-09，借鉴开源 Codex Pacer 的做法，MIT） ----------
+// Claude Code / Codex / DeepSeek Harness 自己报「完成了百分之几」：每个任务一个小进度环，颜色跟着 Agent 走
+var PACE_COL = { claude: "#D97757", codex: "#8B7CFF", deepseek: "#4D6BFE" };
+var PACE_ST = { running: "进行中", quiet: "没动静了", done: "完成", stopped: "已停止" };
+var paceSeen = {};
+function paceRing(t, big) {
+  var s = big ? 44 : 30, sw = big ? 4.5 : 3.6, r = (s - sw) / 2 - 1, c = 2 * Math.PI * r, v = t.state === "done" ? 100 : t.percent;
+  var unk = v == null;   // 从会话日志看到的、Agent 没报百分比：画一段转着的弧，中间不写数
+  if (unk) v = 28;
+  var col = t.state === "quiet" || t.state === "stopped" ? "var(--idle)" : PACE_COL[t.agent] || "var(--accent)";
+  var mid = t.state === "done" ? '<path class="pace-ok" d="M' + (s * .33) + " " + (s * .52) + " l" + (s * .12) + " " + (s * .12) + " l" + (s * .22) + " -" + (s * .25) + '" fill="none" stroke="' + col + '" stroke-width="' + (big ? 2.6 : 2.2) + '" stroke-linecap="round" stroke-linejoin="round"/>' :
+    unk ? "" : '<text x="' + s / 2 + '" y="' + (s / 2 + (big ? 4.5 : 3.6)) + '" text-anchor="middle">' + v + "</text>";
+  return '<span class="pace-ring ' + esc(t.state) + (big ? " big" : "") + (unk ? " unk" : "") + '" style="--pc:' + col + '" aria-hidden="true"><svg viewBox="0 0 ' + s + " " + s + '" width="' + s + '" height="' + s + '">' +
+    '<circle class="trk" cx="' + s / 2 + '" cy="' + s / 2 + '" r="' + r.toFixed(1) + '" fill="none" stroke-width="' + sw + '"/>' +
+    '<circle class="val" cx="' + s / 2 + '" cy="' + s / 2 + '" r="' + r.toFixed(1) + '" fill="none" stroke="' + col + '" stroke-width="' + sw + '" stroke-linecap="round" stroke-dasharray="' + c.toFixed(1) +
+    '" stroke-dashoffset="' + (c * (1 - Math.max(v, 2) / 100)).toFixed(1) + '" transform="rotate(-90 ' + s / 2 + " " + s / 2 + ')"/>' + mid + "</svg></span>";
+}
+// 管家（DeepSeek）自动整理过的说法（）：它判断原话能用就返回 null，这里就照原话显示
+function paceEd(t) {
+  var d = snap && snap.sources.agents && snap.sources.agents.data, s = d && d.summaries && d.summaries[t.id];
+  if (!s || s.task !== t.task) return null;
+  return window.DeckLang && DeckLang.lang === "en" && s.en && s.en.summary ? s.en : s;
+}
+function paceName(t) { var e = paceEd(t); return (e && e.title) || t.task || t.project || t.agent_name; }
+function paceNow(t) { var e = paceEd(t); return (e && e.now && t.step) ? e.now : t.step; }
+// 太长的字：放不下就慢慢来回滚（看得完），鼠标放上去停下并整段显示；系统要求减少动态时只截断 + 悬停看全文
+function mq(text, cls) { return '<span class="one mq ' + (cls || "") + '" data-no-i18n title="' + esc(text) + '"><span>' + esc(text) + "</span></span>"; }
+function paceMq(root) {
+  [].forEach.call((root || document).querySelectorAll(".mq"), function (el) {
+    var c = el.firstChild; if (!c || !el.clientWidth) return;
+    var d = el.scrollWidth - el.clientWidth;   // 外框的 scrollWidth 就是整段字的宽度（滚不滚都一样）
+    if (d > 2) {
+      if (el.classList.contains("go") && el.__mq === d) return;   // 没变就别动，免得动画从头来
+      el.__mq = d; el.style.setProperty("--mq-d", -d + "px"); el.style.setProperty("--mq-t", Math.max(6, Math.round(d / 26) + 5) + "s"); el.classList.add("go");
+    } else if (el.classList.contains("go")) { el.classList.remove("go"); el.__mq = 0; }
+  });
+}
+window.addEventListener("resize", function () { clearTimeout(paceMq.t); paceMq.t = setTimeout(function () { paceMq(); }, 300); });
+function paceDur(ts) { var s = Math.max(0, nowS() - ts); return s < 60 ? "不到 1 分钟" : s < 3600 ? Math.floor(s / 60) + " 分钟" : Math.floor(s / 3600) + " 小时 " + Math.floor(s % 3600 / 60) + " 分"; }
+function paceRight(t) { return t.state === "running" || t.state === "quiet" ? (t.since ? "已用 " + paceDur(t.since) : "") : t.state === "done" ? ago(t.at) + "完成" : ago(t.at) + "停止"; }
+function paceRow(t, big) {
+  var now = paceNow(t), sub = [t.agent_name, big && t.task && t.project ? t.project : ""].filter(Boolean).join(" · ");   // 卡上窄，只写是谁
+  var line = now ? mq(now, "pace-now") : t.state === "quiet" ? '<span class="one">超过 15 分钟没报进度，可能在等你回复</span>' : "";
+  return '<div class="pace-row ' + esc(t.state) + '">' + paceRing(t, big) + '<div class="pace-tx"><b>' + mq(paceName(t)) + "</b>" +
+    '<small class="pace-sub"><span class="pace-who">' + esc(sub) + "</span>" + (line ? '<span class="pace-dot">·</span>' + line : "") + "</small></div>" +
+    // 百分比只在左边的环里写一次；右边写环里看不出来的：用了多久 / 什么时候完成的（：别重复）
+    '<span class="r num">' + esc(big ? paceRight(t) : t.state === "running" ? (t.since ? paceDur(t.since) : "") : PACE_ST[t.state]) + "</span></div>";
+}
+// 详情页里每个任务：一行概况 + 最近几步（倒序）+ 管家（DeepSeek）自动写的「干到哪了、干得怎么样」
+function paceDetail(t, d) {
+  var e = paceEd(t), raw = d.summaries && d.summaries[t.id], steps0 = (e && e.steps) || {};
+  var log = (t.log || []).slice(-6).reverse();
+  var steps = log.length ? '<ol class="pace-log">' + log.map(function (x) {
+    var s = steps0[String(x.t)] || x.s;
+    return '<li><span class="num">' + (x.p >= 0 ? x.p + "%" : "") + '</span>' + (s ? mq(s) : '<span class="one muted">（没写这一步在做什么）</span>') + '<time class="num">' + esc(ago(x.t)) + "</time></li>"; }).join("") + "</ol>" : "";
+  var ed = d.editor, box;
+  if (e && e.summary) box = '<p data-no-i18n>' + esc(e.summary) + '</p><small class="muted">管家（DeepSeek）' + esc(ago(raw.at)) + "整理" + (raw.for === t.at ? "" : " · 有新进展，稍后自动更新") + "</small>";
+  else if (ed === "nokey") box = '<small class="muted">在设置里填好 DeepSeek key，管家会自动把进度整理成好懂的话</small>';
+  else if (ed === "on" || ed === "busy") box = t.state === "stopped" ? "" : '<small class="muted">管家（DeepSeek）正在整理…</small>';
+  else box = "";
+  var src = t.source === "log" ? '<small class="pace-src muted">' + (t.pct_from === "plan" ? "从会话日志看到的，百分比按它列的计划清单算" : "从会话日志看到的，没有自报百分比") + "</small>" : "";
+  return '<div class="pace-item">' + paceRow(t, true) + src + steps + (box ? '<div class="pace-sum">' + box + "</div>" : "") + "</div>";
+}
+// 嵌在 Claude / Codex / DeepSeek 卡里的一行：只在这个 Agent 有任务时出现，最多两个，点了打开 Agent 进度详情
+function paceStrip(agent) {
+  var st = snap && snap.sources.agents, d = st && st.data;
+  if (!d || !d.tasks) return "";
+  var ts = d.tasks.filter(function (t) { return t.agent === agent && t.state !== "stopped"; });
+  if (!ts.length) return "";
+  return '<div class="pace-strip" data-press data-act="pacego" role="button" tabindex="0" aria-label="Agent 进度详情">' + ts.slice(0, 2).map(function (t) {
+    return '<span class="pace-chip">' + paceRing(t) + mq(paceName(t)) + "</span>";
+  }).join("") + (ts.length > 2 ? '<span class="pace-more num">+' + (ts.length - 2) + "</span>" : "") + "</div>";
+}
+// 任务刚到 100% 响一声「完成」（只响一次；按键音效关了就不响）
+function paceDing(d) {
+  var first = !paceSeen.__init;
+  (d.tasks || []).forEach(function (t) {
+    var key = t.id + "|" + (t.since || 0);
+    if (t.state === "done" && !paceSeen[key] && !first && nowS() - t.at < 30) sfx("done");
+    if (t.state === "done") paceSeen[key] = 1;
+  });
+  paceSeen.__init = 1;
+}
+function paceSetup(d) {
+  var S = d.setup || {};
+  return '<div class="gtitle">让 Agent 自己报进度</div><div class="group">' + ["claude", "codex", "deepseek"].map(function (a) {
+    var s = S[a] || {}, on = !!s.on;
+    return '<div class="row-btn">' + icon(a, "ic") + '<span style="flex:1">' + esc(s.name || a) + (s.present ? "" : ' <small class="muted">没装</small>') + "</span>" +
+      '<button class="switch" role="switch" data-act="pace" data-v="' + a + '" aria-checked="' + on + '" aria-label="' + esc((s.name || a) + " 报进度") + '"' + (!BOOT.local || (!s.present && !on) ? " disabled" : "") + "></button></div>";
+  }).join("") + '<div class="row-btn"><span style="flex:1">也看会话日志 <small class="muted">开关前就在跑的任务也能看到</small></span>' +
+    '<button class="switch" role="switch" data-act="pace" data-v="logs" aria-checked="' + !!d.logs_on + '" aria-label="也看会话日志"' + (!BOOT.local ? " disabled" : "") + "></button></div>" + "</div>" +
+    '<p class="note muted">「也看会话日志」：Deck 只读 Codex / Claude Code 自己写在本机的会话日志，看最近 20 分钟在干什么，不改任何东西；没有百分比（除非它列了计划清单）。管家（DeepSeek）整理时会用到任务开头的一句话和最近几步。</p>' +
+    '<p class="note muted">打开后，Deck 会给这个 Agent 装一个只在本机用的小工具 report_progress：Agent 干活时顺手报「做到百分之几、在做哪一步」，不联网、不读你的对话内容，几乎不多花 token。新开的会话才会用上。关掉立即失效，并且只撤掉 Deck 自己加的那一项，你原来的设置不动。</p>';
+}
+function paceToggle(t) {
+  var a = t.getAttribute("data-v"), on = t.getAttribute("aria-checked") !== "true";
+  t.setAttribute("aria-checked", String(on)); t.disabled = true;
+  post("/api/agents/setup", { agent: a, on: on }, function (code, r) {
+    t.disabled = false;
+    if (code !== 200 || !r || r.error) { t.setAttribute("aria-checked", String(!on)); toast((r && r.error) || "没改成，稍后再试"); return; }
+    var nm = (r.status && r.status.name) || a;
+    toast(a === "logs" ? (on ? "好了：Codex / Claude Code 正在跑的任务也会显示" : "不再看会话日志了") :
+      on ? nm + " 装好了：新开的会话就会报进度" + (r.note ? "（" + r.note + "）" : "") : "已关掉 " + nm + " 的进度上报，撤掉了 Deck 加的那一项");
+    refresh("agents");
+  });
+}
+R.agents = function (d) {
+  paceDing(d);
+  var ts = d.tasks || [], live = ts.filter(function (t) { return t.state === "running" || t.state === "quiet"; });
+  var empty = !d.any_on ? '<div class="empty">还没打开。点这里，一键让 Claude Code / Codex / DeepSeek Harness 自己报进度</div>' :
+    '<div class="empty">现在没有 Agent 在干活</div>';
+  var body = (ts.length ? '<div class="pace-list">' + ts.slice(0, 4).map(function (t) { return paceRow(t); }).join("") + "</div>" : empty) +
+    (ts.length ? '<div class="foot num">' + (d.running ? d.running + " 个在跑" : "没有在跑的") + (d.done ? " · " + d.done + " 个刚完成" : "") + (ts.length > 4 ? " · 还有 " + (ts.length - 4) + " 个" : "") + "</div>" : "");
+  var detail = (ts.length ? '<div class="pace-list big">' + ts.map(function (t) { return paceDetail(t, d); }).join("") + "</div>" : empty) +
+    (live.length ? '<p class="note muted">百分比是 Agent 自己估的，可能会往回调；超过 15 分钟没报就显示「没动静了」，一般是在等你回复。</p>' : "") +
+    paceSetup(d) + '<p class="note muted">' + esc(d.credit || "") + "：github.com/RyanZhangNTU/codex-pacer</p>";
+  return { body: body, detail: detail };
+};
+
 // ---------- 状态 ----------
 var snap = null, failCount = 0, layout = loadLayout(), openKey = null, lastToast = null;
 
@@ -1960,7 +2161,9 @@ function loadLayout() {
   // 布局升级（11-06 主页重排）：旧的卡片位置、大小、顺序作废，换成新的默认排法；主题、皮肤、隐藏的卡、加的网页都保留
   // v3（11-07）：网格加细到 24 列 × 16 行，位置和大小换算不过来，恢复成默认排法
   if ((l.v || 1) < 3) { l.pos = {}; l.want = {}; l.order = null; l.v = 3; try { store("layout", l); } catch (e) {} }
-  return { v: 3, order: l.order || null, hidden: l.hidden || [], theme: l.theme || "auto", mode: l.mode || "fit", reduce: !!l.reduce,
+  // Agent 进度卡（11-09）：主页已经铺满，默认不加整张卡（进度先嵌在 Claude / Codex / DeepSeek 卡里），设置里能打开
+  if (!l.pace) { l.hidden = (l.hidden || []).concat(["agents"]); l.pace = 1; try { store("layout", l); } catch (e) {} }
+  return { v: 3, pace: 1, order: l.order || null, hidden: l.hidden || [], theme: l.theme || "auto", mode: l.mode || "fit", reduce: !!l.reduce,
            pos: l.pos || {}, want: l.want || {}, web: l.web || [], glass: String(l.glass || "60"),
            skin: !WIN && l.skin === "glass" ? "glass" : "soft",  // 11-06 起默认新拟态，可切回原来的玻璃
            notchSize: /^[sml]$/.test(l.notchSize) ? l.notchSize : "l", notchLayout: l.notchLayout === "pages" ? "pages" : "scroll",
@@ -2146,6 +2349,7 @@ function render() {
       if (nh && oldHero !== null && nh.textContent !== oldHero) nh.classList.add("tick");
     }
   });
+  requestAnimationFrame(function () { paceMq(grid); });   // 放不下的字滚起来（卡片换了大小也会重新量）
   var ov = $("overall");
   var lv = counts.error ? "error" : counts.warn ? "warn" : "ok";
   var txt = counts.error + counts.warn ? (counts.error + counts.warn) + " 项需要注意" : "一切正常";
@@ -2244,11 +2448,13 @@ function renderDetail(key) {
   if (st.error) html = '<p class="note ' + (st.data ? "warn-t" : "") + '">' + (st.data ? "最新一次没取到，下面是之前的数据：" : "") + esc(st.error) + "</p>" + html;
   html += '<p class="note muted num">' + (st.updated_at ? "更新于 " + ago(st.updated_at) + " · " : "") + "每 " + (st.interval >= 60 ? Math.round(st.interval / 60) + " 分钟" : st.interval + " 秒") + "自动更新</p>";
   var body = $("sheetBody");
+  requestAnimationFrame(function () { paceMq(body); });
   if (body.__html !== html) {
     // 重画前记住滚动位置和搜索框光标，数据每分钟刷新时不打断正在看/正在打字的人
     var ae = document.activeElement, q = ae && ae.classList && ae.classList.contains("gh-q") ? [ae.selectionStart, ae.selectionEnd] : null;
     var sc = [].map.call(body.querySelectorAll(".gh-list,.gh-det"), function (el) { return el.scrollTop; });
     body.innerHTML = html; body.__html = html;
+    if (body.querySelector(".mq")) setTimeout(function () { paceMq(body); }, 700);  // 弹层动画完再量一次
     [].forEach.call(body.querySelectorAll(".gh-list,.gh-det"), function (el, i) { if (sc[i]) el.scrollTop = sc[i]; });
     if (q) { var qi = body.querySelector(".gh-q"); if (qi) { qi.focus({ preventScroll: true }); try { qi.setSelectionRange(q[0], q[1]); } catch (e) {} } }
   }
@@ -2307,6 +2513,7 @@ function renderSettings() {
     (BOOT.local && !WIN ? '<div class="row-btn" style="padding:0 4px"><span style="flex:1">Vesper 玻璃透明度</span></div>' +
       seg("glass", [["70", "70%"], ["60", "60%"], ["50", "50%"], ["40", "40%"], ["30", "30%"]]) : "") +
     (BOOT.local ? '<div id="voiceBox"></div>' : "") +
+    (BOOT.local && !WIN ? '<div class="row-btn" style="padding:0 4px"><span style="flex:1">Agent 进度（让 Claude Code / Codex / DeepSeek 自己报进度）</span><button class="btn sm" data-press data-act="pacego">设置</button></div>' : "") +
     (BOOT.local ? '<div class="row-btn" style="padding:0 4px"><span style="flex:1">Vesper 的记忆</span><button class="btn sm" data-press data-act="memory">查看</button></div>' : "") +
     '<div class="row-btn" style="padding:0 4px"><span style="flex:1">AI 思考光效</span><button class="btn sm" data-press data-act="glowdemo">预览 6 秒</button></div>' +
     '<div class="row-btn" style="padding:0 4px"><span style="flex:1">按键音效</span><button class="switch" role="switch" data-act="sfx" aria-checked="' + layout.sfx + '" aria-label="按键音效"></button></div>' +
@@ -2402,6 +2609,8 @@ document.addEventListener("click", function (e) {
     if (act === "pkind") { proc.kind = t.getAttribute("data-v"); proc.data = null; renderProc(); procLoad(); procAdvise(false); return; }
     if (act === "pkill") { procKill(t); return; }
     if (act === "padvise") { procAdvise(true); return; }
+    if (act === "pacego") { openSheet("agents"); return; }
+    if (act === "pace") { paceToggle(t); return; }
     if (act === "refresh") { refresh(k); t.disabled = true; t.textContent = "刷新中…"; }
     else if (act === "toggle") {
       var hidden = layout.hidden.indexOf(k) >= 0, prev = layout.hidden.slice();
@@ -2465,7 +2674,7 @@ document.addEventListener("keydown", function (e) {
   if (e.key === "Escape" && whyPop.open) { closeWhy(); return; }
   if (e.key === "Escape" && openKey) closeSheet();
   var ae = document.activeElement;
-  if ((e.key === "Enter" || e.key === " ") && ae && ae.getAttribute("data-act") === "dkreveal") { e.preventDefault(); ae.click(); return; }
+  if ((e.key === "Enter" || e.key === " ") && ae && /^(dkreveal|pacego)$/.test(ae.getAttribute("data-act") || "")) { e.preventDefault(); ae.click(); return; }
   if ((e.key === "Enter" || e.key === " ") && ae && ae.getAttribute("data-act") === "flip") { e.preventDefault(); flipRing(ae, ae.getAttribute("data-src"), !flipped[ae.getAttribute("data-src")]); return; }
   if ((e.key === "Enter" || e.key === " ") && document.activeElement && document.activeElement.classList.contains("card")) {
     e.preventDefault(); openSheet(document.activeElement.getAttribute("data-key"));
@@ -3055,7 +3264,7 @@ function handsHtml(ev, live) {
     (ev.detail ? "<div><small>" + (ev.action === "type" ? "内容" : "按键") + '</small><span class="mono">' + esc(ev.detail) + "</span></div>" : "") + "</div>" +
     (ev.risk ? '<div class="clean-note warn-t">' + esc(ev.risk) + "</div>" : "") +
     '<div class="clean-a"><button class="btn" data-press data-chat="handsno"' + (live ? "" : " disabled") + '>不要</button><button class="btn primary" data-press data-chat="handsgo"' + (live ? "" : " disabled") + ">确认，做吧</button></div>" +
-    '<div class="clean-note">' + (live ? "2 分钟内有效，也可以直接说「好」。说「停」或按 ⌥⌘. 随时中止。" : "这一步已经处理过或过期了。") + "</div></div>";
+    '<div class="clean-note">' + (live ? "2 分钟内有效，也可以直接说「好」。说「停」或按 ⌃⌥⌘. 随时中止。" : "这一步已经处理过或过期了。") + "</div></div>";
 }
 function handsOff(card, note) {
   if (!card) return;
@@ -3969,7 +4178,7 @@ window.__deckTest = { openProc: openProc, openDisk: openDisk, itemOf: itemOf,
   // ---- 水帘：弹簧 + 平滑波浪底边（参数和原型一致）----
   function Sp(x) { return { x: x, v: 0, t: x, r: .4, z: .8 }; }
   var sp = { w: Sp(geo.nw), h: Sp(geo.nh), rt: Sp(6), rb: Sp(10) };
-  var opened = false, hDelay = 0, wDelay = 0, waveT = 0, ampS = 0, contentO = 0, raf = 0, last = 0;
+  var opened = false, hDelay = 0, wDelay = 0, waveT = 0, ampS = 0, contentO = 0, raf = 0, last = 0, openWork = 0, lastClip = "", lastO = "", lastTf = "";
   function setSp(n, t, r, z) { var s = sp[n]; s.t = t; s.r = r; s.z = z; }
   function target() {
     var RD = orbReduced();
@@ -4025,10 +4234,12 @@ window.__deckTest = { openProc: openProc, openDisk: openDisk, itemOf: itemOf,
     contentO += (want - contentO) * Math.min(1, dt * (opened ? 14 : 26));
     if (!opened) contentO = Math.min(contentO, Math.max(0, p * 1.4 - .3));
     if (Math.abs(contentO - want) < .004) contentO = want; else settled = false;
-    wrap.style.clipPath = "path('" + pathFor(PW / 2, w, h, rt, rb, null) + "')";
-    wrap.style.opacity = contentO.toFixed(3);
-    wrap.style.transform = "translateZ(0) translateY(" + ((1 - contentO) * -10).toFixed(2) + "px)";
-    wrap.style.filter = contentO > .98 || contentO < .02 ? "none" : "blur(" + ((1 - contentO) * 5).toFixed(2) + "px)";
+    // 内容看不见时不改裁切（改 clip-path 会让整块卡片重画）；也不再做整块模糊（大面积 blur 每帧都很贵，是卡顿的主要来源之一）
+    var clip = contentO > 0 ? "path('" + pathFor(PW / 2, w, h, rt, rb, null) + "')" : lastClip;
+    if (clip !== lastClip) { wrap.style.clipPath = clip; lastClip = clip; }
+    var o = contentO.toFixed(3), tf = "translateZ(0) translateY(" + ((1 - contentO) * -10).toFixed(1) + "px)";
+    if (o !== lastO) { wrap.style.opacity = o; lastO = o; }
+    if (tf !== lastTf) { wrap.style.transform = tf; lastTf = tf; }
     wrap.classList.toggle("live", opened && contentO > .6);
     if (!settled) raf = requestAnimationFrame(tick);
   }
@@ -4038,7 +4249,8 @@ window.__deckTest = { openProc: openProc, openDisk: openDisk, itemOf: itemOf,
     on = !!on; if (on === opened) return;
     opened = on; window.__notchOpen = on;
     var now = performance.now();
-    if (on) { hDelay = orbReduced() ? 0 : now + 45; wDelay = 0; waveT = 0; poll(); kState(); nFitSoon(); setTimeout(nFitSoon, 600); }
+    // 拉数据、重排卡片放到抽屉流完以后（约 0.5 秒）：以前一展开就马上拉 130KB 数据、整批重写卡片，和水帘动画抢同一帧，弹出来一顿一顿的
+    if (on) { hDelay = orbReduced() ? 0 : now + 45; wDelay = 0; waveT = 0; kState(); clearTimeout(openWork); openWork = setTimeout(function () { if (opened) { poll(); nFitSoon(); } }, orbReduced() ? 0 : 520); }
     else {
       hDelay = 0; wDelay = orbReduced() ? 0 : now + 90;
       if (document.activeElement && wrap.contains(document.activeElement)) document.activeElement.blur();
@@ -4135,7 +4347,7 @@ window.__deckTest = { openProc: openProc, openDisk: openDisk, itemOf: itemOf,
       else if (wasBad) wakeHealth({ ok: true });
     });
     offTimer = setTimeout(function () { if (!V.connected) wakeHealth({ ok: false, problems: ["语音服务没在运行（DeckVoice 会自动重开，几分钟后还这样就告诉 Claude）"] }); }, 60000);
-    // 外接键盘 ← / ⌥⌘J 直接说：一开始听就把面板打开（不用先点「Vesper」）
+    // 外接键盘 ← / ⌃⌥⌘J 直接说：一开始听就把面板打开（不用先点「Vesper」）
     V.on("listen", function (ev) { if (!ev.on || ev.source === "followup" || ev.source === "empty-retry") return; setChat(true); if (window.DeckGlow) DeckGlow.show({ thinking: false }); });
     V.on("state", function (ev) { $("micBtn").setAttribute("aria-pressed", String(ev.state === "listening"));
       if (window.DeckSfx) DeckSfx.mute(ev.state === "listening" || ev.state === "speaking");   // 助手在听/在说时按键不出声，免得干扰识别和声纹

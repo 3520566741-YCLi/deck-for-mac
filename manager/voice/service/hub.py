@@ -13,6 +13,7 @@
     hub.recent_audio(seconds)   # 最近 N 秒麦克风音频（环形缓冲）
 """
 import json
+import os
 import queue
 import struct
 import threading
@@ -233,7 +234,10 @@ def _helper_relauncher():
             _hl["next"] = now + HELPER_RELAUNCH_BACKOFF[min(n - 1, len(HELPER_RELAUNCH_BACKOFF) - 1)]
             print(f"[hub] DeckVoice 断开 {int(now - _hl['down_since'])} 秒，自动重新打开（这一小时第 {n} 次）", flush=True)
             emit({"type": "helper.relaunch", "n": n})
-            subprocess.run(["/usr/bin/open", "-g", "-b", "io.github.deckformac.deckvoice"], timeout=15,
+            # 按路径开装好的那份：按 bundle id 开时 LaunchServices 可能挑中别处的旧测试版（11-09 真的发生了）
+            app = os.path.expanduser("~/Applications/DeckVoice.app")
+            target = ["/usr/bin/open", "-g", app] if os.path.isdir(app) else ["/usr/bin/open", "-g", "-b", "io.github.deckformac.deckvoice"]
+            subprocess.run(target, timeout=15,
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except Exception:  # noqa: BLE001
             print(f"[hub] 自动拉起 DeckVoice 出错:\n{traceback.format_exc()}", flush=True)
@@ -312,6 +316,15 @@ def _attach_helper(send_fn):
     _helper_connected = send_fn is not None
     _alast["mic_since"] = time.monotonic()
     emit({"type": "helper", "connected": _helper_connected})
+
+
+def _detach_helper(send_fn):
+    """某个 helper 连接断开：只有它还是当前连接时才清掉，返回是否清了。"""
+    if _helper_send is not send_fn:
+        print("[hub] 断开的是旧的 DeckVoice 连接，当前连接不受影响", flush=True)
+        return False
+    _attach_helper(None)
+    return True
 
 
 def send_helper(obj):

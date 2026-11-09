@@ -150,6 +150,12 @@ git clone https://github.com/3520566741-YCLi/deck-for-mac.git ~/deck-for-mac
 
 ## 最近更新
 
+**v0.4.0**（2026-11-09，只更新 Mac）
+
+- 📊 **Agent 进度**：Claude Code、Codex、DeepSeek Harness 干到哪了，直接嵌在各自卡片里；Agent 自己报百分比，开关前就在跑的任务从日志读出来；点开看每一步。
+- 🧠 **助手自动整理**：原话能看就照用，不合适才改写成好懂的话，再写两三句「干到哪了、顺不顺」。
+- 🌙 刘海弹出更顺；Claude / Codex 额度更准；耳机断开后语音助手不再占着麦克风。
+
 **v0.3.0**（2026-11-08）
 
 - 🪟 **Windows 版**：只有新拟态皮肤，带安装包，装在用户文件夹、不要管理员权限。主页、管家页、进程、磁盘、工具箱、每日清理、资讯页、助手都能用；所有「删除」只进回收站。
@@ -262,7 +268,8 @@ docs/               服务清单、语音提速笔记、截图
 
 | 版本 | 日期 | 这一版改了什么 | 下载 |
 |---|---|---|---|
-| **v0.3.0** `最新` | 2026-11-08 | Windows 版（安装包、顶部面板、语音、操作电脑）；英文模式 · [详细](CHANGELOG.md#v030--2026-11-08) | [下载](https://github.com/3520566741-YCLi/deck-for-mac/releases/tag/v0.3.0) |
+| **v0.4.0** `最新` | 2026-11-09 | Agent 进度（自报 + 读日志，助手自动整理）；刘海更顺、额度更准、语音助手不再占着麦克风（只更新 Mac） · [详细](CHANGELOG.md#v040--2026-11-09) | [下载](https://github.com/3520566741-YCLi/deck-for-mac/releases/tag/v0.4.0) |
+| v0.3.0 | 2026-11-08 | Windows 版（安装包、顶部面板、语音、操作电脑）；英文模式 · [详细](CHANGELOG.md#v030--2026-11-08) | [下载](https://github.com/3520566741-YCLi/deck-for-mac/releases/tag/v0.3.0) |
 | v0.2.1 | 2026-11-08 | 日报里的股价按实时行情核对，写错的句子自动删掉 · [详细](CHANGELOG.md#v021--2026-11-08) | [下载](https://github.com/3520566741-YCLi/deck-for-mac/releases/tag/v0.2.1) |
 | v0.2.0 | 2026-11-08 | 助手能读日报、能操作 Deck 全部功能；按钮反馈和音效；键盘清洁；助手名字和声纹自己设；设置里切换显示方式 · [详细](CHANGELOG.md#v020--2026-11-08) | [下载](https://github.com/3520566741-YCLi/deck-for-mac/releases/tag/v0.2.0) |
 | v0.1.1 | 2026-11-08 | 修好叫不醒；说「查一下」会当场联网查；可选的语音看门狗 · [详细](CHANGELOG.md#v011--2026-11-08) | [下载](https://github.com/3520566741-YCLi/deck-for-mac/releases/tag/v0.1.1) |

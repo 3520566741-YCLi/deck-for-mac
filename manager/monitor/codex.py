@@ -18,8 +18,21 @@ CANDIDATES = (
 def _window(v):
     if not isinstance(v, dict) or v.get("usedPercent") is None:
         return None
-    return {"used_pct": float(v["usedPercent"]), "resets_at": v.get("resetsAt"),
-            "minutes": v.get("windowDurationMins")}
+    used, r = float(v["usedPercent"]), v.get("resetsAt")
+    w = {"used_pct": used, "resets_at": r, "minutes": v.get("windowDurationMins"),
+         # 给 Vesper 直接念的人话字段（11-09）：页面大字显示的是「剩余」，别让它把已用当剩余说
+         "remaining_pct": round(max(0.0, 100 - used), 1)}
+    if isinstance(r, (int, float)) and r > 0:
+        w["resets_local"] = time.strftime("%m-%d %H:%M", time.localtime(r))
+        w["resets_in"] = _span(r - time.time())
+    return w
+
+
+def _span(s):
+    if s <= 60:
+        return "马上"
+    d, h, m = int(s // 86400), int(s % 86400 // 3600), int(s % 3600 // 60)
+    return ("%d 天 %d 小时后" % (d, h)) if d else ("%d 小时 %d 分后" % (h, m)) if h else ("%d 分钟后" % max(1, m))
 
 
 class CodexSource:
@@ -131,4 +144,5 @@ class CodexSource:
             if t["needs_you"]:
                 why.append({"text": "Codex 任务「%s」在等你批准或回复" % t["title"][:30], "fix": "打开 Codex 看一下这个任务"})
         return {"level": level, "why": why, "five_hours": five, "week": week, "plan": rl.get("planType"),
+                "limits_as_of": time.strftime("%m-%d %H:%M"),
                 "tasks": tasks[:8], "limits_missing": not (five or week)}

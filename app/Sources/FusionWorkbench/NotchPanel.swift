@@ -7,7 +7,7 @@ import WebKit
 /// 里面放的就是扩展屏那个 Deck 网页（/dash?app=1&notch=1），卡片、Vesper、设置、语音都是同一套；
 /// 面板的形状和「水帘」展开动画也由网页画。这里只负责：
 /// - 一个透明、不抢焦点的窗口贴在刘海正下方（大小跟着网页设置里的「刘海模式面板大小」）；
-/// - 鼠标碰到刘海（左右各多 60 点、往下多 8 点，或者甩到屏幕最上沿的中间一段）就叫网页展开；
+/// - 鼠标碰到刘海本身（只认刘海那一块，往下多 8 点）就叫网页展开；刘海两边的菜单栏图标照常能点；
 ///   离开面板 0.32 秒后收起；Vesper 正在听/想/说、正在打字时不收，说完 4 秒鼠标不在面板上再收；
 /// - 收起时整个窗口不接鼠标，菜单栏照常点。
 /// 刘海尺寸的算法参考 NotchDrop（MIT，Lakr233）和 DynamicNotchKit（MIT，MrKai77）：safeAreaInsets.top + auxiliaryTopLeft/RightArea。
@@ -183,9 +183,9 @@ final class NotchPanel: NSObject, WKScriptMessageHandler, WKNavigationDelegate, 
 
     private func inHotZone(_ p: NSPoint) -> Bool {
         guard onNotchScreen(p) else { return false }
+        // 只认刘海本身：以前左右各多 60 点、屏幕最上沿还多 ±360 点，鼠标去点刘海旁边的菜单栏图标（比如「«」）也会弹出来挡住
         let dx = abs(p.x - geo.centerX), fromTop = geo.top - p.y
-        if fromTop <= geo.notchHeight + 8 && dx <= geo.notchWidth / 2 + 60 { return true }
-        return fromTop <= 4 && dx <= 360  // 一下甩到屏幕最上沿
+        return fromTop <= geo.notchHeight + 8 && dx <= geo.notchWidth / 2 - 4
     }
 
     private func inPanel(_ p: NSPoint) -> Bool {

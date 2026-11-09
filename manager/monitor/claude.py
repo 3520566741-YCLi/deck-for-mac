@@ -1,16 +1,20 @@
 """Claude Code：读本机 ~/.claude/projects 下的会话日志（和 ccusage 同一口径），
 统计今天 / 最近 5 小时的 token、正在进行的会话。日志里的对话正文不会被读出或发出去，只取用量字段。
 
-可选（默认关）：用 Claude Code 自己存在钥匙串里的登录凭据，查订阅的 5 小时 / 每周用量上限。
-这是 Claude Code 内部用的接口，不是公开 API，随时可能变；第一次查询时 macOS 会弹窗问是否允许访问钥匙串。
+订阅的 5 小时 / 每周额度（11-09 改）：主要靠 `claude -p /usage`——Claude Code 自己的 /usage 命令，
+不花 token、不建会话（--no-session-persistence），登录过期它自己会续，和你在 Claude Code 里看到的一模一样。
+备用：① Claude Code 状态栏给的 rate_limits（scripts/claude-statusline.py 记的，只有在终端里用 claude 时才会更新）；
+② 可选（默认关）用钥匙串里的登录凭据查内部接口。三者谁新用谁，并把「这是几点的数据」一起给页面和 Vesper。
 """
 import glob
 import json
 import os
+import re
+import subprocess
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
-from .util import HOME, SourceError, http_json, run
+from .util import HOME, SourceError, find_exe, http_json, run
 
 ACTIVE_WINDOW = 10 * 60
 SCAN_DAYS = 8
@@ -23,6 +27,73 @@ def _ts(s):
         return datetime.fromisoformat(s.replace("Z", "+00:00")).timestamp()
     except Exception:  # noqa: BLE001
         return None
+
+
+_MON = {m: i + 1 for i, m in enumerate("jan feb mar apr may jun jul aug sep oct nov dec".split())}
+# 「Current session: 19% used · resets Nov 9 at 9:30pm (Asia/Singapore)」
+_USAGE_RE = re.compile(r"^\s*Current (session|week)(?:\s*\(([^)]*)\))?\s*:\s*([\d.]+)%\s*used(?:.*?\bresets\s+(.+?))?\s*$", re.I)
+_RESET_RE = re.compile(r"^(?:([A-Za-z]{3})[a-z]*\.?\s+(\d{1,2})(?:,?\s*(\d{4}))?\s*(?:at\s+)?)?(\d{1,2})(?::(\d{2}))?\s*([ap]m)?\s*(?:\(([^)]+)\))?$", re.I)
+
+
+def _zone(name):
+    try:
+        from zoneinfo import ZoneInfo
+        return ZoneInfo(name) if name else None
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _reset_ts(text, now=None):
+    """「Nov 12 at 6am (Asia/Singapore)」「9:30pm (Asia/Singapore)」→ 时间戳；看不懂就返回 None。"""
+    m = _RESET_RE.match((text or "").strip())
+    if not m:
+        return None
+    mon, day, year, hh, mm, ap, tzname = m.groups()
+    h, mi = int(hh), int(mm or 0)
+    if ap:
+        h = h % 12 + (12 if ap.lower() == "pm" else 0)
+    if h > 23 or mi > 59:
+        return None
+    tz = _zone(tzname) or datetime.now().astimezone().tzinfo
+    cur = datetime.fromtimestamp(now or time.time(), tz)
+    try:
+        if mon:
+            mo = _MON.get(mon[:3].lower())
+            if not mo:
+                return None
+            cands = [datetime(int(year), mo, int(day), h, mi, tzinfo=tz)] if year else \
+                [datetime(cur.year + dy, mo, int(day), h, mi, tzinfo=tz) for dy in (-1, 0, 1)]
+            # 没写年份：取离现在最近的那一年（12 月底看 1 月的重置时间也对）
+            dt = min(cands, key=lambda d: abs((d - cur).total_seconds()))
+        else:
+            dt = cur.replace(hour=h, minute=mi, second=0, microsecond=0)
+            if dt < cur - timedelta(minutes=5):
+                dt += timedelta(days=1)
+    except ValueError:
+        return None
+    return dt.timestamp()
+
+
+def parse_usage(text, now=None):
+    """解析 Claude Code /usage 的文字输出 → {five_hour, seven_day, seven_day_xxx}。"""
+    res = {}
+    for line in (text or "").splitlines():
+        m = _USAGE_RE.match(line)
+        if not m:
+            continue
+        kind, sub, pct, reset = m.groups()
+        sub = (sub or "").strip()
+        if kind.lower() == "session":
+            k, label = "five_hour", "5 小时"
+        elif not sub or sub.lower() in ("all models", "all"):
+            k, label = "seven_day", "本周"
+        else:
+            k, label = "seven_day_" + re.sub(r"[^a-z0-9]+", "_", sub.lower()).strip("_"), "本周 " + sub
+        if k in res:
+            continue
+        res[k] = {"label": label, "used_pct": round(min(100.0, float(pct)), 1),
+                  "resets_at": _reset_ts(reset, now) if reset else None}
+    return res if ("five_hour" in res or "seven_day" in res) else {}
 
 
 def _short_model(m):
@@ -49,6 +120,12 @@ class ClaudeSource:
         self.limits_at = 0
         self.limits_err = None
         self.limits_src = None  # 有值 = 额度来自 Claude Code 状态栏（那一刻的时间）
+        self.limits_via = None  # usage / statusline / api：额度是从哪读的
+        self.limits_ts = None   # 额度是几点的数据
+        self.usage = None       # 最近一次 `claude -p /usage` 成功的结果 {"limits", "at"}
+        self.usage_try = 0
+        self.usage_err = None
+        self.api = None         # 联网接口最近一次成功的结果
 
     # ---------- 增量读日志 ----------
     def _scan(self):
@@ -136,6 +213,38 @@ class ClaudeSource:
             res[k] = {"label": label, "used_pct": round(used, 1), "resets_at": r}
         return {"limits": res, "at": float(d.get("at") or 0)} if res else None
 
+    def _usage_cli(self):
+        """跑一次 `claude -p /usage`：Claude Code 自己的额度命令，0 token、不建会话，约 5 秒。"""
+        exe = find_exe("claude", [self.cfg["claude_path"]] if self.cfg.get("claude_path") else [])
+        if not exe:
+            self.usage_err = "没找到 claude 命令"
+            return
+        try:
+            # stdin 给空：不然 claude -p 可能等着读管道；Windows 上不闪黑框。
+            # --setting-sources local + 在主目录跑：不加载用户设置里的 hooks / 插件（刘海提示之类不会每 3 分钟被触发一次），
+            # 登录信息不在设置里，照样能查
+            r = subprocess.run([exe, "-p", "/usage", "--no-session-persistence", "--output-format", "json",
+                                "--setting-sources", str(self.cfg.get("usage_setting_sources", "local"))],
+                               stdin=subprocess.DEVNULL, capture_output=True, text=True, encoding="utf-8", errors="replace",
+                               timeout=int(self.cfg.get("usage_timeout", 40)), cwd=HOME,
+                               creationflags=0x08000000 if os.name == "nt" else 0)
+            code, out, err = r.returncode, r.stdout or "", r.stderr or ""
+        except Exception as e:  # noqa: BLE001
+            code, out, err = -1, "", str(e)
+        text = ""
+        try:
+            o = json.loads(out)
+            text = o.get("result") or "" if isinstance(o, dict) else ""
+        except ValueError:
+            text = out or ""
+        lim = parse_usage(text)
+        if lim:
+            self.usage, self.usage_err = {"limits": lim, "at": time.time()}, None
+            return
+        low = (text + " " + (err or "")).lower()
+        self.usage_err = ("Claude Code 没登录或登录过期：在终端运行 claude 登录一次" if re.search(r"log ?in|auth|expired|401", low)
+                          else "claude /usage 没给出额度（%s）" % ("超时" if code == -1 else "退出码 %s" % code))
+
     def _fetch_limits(self):
         code, out, err = run(["security", "find-generic-password", "-s", "Claude Code-credentials", "-w"], timeout=20)
         if code != 0 or not out.strip():
@@ -178,18 +287,40 @@ class ClaudeSource:
                               % self.root.replace(HOME, "~"))
         self._scan()
         now = time.time()
+        every = int(self.cfg.get("usage_interval", 180))
+        if self.cfg.get("usage_cli", True) and (now - self.usage_try >= every or (force and now - self.usage_try >= 30)):
+            self._usage_cli()
+            # 失败时隔 3 倍时间再试，免得 claude 坏了每几分钟起一次进程
+            self.usage_try = now + (every * 2 if self.usage_err else 0)
         local = self._local_limits()
-        if local and now - local["at"] < 1800:
-            # Claude Code 半小时内报过：直接用，不去查联网接口
-            self.limits, self.limits_err, self.limits_src = local["limits"], None, local["at"]
-        elif self.cfg.get("usage_limits") and (force or now - self.limits_at > int(self.cfg.get("limits_interval", 300))):
+        # 谁新用谁：/usage（几分钟一次）和状态栏（你在终端用 claude 时随时更新）
+        cands = []
+        if self.usage:
+            cands.append((self.usage["at"], "usage", self.usage["limits"]))
+        if local:
+            cands.append((local["at"], "statusline", local["limits"]))
+        best = max(cands, key=lambda c: c[0]) if cands else None
+        if (not best or now - best[0] > 1800) and self.cfg.get("usage_limits") and \
+                (force or now - self.limits_at > int(self.cfg.get("limits_interval", 300))):
+            # 前两种都没有或都超过半小时：才去查会限流的联网接口
             self.limits_at = now
+            self.limits = None
             self._fetch_limits()
-            self.limits_src = None
-            if not self.limits and local:  # 接口查不到时，退回 Claude Code 上次报的
-                self.limits, self.limits_src, self.limits_err = local["limits"], local["at"], None
-        elif local and (not self.limits or self.limits_src):
-            self.limits, self.limits_src, self.limits_err = local["limits"], local["at"], None
+            if self.limits:
+                self.api = {"limits": self.limits, "at": now}
+        if self.api and (not best or self.api["at"] > best[0]):
+            best = (self.api["at"], "api", self.api["limits"])
+        if best:
+            self.limits, self.limits_ts, self.limits_via = best[2], best[0], best[1]
+            self.limits_src = best[0] if best[1] == "statusline" else None
+            if now - best[0] < 1800:
+                self.limits_err = None
+        else:
+            self.limits, self.limits_ts, self.limits_via, self.limits_src = None, None, None, None
+        # 额度读不到或已经过时（超过半小时）才报原因
+        err = None
+        if not best or now - best[0] > 1800:
+            err = (self.limits_err if self.cfg.get("usage_limits") else None) or self.usage_err
         day0 = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
         week0 = day0 - datetime.now().weekday() * 86400
 
@@ -230,6 +361,32 @@ class ClaudeSource:
             "today": agg(day0), "five_hours": agg(now - 5 * 3600), "week": agg(week0),
             "hours": hours,
             "active": active[:6], "recent": recent, "processes": procs,
-            "limits": self.limits, "limits_enabled": bool(self.cfg.get("usage_limits")),
-            "limits_error": self.limits_err, "limits_from_cc": self.limits_src,
+            "limits": _readable(self.limits, now), "limits_enabled": bool(self.cfg.get("usage_limits") or self.cfg.get("usage_cli", True)),
+            "limits_error": err, "limits_from_cc": self.limits_src,
+            "limits_at": self.limits_ts, "limits_via": self.limits_via,
+            # 给 Vesper 看的：这份额度是几点的
+            "limits_as_of": time.strftime("%m-%d %H:%M", time.localtime(self.limits_ts)) if self.limits_ts else None,
         }
+
+
+def _readable(limits, now):
+    """每个窗口多带几个人话字段，Vesper 直接念、不用自己换算时间戳：剩余百分比、几点重置、还有多久。"""
+    if not limits:
+        return limits
+    out = {}
+    for k, w in limits.items():
+        w = dict(w)
+        w["remaining_pct"] = round(max(0.0, 100 - float(w.get("used_pct") or 0)), 1)
+        r = w.get("resets_at")
+        if r:
+            w["resets_local"] = time.strftime("%m-%d %H:%M", time.localtime(r))
+            w["resets_in"] = _span(r - now)
+        out[k] = w
+    return out
+
+
+def _span(s):
+    if s <= 60:
+        return "马上"
+    d, h, m = int(s // 86400), int(s % 86400 // 3600), int(s % 3600 // 60)
+    return ("%d 天 %d 小时后" % (d, h)) if d else ("%d 小时 %d 分后" % (h, m)) if h else ("%d 分钟后" % max(1, m))

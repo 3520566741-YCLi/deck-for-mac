@@ -152,6 +152,12 @@ Your settings (`config.json`, `apps.json`), chat history, memories and voiceprin
 
 ## What's new
 
+**v0.4.0** (2026-11-09, Mac only)
+
+- 📊 **Agent progress**: how far Claude Code, Codex and DeepSeek Harness have got, right inside their cards. Agents report their own percent; tasks that started before you turned it on are read from their logs; tap to see every step.
+- 🧠 **Automatic tidy-up**: the agent's own words are used as-is when they read fine, rewritten plainly when they don't, plus two or three sentences on how it's going.
+- 🌙 Smoother notch opening; more accurate Claude / Codex limits; the voice helper no longer holds the mic after headphones disconnect.
+
 **v0.3.0** (2026-11-08)
 
 - 🪟 **Windows version**: neumorphic skin only, with an installer; installs into your user folder, no admin rights. Home, Butler, processes, disk, toolbox, daily cleanup, news and the assistant all work; every "delete" goes to the Recycle Bin.
@@ -264,7 +270,8 @@ Issues and PRs are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) and t
 
 | Version | Date | What changed | Download |
 |---|---|---|---|
-| **v0.3.0** `latest` | 2026-11-08 | Windows version (installer, top panel, voice, PC control); English mode · [details](CHANGELOG.md#v030--2026-11-08) | [Download](https://github.com/3520566741-YCLi/deck-for-mac/releases/tag/v0.3.0) |
+| **v0.4.0** `latest` | 2026-11-09 | Agent progress (self-reported + session logs, tidied up by the assistant); smoother notch, accurate limits, voice helper releases the mic (Mac only) · [details](CHANGELOG.md#v040--2026-11-09) | [Download](https://github.com/3520566741-YCLi/deck-for-mac/releases/tag/v0.4.0) |
+| v0.3.0 | 2026-11-08 | Windows version (installer, top panel, voice, PC control); English mode · [details](CHANGELOG.md#v030--2026-11-08) | [Download](https://github.com/3520566741-YCLi/deck-for-mac/releases/tag/v0.3.0) |
 | v0.2.1 | 2026-11-08 | Stock prices in the daily brief are checked against live quotes; wrong sentences are removed · [details](CHANGELOG.md#v021--2026-11-08) | [Download](https://github.com/3520566741-YCLi/deck-for-mac/releases/tag/v0.2.1) |
 | v0.2.0 | 2026-11-08 | The assistant reads the daily brief and operates all of Deck; button feedback and sound; keyboard cleaning; name the assistant and record your voiceprint; display mode in Settings · [details](CHANGELOG.md#v020--2026-11-08) | [Download](https://github.com/3520566741-YCLi/deck-for-mac/releases/tag/v0.2.0) |
 | v0.1.1 | 2026-11-08 | Wakes up reliably; "let me check" searches right away; optional voice watchdog · [details](CHANGELOG.md#v011--2026-11-08) | [Download](https://github.com/3520566741-YCLi/deck-for-mac/releases/tag/v0.1.1) |

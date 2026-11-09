@@ -631,7 +631,7 @@ def _on_hotkey(ev):
         L.held = False
         L.finish_now()
         return
-    if ev.get("name") == "talk":  # ⌥⌘J：不用唤醒词，直接说（再按一次取消）
+    if ev.get("name") == "talk":  # ⌃⌥⌘J：不用唤醒词，直接说（再按一次取消）
         if _barge().held():
             # 正在「开口打断」的暂停里又按了说话键：就是要打断，丢掉旧回答，重新听
             _barge().commit("hotkey")

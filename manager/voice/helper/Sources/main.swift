@@ -29,6 +29,7 @@ final class App: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ n: Notification) {
+        guard ensureSingleInstance() else { exit(0) }
         let log: (String) -> Void = { [weak self] s in self?.link.log(s) }
         audio.log = log
         captions.log = log
@@ -54,7 +55,7 @@ final class App: NSObject, NSApplicationDelegate {
         link.onJSON = { [weak self] m in DispatchQueue.main.async { self?.handle(m) } }
 
         HotKeys.shared.handler = { [weak self] name in DispatchQueue.main.async { self?.hotkey(name) } }
-        // 按住说话：⌥⌘J 按住超过 0.6 秒再松开 = 说完了，马上出结果
+        // 按住说话：⌃⌥⌘J 按住超过 0.6 秒再松开 = 说完了，马上出结果
         var talkDown = Date.distantPast
         var talkHeld = false
         HotKeys.shared.pressHandler = { [weak self] name, pressed in
@@ -141,7 +142,7 @@ final class App: NSObject, NSApplicationDelegate {
 
     func hotkey(_ name: String) {
         if name == "mic" { setMic(!micOn, announce: true) }
-        if name == "talk" && !micEffective { link.log("麦克风现在关着（\(micOn ? "让给了别的 App" : "已手动关闭")），⌥⌘J 没法听") }
+        if name == "talk" && !micEffective { link.log("麦克风现在关着（\(micOn ? "让给了别的 App" : "已手动关闭")），⌃⌥⌘J 没法听") }
         link.send(json: ["t": "hotkey", "name": name])
         if name == "stop" { audio.stopPlayback() }  // 不等服务，先让声音停
     }
@@ -230,6 +231,24 @@ final class App: NSObject, NSApplicationDelegate {
         do { try p.run(); service = p } catch { NSLog("[DeckVoice] 启动语音服务失败：%@", "\(error)") }
     }
 
+    /// 同一时间只能有一个 DeckVoice：两个会同时开麦克风、抢同一组快捷键和按键监听（11-09 旧测试版被 open -b 拉起，跟正式版并存）。
+    /// 不是装在 ~/Applications 的那份（别处的旧测试版）直接不启动；自己是正式版就把其它副本结束掉。
+    func ensureSingleInstance() -> Bool {
+        let installed = (NSHomeDirectory() as NSString).appendingPathComponent("Applications/DeckVoice.app")
+        let mine = Bundle.main.bundleURL.resolvingSymlinksInPath().path
+        if mine != installed && FileManager.default.fileExists(atPath: installed) {
+            NSLog("[DeckVoice] 这是 %@ 的副本，正式版在 %@，不启动", mine, installed)
+            return false
+        }
+        let me = ProcessInfo.processInfo.processIdentifier
+        for other in NSRunningApplication.runningApplications(withBundleIdentifier: Bundle.main.bundleIdentifier ?? "io.github.deckformac.deckvoice")
+            where other.processIdentifier != me {
+            NSLog("[DeckVoice] 结束另一个 DeckVoice（pid %d）", other.processIdentifier)
+            kill(other.processIdentifier, SIGKILL)  // 不走正常退出：那样会告诉服务「别再拉起」并可能把服务一起关掉
+        }
+        return true
+    }
+
     func applicationWillTerminate(_ n: Notification) {
         // 告诉语音服务这是正常退出，别自动把 DeckVoice 拉回来（服务若是别处起的、不跟着退出时有用）
         link.send(json: ["t": "quit"])
@@ -251,10 +270,10 @@ final class App: NSObject, NSApplicationDelegate {
         aecItem.target = self
         yieldItem.target = self
         menu.addItem(micItem)
-        let talk = NSMenuItem(title: "直接说（按住右 ⌘ 或 ⌥⌘J，松手出结果）", action: #selector(talk), keyEquivalent: "")
+        let talk = NSMenuItem(title: "直接说（按住右 ⌘ 或 ⌃⌥⌘J，松手出结果）", action: #selector(talk), keyEquivalent: "")
         talk.target = self
         menu.addItem(talk)
-        let stop = NSMenuItem(title: "停（轻按右 ⌥ 或 ⌥⌘.）", action: #selector(stopNow), keyEquivalent: "")
+        let stop = NSMenuItem(title: "停（轻按右 ⌥ 或 ⌃⌥⌘.）", action: #selector(stopNow), keyEquivalent: "")
         stop.target = self
         menu.addItem(stop)
         let keyMenu = NSMenu()
@@ -289,9 +308,9 @@ final class App: NSObject, NSApplicationDelegate {
         img?.isTemplate = true
         status.button?.image = img
         if !yieldedTo.isEmpty {
-            micItem.title = "麦克风已让给 \(yieldedTo.first!)（关闭：⌥⌘M）"
+            micItem.title = "麦克风已让给 \(yieldedTo.first!)（关闭：⌃⌥⌘M）"
         } else {
-            micItem.title = micOn ? "关闭麦克风（⌥⌘M）" : "打开麦克风（⌥⌘M）"
+            micItem.title = micOn ? "关闭麦克风（⌃⌥⌘M）" : "打开麦克风（⌃⌥⌘M）"
         }
         aecItem.state = audio.aec ? .on : .off
         yieldItem.state = yieldMic ? .on : .off

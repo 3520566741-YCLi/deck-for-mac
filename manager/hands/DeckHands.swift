@@ -2,7 +2,7 @@
 // 另有键盘清洁模式（--clean，见 CleanMode.swift），是单独的进程。
 // 怎么点由 Vesper（DeepSeek + Jev）在 Deck 服务里决定；这里只执行，并且自己守住几条底线：
 // - 菜单栏开关「允许 Vesper 操作电脑」关着时，什么都不做。
-// - 急停：Deck 的停止（说「停」/ ⌥⌘. / → 键 / 页面停止按钮，经 Deck 发 stop）、菜单「立即停止」、连按 3 次 Esc。
+// - 急停：Deck 的停止（说「停」/ ⌃⌥⌘. / → 键 / 页面停止按钮，经 Deck 发 stop）、菜单「立即停止」、连按 3 次 Esc。
 //   停下后拒绝一切动作，直到下一次新的提问（Deck 发 arm）。
 // - 永远不往密码框里打字，也不读密码框的内容。
 // - 只听本机 Unix socket（~/Library/Application Support/Deck/hands.sock，权限 600，且核对对方是同一个用户）。
@@ -515,7 +515,7 @@ menu.delegate = Actions.shared
 refreshMenu()
 if !AXIsProcessTrusted() { Actions.shared.openPrefs() }
 
-// 备用急停：连按三次 Esc（只是旁听按键，不注册快捷键；⌥⌘. 归 DeckVoice，经 Deck 的 stop 传到这里）
+// 备用急停：连按三次 Esc（只是旁听按键，不注册快捷键；⌃⌥⌘. 归 DeckVoice，经 Deck 的 stop 传到这里）
 var escTimes: [Date] = []
 NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { e in
     if e.keyCode == 53 {

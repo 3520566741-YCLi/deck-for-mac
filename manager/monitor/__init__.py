@@ -6,6 +6,7 @@ import threading
 import time
 import traceback
 
+from .agents import AgentsSource
 from .butler import ButlerSource
 from .claude import ClaudeSource
 from .cleanup import CleanupSource
@@ -24,8 +25,9 @@ from .util import SourceError
 
 IDLE_AFTER = 120
 MIN_FORCE_GAP = 8
-DEFAULT_ORDER = ["system", "claude", "codex", "github", "deepseek", "butler", "cleanup", "tools", "makerworld"]
-DEFAULT_ENABLED = {"system", "claude", "codex", "github", "deepseek", "butler", "cleanup", "tools"}
+DEFAULT_ORDER = ["system", "claude", "codex", "github", "deepseek", "butler", "cleanup", "tools", "makerworld", "agents"]
+# agents：Agent 进度（11-09，Windows 版冻结不做）
+DEFAULT_ENABLED = {"system", "claude", "codex", "github", "deepseek", "butler", "cleanup", "tools", "agents"}
 if WIN:
     # 11-08 第二步：管家（我的应用）、每日清理、工具箱已换成 Windows 写法（winport/）
     DEFAULT_ENABLED = {"system", "claude", "codex", "github", "deepseek", "butler", "cleanup", "tools"}
@@ -45,6 +47,7 @@ class Hub:
             "cleanup": lambda c: CleanupSource(c),
             "makerworld": lambda c: MakerWorldSource(c),
             "tools": lambda c: ToolsSource(c),
+            "agents": lambda c: AgentsSource(c),
         }
         self.sources = {}
         self.state = {}

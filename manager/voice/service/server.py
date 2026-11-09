@@ -92,8 +92,10 @@ class HelperHandler(socketserver.BaseRequestHandler):
         except (ConnectionError, OSError) as e:
             print(f"[server] DeckVoice 断开：{e}", flush=True)
         finally:
-            hub._attach_helper(None)
-            hub._set_mic(False)
+            # 只在断开的是「当前那个」DeckVoice 时才清状态：11-09 同时跑了两个 DeckVoice（旧测试版被 open -b 拉起），
+            # 旧的一断开就把新连上的也当成断了，看门狗/状态全乱
+            if hub._detach_helper(send):
+                hub._set_mic(False)
 
 
 class HelperServer(socketserver.ThreadingTCPServer):

@@ -282,7 +282,7 @@ HOTKEY_TEXT = {"mic": "Ctrl+Alt+M", "talk": "Ctrl+Alt+J"}
 
 def hotkey_loop(on_key, log=print):
     """RegisterHotKey 不需要任何权限；被别的软件占了就跳过那一个。on_key(name, phase)：phase = press / hold / release。
-    「直接说」按住超过 0.6 秒算按住说话（和 Mac 的 ⌥⌘J 一样），松手马上出结果。"""
+    「直接说」按住超过 0.6 秒算按住说话（和 Mac 的 ⌃⌥⌘J 一样），松手马上出结果。"""
     if not IS_WIN:
         return
     import ctypes  # noqa: PLC0415

@@ -1,0 +1,31 @@
+# 只发源码的版本（没有 Windows 安装包，比如只更新 Mac 的版本）。
+# Source-only release (no Windows installer, e.g. a Mac-only version).
+# 手动运行，填 release_tag（如 v0.4.0）：用 .github/releases/<tag>.md 建 Release（首行是标题），旧版本不动、不覆盖。
+name: release-mac
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "版本标签，如 v0.4.0 / Tag, e.g. v0.4.0"
+        required: true
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 建 Release / Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          [[ "$TAG" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)$ ]] || { echo "标签格式不对：$TAG"; exit 1; }
+          [ "$(tr -d '[:space:]' < manager/VERSION)" = "${BASH_REMATCH[1]}" ] || { echo "manager/VERSION 和 $TAG 对不上"; exit 1; }
+          if gh release view "$TAG" >/dev/null 2>&1; then echo "$TAG 已经有了，不覆盖"; exit 1; fi
+          notes=".github/releases/$TAG.md"
+          [ -f "$notes" ] || { echo "缺发版说明 $notes"; exit 1; }
+          title="$(head -1 "$notes" | sed 's/^#\s*//')"
+          tail -n +2 "$notes" > "$RUNNER_TEMP/notes.md"
+          gh release create "$TAG" --target "$GITHUB_SHA" --title "$title" --notes-file "$RUNNER_TEMP/notes.md" --latest

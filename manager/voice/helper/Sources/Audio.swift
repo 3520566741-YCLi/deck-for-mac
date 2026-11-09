@@ -30,6 +30,8 @@ final class AudioCore {
     private var lastSignature = ""
     private var lastRebuild = Date.distantPast
     private var failures = 0
+    private var retryGen = 0         // 每次重建加一：只认最新那条重试，旧的作废（以前每次失败都多挂一条重试链，越积越多，一秒重建几十次）
+    private var deadRebuilds = 0     // 连「只播放」都开不起来的重建，连续几次了
     private var vpRetries = 0
     private var vpEverWorked = false
     private var vpBroken = false
@@ -72,6 +74,8 @@ final class AudioCore {
     func setMic(_ on: Bool) {
         q.async {
             if on == self.micOn && self.engine.isRunning && self.failures == 0 { return }  // 没变化就别打断
+            // 没变化、正在退避重试：别清零退避立刻再建（11-09 服务每次问状态都会走到这里，退避形同虚设）
+            if on == self.micOn && self.failures > 0 { return }
             self.micOn = on
             self.failures = 0
             self.rebuild()
@@ -106,6 +110,7 @@ final class AudioCore {
 
     /// 按当前 micOn 重建引擎。依次尝试：麦克风+回声消除 → 麦克风 → 只播放，保证至少能出声。
     private func rebuild() {
+        retryGen += 1
         lastRebuild = Date()
         lastSignature = Devices.signature()
         var attempts: [(Bool, Bool)] = []
@@ -119,10 +124,11 @@ final class AudioCore {
             if let err = start(mic: mic, vp: vp) {
                 if vp && !vpEverWorked { vpBroken = true }  // 这台机器上开不了，本次运行不再试（菜单里重新勾选会再试一次）
                 log?("音频引擎启动失败（\(mic ? (vp ? "麦克风+回声消除" : "麦克风") : "只播放")）：\(err)")
-                if i == attempts.count - 1 { scheduleRetry() }
+                if i == attempts.count - 1 { allFailed(); scheduleRetry() }
                 continue
             }
             failures = 0
+            deadRebuilds = 0
             aecOn = mic && vp
             onAEC?(aecOn)
             log?("音频：输入 \(mic ? Devices.describe(input: true) : "关")，输出 \(Devices.describe(input: false))\(vp ? "，回声消除开" : "")")
@@ -145,10 +151,20 @@ final class AudioCore {
     private func scheduleRetry() {
         failures += 1
         let wait = min(60.0, pow(2.0, Double(failures)))
+        let gen = retryGen
         q.asyncAfter(deadline: .now() + wait) { [weak self] in
-            guard let self = self, self.failures > 0 else { return }
+            guard let self = self, self.failures > 0, gen == self.retryGen else { return }
             self.rebuild()
         }
+    }
+
+    /// 连「只播放」都开不起来：多半是蓝牙耳机连上又断开后，这个进程里的音频状态坏了（11-09 卡了 3 个多小时，
+    /// 一直 -10875，换新进程立刻就好）。连续 5 次就退出，语音服务 15 秒后会自动重新打开 DeckVoice。
+    private func allFailed() {
+        deadRebuilds += 1
+        guard deadRebuilds >= 5 else { return }
+        log?("音频引擎在这个进程里坏了（连续 \(deadRebuilds) 次连只播放都开不了），退出让语音服务重新打开 DeckVoice")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { exit(75) }
     }
 
     /// 起一个新引擎；成功返回 nil，失败返回原因

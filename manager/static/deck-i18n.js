@@ -38,12 +38,12 @@
     [/访达/g, "资源管理器"], [/程序坞/g, "任务栏"], [/Dock 失效图标/g, "任务栏失效图标"], [/在 Dock/g, "在任务栏"],
     [/自建后台服务（LaunchAgent）/g, "自建后台任务（任务计划程序）"], [/LaunchAgent/g, "计划任务"], [/钥匙串/g, "凭据管理器"],
     [/这台 Mac/g, "这台电脑"], [/Mac 管家/g, "电脑管家"], [/Spotlight/g, "Windows 搜索"], [/活动监视器/g, "任务管理器"], [/完全磁盘访问权限/g, "文件夹访问权限"],
-    [/⌥⌘M/g, "Ctrl+Alt+M"], [/⌥⌘J/g, "Ctrl+Alt+J"], [/⌥⌘\./g, "Ctrl+Alt+."],
+    [/⌃?⌥⌘M/g, "Ctrl+Alt+M"], [/⌃?⌥⌘J/g, "Ctrl+Alt+J"], [/⌃?⌥⌘\./g, "Ctrl+Alt+."],
     [/打开 DeckVoice（菜单栏的麦克风图标）后再来/g, "重新打开 Deck（语音服务会跟着起来）"], [/打开 DeckVoice 后/g, "Deck 起来后"], [/DeckVoice 会自动重开/g, "Deck 会自动重开"]];
   var EW = [[/Empty the Trash/g, "Empty the Recycle Bin"], [/\bthe Trash\b/g, "the Recycle Bin"], [/\bTrash\b/g, "Recycle Bin"],
     [/in Finder/g, "in File Explorer"], [/\bFinder\b/g, "File Explorer"], [/\bthe Dock\b/g, "the taskbar"], [/\bDock\b/g, "Taskbar"],
     [/LaunchAgents?/g, "scheduled task"], [/\bKeychain\b/g, "Credential Manager"], [/this Mac\b/g, "this PC"], [/Mac Butler/g, "PC Butler"], [/Activity Monitor/g, "Task Manager"],
-    [/⌥⌘M/g, "Ctrl+Alt+M"], [/⌥⌘J/g, "Ctrl+Alt+J"], [/⌥⌘\./g, "Ctrl+Alt+."], [/⌥⌘/g, "Ctrl+Alt+"], [/Open DeckVoice/g, "Restart Deck"], [/DeckVoice/g, "Deck"]];
+    [/⌃?⌥⌘M/g, "Ctrl+Alt+M"], [/⌃?⌥⌘J/g, "Ctrl+Alt+J"], [/⌃?⌥⌘\./g, "Ctrl+Alt+."], [/⌃?⌥⌘/g, "Ctrl+Alt+"], [/Open DeckVoice/g, "Restart Deck"], [/DeckVoice/g, "Deck"]];
   function swap(s, list) { for (var i = 0; i < list.length; i++) s = s.replace(list[i][0], list[i][1]); return s; }
   var ZH = /[\u3000-\u303f\u4e00-\u9fff\uff00-\uffef]/;
   // 中文句子（含没翻译的）按中文换；纯英文（翻译结果、原本就是英文的 Dock 之类）按英文换
@@ -225,6 +225,22 @@
     "这两天": "Last two days", "安静": "Quiet", "这一期没有新动态": "Nothing new this issue", "本期封面": "This issue's cover", "生成艺术": "Generative art",
     "配图是按算法现画的示意，不是原作品；点开看原文。": "Illustrations are drawn by an algorithm, not the original work; open the story for the real thing.",
     "持仓": "Holdings", "美股": "US", "港股": "HK", "实时": "Live", "分时图": "Intraday", "纳斯达克": "Nasdaq", "标普 500": "S&P 500", "恒生科技": "Hang Seng Tech", "上证指数": "SSE Composite",
+    // Agent 进度（11-09）
+    "Agent 进度": "Agent progress", "进行中": "Running", "没动静了": "Quiet", "已停止": "Stopped", "让 Agent 自己报进度": "Let agents report their own progress",
+    "现在没有 Agent 在干活": "No agent is working right now", "没有在跑的": "Nothing running", "没装": "Not installed",
+    "还没打开。点这里，一键让 Claude Code / Codex / DeepSeek Harness 自己报进度": "Not on yet. Tap here to let Claude Code / Codex / DeepSeek Harness report their own progress",
+    "百分比是 Agent 自己估的，可能会往回调；超过 15 分钟没报就显示「没动静了」，一般是在等你回复。": "Percentages are the agent's own estimate and may go down; after 15 minutes without a report it shows “Quiet”, usually because it is waiting for you.",
+    "Agent 进度（让 Claude Code / Codex / DeepSeek 自己报进度）": "Agent progress (let Claude Code / Codex / DeepSeek report progress)",
+    "在设置里填好 DeepSeek key，管家会自动把进度整理成好懂的话": "Add a DeepSeek key in Settings and the butler will tidy up progress into plain words automatically",
+    "管家（DeepSeek）正在整理…": "DeepSeek is tidying this up…", 
+    "从会话日志看到的，百分比按它列的计划清单算": "Seen in the session log; percent is from its own plan checklist",
+    "从会话日志看到的，没有自报百分比": "Seen in the session log; no self-reported percent",
+    "也看会话日志": "Also read session logs", "开关前就在跑的任务也能看到": "shows tasks that started before the switch",
+    "「也看会话日志」：Deck 只读 Codex / Claude Code 自己写在本机的会话日志，看最近 20 分钟在干什么，不改任何东西；没有百分比（除非它列了计划清单）。管家（DeepSeek）整理时会用到任务开头的一句话和最近几步。": "“Also read session logs”: Deck only reads the logs Codex / Claude Code already write on this Mac to see the last 20 minutes of work, and changes nothing. There is no percent unless the agent made a plan checklist. When DeepSeek tidies things up it sees the task’s first line and the last few steps.",
+    "好了：Codex / Claude Code 正在跑的任务也会显示": "Done: tasks already running in Codex / Claude Code will show too", "不再看会话日志了": "Stopped reading session logs",
+    "额度暂时读不到": "Can’t read usage right now", "点开看": "Tap to see", "现在没有进行中的会话": "No active sessions right now",
+"（没写这一步在做什么）": "(no step description)",
+    "超过 15 分钟没报进度，可能在等你回复": "No report for 15 minutes, may be waiting for you",
     "美股温度": "US market mood", "为什么相关：": "Why it matters: ", "连接长桥": "Connect Longbridge", "会影响你自选的科技资讯": "Tech news that may move your watchlist", "还没有报纸": "No paper yet", "正在编…": "Editing…"
   };
   // 属性（placeholder / title / aria-label）
@@ -384,9 +400,14 @@
     [/^没装：(.+) 不存在$/, "Not installed: $1 not found"], [/^找不到 LaunchAgent (.+)$/, "LaunchAgent $1 not found"], [/^本地服务 (.+) 无响应$/, "Local service $1 not responding"],
     [/^(.+) 下一期：(早版|午版|晚版) (\d+:\d+)。$/, function (m, a, n, t) { return tr(a) + " Next: " + ({ "早版": "Morning", "午版": "Noon", "晚版": "Evening" })[n] + " " + t + "."; }],
     [/^最近 5 小时 (.+) · 本周 (.+)$/, "Last 5 h $1 · this week $2"],
+    [/^额度是 (.+)的$/, function (m, t) { return "Quota from " + tr(t); }],
+    [/^额度来自 Claude Code 自己的 \/usage（和你在 Claude Code 里看到的一样，不花 token），每 3 分钟查一次，(.+)更新。$/, function (m, t) { return "Quota comes from Claude Code's own /usage (same numbers you see in Claude Code, costs no tokens), checked every 3 min, updated " + tr(t) + "."; }],
+    [/^额度来自 Claude Code 自己给状态栏的数据，(.+)更新。$/, function (m, t) { return "Quota comes from Claude Code's status-line data, updated " + tr(t) + "."; }],
+    [/^额度来自用量接口，(.+)更新。$/, function (m, t) { return "Quota comes from the usage API, updated " + tr(t) + "."; }],
+    [/^本周 (\S+)$/, "This week $1"],
     [/^进行中的会话 · (\d+) 个 claude 进程$/, function (m, n) { return "Active sessions · " + n + " claude process" + (n === "1" ? "" : "es"); }],
     [/^没找到 (.+) 的 API key（(.+) 里的 (.+)）$/, "No $1 API key found ($3 in $2)"],
-    [/^(.+)：没装：(.+) 不存在$/, "$1: not installed: $2 not found"],
+    [/^(.+)：没装：(.+) 不存在$/, "$1: not installed: $2 not found"], [/^(.+)：本地服务 (.+) 无响应$/, "$1: local service $2 not responding"],
     [/^(.+) · 上次用 (.+)$/, function (m, a, t) { return a + " · used " + tr(t); }],
     [/^(\d+) 个应用。点「卸载…」先看看会移走哪些东西，不会马上动。$/, "$1 apps. Tap “Uninstall…” to preview what would be moved; nothing happens right away."],
     [/^(.+) · 剩 (.+)$/, "$1 · $2 free"], [/^(.+)（外置）$/, "$1 (external)"],
@@ -427,7 +448,19 @@
     // 对话里的操作小标签
     [/^播放「(.+)」$/, "Playing \u201c$1\u201d"], [/^接着播「(.+)」$/, "Resumed \u201c$1\u201d"], [/^暂停了「(.+)」$/, "Paused \u201c$1\u201d"],
     [/^打开了「(.+)」$/, "Opened \u201c$1\u201d"], [/^刷新了「(.+)」$/, "Refreshed \u201c$1\u201d"], [/^显示方式改成「(.+)」$/, "Display set to \u201c$1\u201d"],
-    [/^在访达里打开了「(.+)」$/, "Opened \u201c$1\u201d in Finder"]
+    [/^在访达里打开了「(.+)」$/, "Opened \u201c$1\u201d in Finder"],
+    [/^(\d+) 个在跑$/, "$1 running"], [/^(\d+) 个在跑 · (\d+) 个刚完成$/, "$1 running · $2 just done"], [/^没有在跑的 · (\d+) 个刚完成$/, "Nothing running · $1 just done"],
+    [/^(.+) · 还有 (\d+) 个$/, function (m, a, n) { return tr(a) + " · " + n + " more"; }],
+    [/^不到 1 分钟$/, "< 1 min"], [/^(\d+) 分钟$/, "$1 min"], [/^(\d+) 小时 (\d+) 分$/, "$1 h $2 min"],
+    [/^已用 不到 1 分钟$/, "Under 1 min"], [/^已用 (\d+) 分钟$/, "$1 min so far"], [/^已用 (\d+) 小时 (\d+) 分$/, "$1 h $2 min so far"],
+    [/^(Claude Code|Codex|DeepSeek Harness) 报进度$/, function (m, a) { return a + " progress reports"; }],
+    [/^管家（DeepSeek）(.+)整理( · 有新进展，稍后自动更新)?$/, function (m, a, b) { return "Tidied up by DeepSeek " + tr(a) + (b ? " · new progress, updating soon" : ""); }],
+    [/^(\d+) 分钟前完成$/, "Done $1 min ago"], [/^刚刚完成$/, "Just done"], [/^(\d+) 秒前完成$/, "Done $1 s ago"], [/^(\d+) 分钟前停止$/, "Stopped $1 min ago"], [/^刚刚停止$/, "Just stopped"],
+    [/^(.+) 装好了：新开的会话就会报进度$/, "$1 is set up: new sessions will report progress"], [/^已关掉 (.+) 的进度上报，撤掉了 Deck 加的那一项$/, "Turned off progress reporting for $1 and removed what Deck added"],
+    [/^打开后，Deck 会给这个 Agent 装一个只在本机用的小工具[\s\S]*$/, function () { return "When on, Deck gives this agent a small local-only tool, report_progress: while working, the agent reports how far along it is and what step it is on. No network, it never reads your conversations, and it costs almost no tokens. Only new sessions pick it up. Turning it off takes effect at once and removes only what Deck added; your own settings are untouched."; }],
+    [/^做法借鉴开源项目 Codex Pacer（MIT）：(.+)$/, "Approach borrowed from the open-source Codex Pacer (MIT): $1"],
+    // 兜底：「名字：问题」（管家页、主页问题清单把应用名和每条问题拼在一起）——两半各自翻，放最后，前面的专门规则优先
+    [/^([^：\n]{1,40})：([^：\n]+)$/, function (m, a, b) { return tr(a) + ": " + tr(b); }]
   ];
 
   function tr(s) {
